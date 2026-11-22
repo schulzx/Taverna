@@ -1,0 +1,10440 @@
+{
+ "nome": "o treino das intenções",
+ "versao_do_exame": 1,
+ "data": "2026-11-22",
+ "selado": false,
+ "origem": "Frases escritas por nós, em PT-BR, como um jogador brasileiro digitaria num chat de RPG, sem abrir o leitor, as listas de palavras nem frases de mesa reais. O gabarito é o que um mestre de mesa real responderia, dado só o que a cena diz.",
+ "regra": "Aberto: quem constrói o leitor pode ler e afinar com estas frases.",
+ "itens": [
+  {
+   "id": "T-001",
+   "frase": "quanto é o colar?",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "colar",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "falar"
+  },
+  {
+   "id": "T-002",
+   "frase": "medito no banco até a missa",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "esperar"
+  },
+  {
+   "id": "T-003",
+   "frase": "suborno o guarda",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ninguem_aqui"
+   },
+   "armadilha": null,
+   "nota": "trocar/subornar: nao (ninguem_aqui)"
+  },
+  {
+   "id": "T-004",
+   "frase": "acendo a tocha pra ver o fundo",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "usar: sim"
+  },
+  {
+   "id": "T-005",
+   "frase": "devolvo a gazua ao Edrik",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Edrik Sorn",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": "alvo_morto",
+   "nota": "trocar/devolver: nao (morto)"
+  },
+  {
+   "id": "T-006",
+   "frase": "caminho até a barraca da Hilda",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": "barraca",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "mover"
+  },
+  {
+   "id": "T-007",
+   "frase": "e ai, Marta, alguma novidade?",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Marta Quint",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "sem_acento_ou_erro",
+   "nota": "falar"
+  },
+  {
+   "id": "T-008",
+   "frase": "troco a adaga por um quarto, Marta",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Marta Quint",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/escambo: sim_com_preco"
+  },
+  {
+   "id": "T-009",
+   "frase": "sigo a trilha até o celeiro",
+   "cena": {
+    "lugar": "Aldeia de Pedra Alta",
+    "tipo": "aldeia",
+    "pessoas": [
+     {
+      "nome": "Garrik Salles",
+      "oficio": "chefe da aldeia",
+      "vende": null
+     },
+     {
+      "nome": "Garrik Moura",
+      "oficio": "lenhador",
+      "vende": [
+       {
+        "item": "lenha",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Olga",
+      "oficio": "padeira",
+      "vende": [
+       {
+        "item": "pão",
+        "preco": 1
+       },
+       {
+        "item": "bolo",
+        "preco": 3
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Padre Benício"
+    ],
+    "mortos": [],
+    "coisas": [
+     "poço",
+     "pelourinho",
+     "celeiro",
+     "galinheiro"
+    ],
+    "heroi": {
+     "moeda": 11,
+     "carrega": [
+      "machado",
+      "corda",
+      "ração",
+      "tocha"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "celeiro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "mover"
+  },
+  {
+   "id": "T-010",
+   "frase": "qual o nome do estalajadeiro?",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "perguntar_ao_mestre"
+  },
+  {
+   "id": "T-011",
+   "frase": "peço um pão de graça pro Osk",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Osk",
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "é mercadoria dele"
+  },
+  {
+   "id": "T-012",
+   "frase": "acendo a tocha",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "usar: sim"
+  },
+  {
+   "id": "T-013",
+   "frase": "pago a conta, mas to sem grana",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 0,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": "giria",
+   "nota": "trocar/pagar: nao (sem_moeda)"
+  },
+  {
+   "id": "T-014",
+   "frase": "não aceito dinheiro sujo, Rato",
+   "cena": {
+    "lugar": "Beco da Lâmina",
+    "tipo": "beco",
+    "pessoas": [
+     {
+      "nome": "Rato",
+      "oficio": "receptador",
+      "vende": [
+       {
+        "item": "gazua",
+        "preco": 5
+       },
+       {
+        "item": "informação",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Nina Cobra",
+      "oficio": "batedora",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Dray"
+    ],
+    "mortos": [
+     "Dedo Longo"
+    ],
+    "coisas": [
+     "lixeira",
+     "escada",
+     "janela",
+     "caixote"
+    ],
+    "heroi": {
+     "moeda": 18,
+     "carrega": [
+      "adaga",
+      "gazua",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-015",
+   "frase": "pego o que ele deixou",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_quem"
+   },
+   "armadilha": "pronome",
+   "nota": "três homens na estrada; ele quem?"
+  },
+  {
+   "id": "T-016",
+   "frase": "dou uma moeda ao Dolan",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dolan",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": "alvo_morto",
+   "nota": "trocar/dar: nao (morto)"
+  },
+  {
+   "id": "T-017",
+   "frase": "peço uma poção pra Sibila",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": null,
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "homonimo",
+   "nota": "trocar/pedir: pergunta (dois_com_o_nome)"
+  },
+  {
+   "id": "T-018",
+   "frase": "cobro o Dolan",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Dolan",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": "alvo_morto",
+   "nota": "trocar/cobrar: nao (morto)"
+  },
+  {
+   "id": "T-019",
+   "frase": "dou um papo no Gil pra ele contar tudo",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-020",
+   "frase": "escalo o marco de pedra",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "marco de pedra",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "agir"
+  },
+  {
+   "id": "T-021",
+   "frase": "se eu tivesse moeda, o Kragg abria a cela?",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "falar"
+  },
+  {
+   "id": "T-022",
+   "frase": "suborno o barão",
+   "cena": {
+    "lugar": "Antessala do Barão Veltrin",
+    "tipo": "palacio",
+    "pessoas": [
+     {
+      "nome": "Ferran",
+      "oficio": "camareiro",
+      "vende": null
+     },
+     {
+      "nome": "Dessa",
+      "oficio": "guarda",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Barão Veltrin"
+    ],
+    "mortos": [],
+    "coisas": [
+     "tapete",
+     "lustre",
+     "porta dupla",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 50,
+     "carrega": [
+      "carta lacrada",
+      "anel",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Barão Veltrin",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "trocar/subornar: nao (ausente)"
+  },
+  {
+   "id": "T-023",
+   "frase": "conto pro Garrik que vi lobos",
+   "cena": {
+    "lugar": "Aldeia de Pedra Alta",
+    "tipo": "aldeia",
+    "pessoas": [
+     {
+      "nome": "Garrik Salles",
+      "oficio": "chefe da aldeia",
+      "vende": null
+     },
+     {
+      "nome": "Garrik Moura",
+      "oficio": "lenhador",
+      "vende": [
+       {
+        "item": "lenha",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Olga",
+      "oficio": "padeira",
+      "vende": [
+       {
+        "item": "pão",
+        "preco": 1
+       },
+       {
+        "item": "bolo",
+        "preco": 3
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Padre Benício"
+    ],
+    "mortos": [],
+    "coisas": [
+     "poço",
+     "pelourinho",
+     "celeiro",
+     "galinheiro"
+    ],
+    "heroi": {
+     "moeda": 11,
+     "carrega": [
+      "machado",
+      "corda",
+      "ração",
+      "tocha"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "homonimo",
+   "nota": "falar"
+  },
+  {
+   "id": "T-024",
+   "frase": "dou uma graninha pro Pavio abrir o bico",
+   "cena": {
+    "lugar": "Guarita do Portão Leste",
+    "tipo": "portao",
+    "pessoas": [
+     {
+      "nome": "Rurik",
+      "oficio": "guarda",
+      "vende": null
+     },
+     {
+      "nome": "Sabra Lopes",
+      "oficio": "capitã da guarda",
+      "vende": null
+     },
+     {
+      "nome": "Pavio",
+      "oficio": "contrabandista",
+      "vende": [
+       {
+        "item": "passagem sem registro",
+        "preco": 10
+       },
+       {
+        "item": "poção",
+        "preco": 12
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Teodoro Fox"
+    ],
+    "mortos": [],
+    "coisas": [
+     "portão",
+     "cancela",
+     "fogueira",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 14,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda",
+      "salvo-conduto vencido"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Pavio",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "trocar/subornar: dado"
+  },
+  {
+   "id": "T-025",
+   "frase": "compro o silêncio do Rato com 10 moedas",
+   "cena": {
+    "lugar": "Beco da Lâmina",
+    "tipo": "beco",
+    "pessoas": [
+     {
+      "nome": "Rato",
+      "oficio": "receptador",
+      "vende": [
+       {
+        "item": "gazua",
+        "preco": 5
+       },
+       {
+        "item": "informação",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Nina Cobra",
+      "oficio": "batedora",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Dray"
+    ],
+    "mortos": [
+     "Dedo Longo"
+    ],
+    "coisas": [
+     "lixeira",
+     "escada",
+     "janela",
+     "caixote"
+    ],
+    "heroi": {
+     "moeda": 18,
+     "carrega": [
+      "adaga",
+      "gazua",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Rato",
+    "coisa": "moeda",
+    "quantia": 10,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "compro o silêncio = suborno, não compra"
+  },
+  {
+   "id": "T-026",
+   "frase": "empresto um tostão pra Marta",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Marta Quint",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "trocar/emprestar: sim"
+  },
+  {
+   "id": "T-027",
+   "frase": "devolvo a faca ao Ledo",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Ledo",
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/devolver: sim"
+  },
+  {
+   "id": "T-028",
+   "frase": "não gasto nenhuma moeda, sigo reto",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "mover"
+  },
+  {
+   "id": "T-029",
+   "frase": "conto pro Osk que perdi minha bolsa",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Osk",
+    "coisa": "bolsa",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "falar"
+  },
+  {
+   "id": "T-030",
+   "frase": "me esgueiro pela escada",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "escada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "verbo_raro",
+   "nota": "agir"
+  },
+  {
+   "id": "T-031",
+   "frase": "furto a ração de alguém",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": null,
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ninguem_aqui"
+   },
+   "armadilha": null,
+   "nota": "trocar/furtar: nao (ninguem_aqui)"
+  },
+  {
+   "id": "T-032",
+   "frase": "capitão, quanto cobra até Porto Brisa?",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Aurelio Duarte",
+    "coisa": "passagem",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "falar"
+  },
+  {
+   "id": "T-033",
+   "frase": "uso a pele pra me cobrir",
+   "cena": {
+    "lugar": "Acampamento dos Caçadores",
+    "tipo": "acampamento",
+    "pessoas": [
+     {
+      "nome": "Tarsa",
+      "oficio": "caçadora",
+      "vende": [
+       {
+        "item": "flecha",
+        "preco": 1
+       },
+       {
+        "item": "pele",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Dunga",
+      "oficio": "cozinheiro",
+      "vende": [
+       {
+        "item": "ensopado",
+        "preco": 2
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Joaquim Hurt"
+    ],
+    "mortos": [
+     "Velho Hurt"
+    ],
+    "coisas": [
+     "fogueira",
+     "tenda",
+     "caldeirão",
+     "estandarte"
+    ],
+    "heroi": {
+     "moeda": 9,
+     "carrega": [
+      "arco",
+      "flechas",
+      "faca"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "pele",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null,
+   "nota": "usar: nao"
+  },
+  {
+   "id": "T-034",
+   "frase": "pego o livro grande",
+   "cena": {
+    "lugar": "Biblioteca da Torre",
+    "tipo": "biblioteca",
+    "pessoas": [
+     {
+      "nome": "Anselmo Pires",
+      "oficio": "bibliotecário",
+      "vende": [
+       {
+        "item": "pergaminho",
+        "preco": 4
+       },
+       {
+        "item": "tinta",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Nara",
+      "oficio": "estudante",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Quirino Alves"
+    ],
+    "mortos": [
+     "Ilze Brandt"
+    ],
+    "coisas": [
+     "estante",
+     "mesa",
+     "lampião",
+     "livro grande"
+    ],
+    "heroi": {
+     "moeda": 20,
+     "carrega": [
+      "pena",
+      "pergaminho",
+      "tocha",
+      "chave de bronze"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "livro grande",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/pegar: dado"
+  },
+  {
+   "id": "T-035",
+   "frase": "se eu pagar o quarto adiantado, a Marta faz um preço?",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Marta Quint",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "falar"
+  },
+  {
+   "id": "T-036",
+   "frase": "ofereço vinte pratas ao Kragg pra soltar o Fenn",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Kragg",
+    "coisa": "moeda",
+    "quantia": 20,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": "quantia_por_extenso",
+   "nota": "trocar/subornar: nao (sem_moeda)"
+  },
+  {
+   "id": "T-037",
+   "frase": "Ferran, se eu pagar, você me anuncia ao barão?",
+   "cena": {
+    "lugar": "Antessala do Barão Veltrin",
+    "tipo": "palacio",
+    "pessoas": [
+     {
+      "nome": "Ferran",
+      "oficio": "camareiro",
+      "vende": null
+     },
+     {
+      "nome": "Dessa",
+      "oficio": "guarda",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Barão Veltrin"
+    ],
+    "mortos": [],
+    "coisas": [
+     "tapete",
+     "lustre",
+     "porta dupla",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 50,
+     "carrega": [
+      "carta lacrada",
+      "anel",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Ferran",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-038",
+   "frase": "me escondo atrás do banco",
+   "cena": {
+    "lugar": "Antessala do Barão Veltrin",
+    "tipo": "palacio",
+    "pessoas": [
+     {
+      "nome": "Ferran",
+      "oficio": "camareiro",
+      "vende": null
+     },
+     {
+      "nome": "Dessa",
+      "oficio": "guarda",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Barão Veltrin"
+    ],
+    "mortos": [],
+    "coisas": [
+     "tapete",
+     "lustre",
+     "porta dupla",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 50,
+     "carrega": [
+      "carta lacrada",
+      "anel",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "agir"
+  },
+  {
+   "id": "T-039",
+   "frase": "empresto a corda pro Tomás",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "homonimo",
+   "nota": "trocar/emprestar: pergunta (dois_com_o_nome)"
+  },
+  {
+   "id": "T-040",
+   "frase": "cobro o que o Cado me deve",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Cado Ferraz",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/cobrar: dado"
+  },
+  {
+   "id": "T-041",
+   "frase": "leio o preço escrito na capa do livro grande",
+   "cena": {
+    "lugar": "Biblioteca da Torre",
+    "tipo": "biblioteca",
+    "pessoas": [
+     {
+      "nome": "Anselmo Pires",
+      "oficio": "bibliotecário",
+      "vende": [
+       {
+        "item": "pergaminho",
+        "preco": 4
+       },
+       {
+        "item": "tinta",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Nara",
+      "oficio": "estudante",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Quirino Alves"
+    ],
+    "mortos": [
+     "Ilze Brandt"
+    ],
+    "coisas": [
+     "estante",
+     "mesa",
+     "lampião",
+     "livro grande"
+    ],
+    "heroi": {
+     "moeda": 20,
+     "carrega": [
+      "pena",
+      "pergaminho",
+      "tocha",
+      "chave de bronze"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "livro grande",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-042",
+   "frase": "qual o preço da poção da Sibila Rand?",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Sibila Rand",
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "falar"
+  },
+  {
+   "id": "T-043",
+   "frase": "vendo o mapa pro Hugo",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": null,
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "homonimo",
+   "nota": "trocar/vender: pergunta (dois_com_o_nome)"
+  },
+  {
+   "id": "T-044",
+   "frase": "me esgueiro até a tenda",
+   "cena": {
+    "lugar": "Acampamento dos Caçadores",
+    "tipo": "acampamento",
+    "pessoas": [
+     {
+      "nome": "Tarsa",
+      "oficio": "caçadora",
+      "vende": [
+       {
+        "item": "flecha",
+        "preco": 1
+       },
+       {
+        "item": "pele",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Dunga",
+      "oficio": "cozinheiro",
+      "vende": [
+       {
+        "item": "ensopado",
+        "preco": 2
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Joaquim Hurt"
+    ],
+    "mortos": [
+     "Velho Hurt"
+    ],
+    "coisas": [
+     "fogueira",
+     "tenda",
+     "caldeirão",
+     "estandarte"
+    ],
+    "heroi": {
+     "moeda": 9,
+     "carrega": [
+      "arco",
+      "flechas",
+      "faca"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "tenda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "verbo_raro",
+   "nota": "agir"
+  },
+  {
+   "id": "T-045",
+   "frase": "olho a Olga assando os bolos",
+   "cena": {
+    "lugar": "Aldeia de Pedra Alta",
+    "tipo": "aldeia",
+    "pessoas": [
+     {
+      "nome": "Garrik Salles",
+      "oficio": "chefe da aldeia",
+      "vende": null
+     },
+     {
+      "nome": "Garrik Moura",
+      "oficio": "lenhador",
+      "vende": [
+       {
+        "item": "lenha",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Olga",
+      "oficio": "padeira",
+      "vende": [
+       {
+        "item": "pão",
+        "preco": 1
+       },
+       {
+        "item": "bolo",
+        "preco": 3
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Padre Benício"
+    ],
+    "mortos": [],
+    "coisas": [
+     "poço",
+     "pelourinho",
+     "celeiro",
+     "galinheiro"
+    ],
+    "heroi": {
+     "moeda": 11,
+     "carrega": [
+      "machado",
+      "corda",
+      "ração",
+      "tocha"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Olga",
+    "coisa": "bolo",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-046",
+   "frase": "racho a conta com o Gil",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "trocar/pagar: sim_com_preco"
+  },
+  {
+   "id": "T-047",
+   "frase": "cobro os cinco que o Gil me deve",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Gil",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "quantia_por_extenso",
+   "nota": "trocar/cobrar: dado"
+  },
+  {
+   "id": "T-048",
+   "frase": "como a ração e guardo a adaga",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": "duas_acoes",
+   "nota": "usar: sim"
+  },
+  {
+   "id": "T-049",
+   "frase": "observo o vitral",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "vitral",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "olhar"
+  },
+  {
+   "id": "T-050",
+   "frase": "troco o rum por uma passagem",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": null,
+    "coisa": "rum",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "rum vale 3, passagem vale 20"
+  },
+  {
+   "id": "T-051",
+   "frase": "falo com o Bruno sobre a estrada",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Bruno Falk",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "falar"
+  },
+  {
+   "id": "T-052",
+   "frase": "chego chegando no Kragg",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "lutar"
+  },
+  {
+   "id": "T-053",
+   "frase": "vendo minha corda ao Tomás",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "homonimo",
+   "nota": "trocar/vender: pergunta (dois_com_o_nome)"
+  },
+  {
+   "id": "T-054",
+   "frase": "olho o cofre de esmolas",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "cofre de esmolas",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-055",
+   "frase": "passo a mão no mapa do Cado sem ele ver",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Cado Ferraz",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "trocar/furtar: dado"
+  },
+  {
+   "id": "T-056",
+   "frase": "dou um jeito de arrombar a janela",
+   "cena": {
+    "lugar": "Beco da Lâmina",
+    "tipo": "beco",
+    "pessoas": [
+     {
+      "nome": "Rato",
+      "oficio": "receptador",
+      "vende": [
+       {
+        "item": "gazua",
+        "preco": 5
+       },
+       {
+        "item": "informação",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Nina Cobra",
+      "oficio": "batedora",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Dray"
+    ],
+    "mortos": [
+     "Dedo Longo"
+    ],
+    "coisas": [
+     "lixeira",
+     "escada",
+     "janela",
+     "caixote"
+    ],
+    "heroi": {
+     "moeda": 18,
+     "carrega": [
+      "adaga",
+      "gazua",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "janela",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "agir"
+  },
+  {
+   "id": "T-057",
+   "frase": "dez flexas",
+   "cena": {
+    "lugar": "Acampamento dos Caçadores",
+    "tipo": "acampamento",
+    "pessoas": [
+     {
+      "nome": "Tarsa",
+      "oficio": "caçadora",
+      "vende": [
+       {
+        "item": "flecha",
+        "preco": 1
+       },
+       {
+        "item": "pele",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Dunga",
+      "oficio": "cozinheiro",
+      "vende": [
+       {
+        "item": "ensopado",
+        "preco": 2
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Joaquim Hurt"
+    ],
+    "mortos": [
+     "Velho Hurt"
+    ],
+    "coisas": [
+     "fogueira",
+     "tenda",
+     "caldeirão",
+     "estandarte"
+    ],
+    "heroi": {
+     "moeda": 9,
+     "carrega": [
+      "arco",
+      "flechas",
+      "faca"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "flecha",
+    "quantia": 10,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": "sem_acento_ou_erro",
+   "nota": "10 flechas = 10 moedas, o herói tem 9"
+  },
+  {
+   "id": "T-058",
+   "frase": "quero levar a poção",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "só a Sibila Rand vende poção; o vendedor não é nomeado"
+  },
+  {
+   "id": "T-059",
+   "frase": "peço um pouco de ensopado pra ele",
+   "cena": {
+    "lugar": "Acampamento dos Caçadores",
+    "tipo": "acampamento",
+    "pessoas": [
+     {
+      "nome": "Tarsa",
+      "oficio": "caçadora",
+      "vende": [
+       {
+        "item": "flecha",
+        "preco": 1
+       },
+       {
+        "item": "pele",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Dunga",
+      "oficio": "cozinheiro",
+      "vende": [
+       {
+        "item": "ensopado",
+        "preco": 2
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Joaquim Hurt"
+    ],
+    "mortos": [
+     "Velho Hurt"
+    ],
+    "coisas": [
+     "fogueira",
+     "tenda",
+     "caldeirão",
+     "estandarte"
+    ],
+    "heroi": {
+     "moeda": 9,
+     "carrega": [
+      "arco",
+      "flechas",
+      "faca"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Dunga",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "pronome",
+   "nota": "trocar/pedir: dado"
+  },
+  {
+   "id": "T-060",
+   "frase": "compro comida do Ledo",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Ledo",
+    "coisa": "comida",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_vende"
+   },
+   "armadilha": null,
+   "nota": "o peregrino não vende nada"
+  },
+  {
+   "id": "T-061",
+   "frase": "vendo o rum pro Pio",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Pio",
+    "coisa": "rum",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/vender: sim_com_preco"
+  },
+  {
+   "id": "T-062",
+   "frase": "pago a dívida do Armando",
+   "cena": {
+    "lugar": "Casa de Dona Zelfa",
+    "tipo": "casa",
+    "pessoas": [
+     {
+      "nome": "Zelfa Montes",
+      "oficio": "viúva",
+      "vende": null
+     },
+     {
+      "nome": "Juca",
+      "oficio": "neto",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Armando Montes"
+    ],
+    "mortos": [],
+    "coisas": [
+     "mesa",
+     "estante",
+     "gaveta",
+     "relógio",
+     "bule"
+    ],
+    "heroi": {
+     "moeda": 10,
+     "carrega": [
+      "livro emprestado",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Armando Montes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "trocar/pagar: nao (ausente)"
+  },
+  {
+   "id": "T-063",
+   "frase": "furto o pão do Osk",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Osk",
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/furtar: dado"
+  },
+  {
+   "id": "T-064",
+   "frase": "penduro o cantil no ombro",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "cantil",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "usar: sim"
+  },
+  {
+   "id": "T-065",
+   "frase": "compro a chave do Kragg",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Kragg",
+    "coisa": "chave",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null,
+   "nota": "trocar/comprar: nao (sem_moeda)"
+  },
+  {
+   "id": "T-066",
+   "frase": "tento persuadir o Bruno",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Bruno Falk",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-067",
+   "frase": "vendo a tocha pro Edrik",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Edrik Sorn",
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": "alvo_morto",
+   "nota": "trocar/vender: nao (morto)"
+  },
+  {
+   "id": "T-068",
+   "frase": "dou uma lida no livro grande",
+   "cena": {
+    "lugar": "Biblioteca da Torre",
+    "tipo": "biblioteca",
+    "pessoas": [
+     {
+      "nome": "Anselmo Pires",
+      "oficio": "bibliotecário",
+      "vende": [
+       {
+        "item": "pergaminho",
+        "preco": 4
+       },
+       {
+        "item": "tinta",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Nara",
+      "oficio": "estudante",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Quirino Alves"
+    ],
+    "mortos": [
+     "Ilze Brandt"
+    ],
+    "coisas": [
+     "estante",
+     "mesa",
+     "lampião",
+     "livro grande"
+    ],
+    "heroi": {
+     "moeda": 20,
+     "carrega": [
+      "pena",
+      "pergaminho",
+      "tocha",
+      "chave de bronze"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "livro grande",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-069",
+   "frase": "desenrolo um desconto no mapa do Cado",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Cado Ferraz",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "trocar/comprar: dado"
+  },
+  {
+   "id": "T-070",
+   "frase": "desenrolo com a Hilda, prometo voltar",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-071",
+   "frase": "compro o que o Pavio vende",
+   "cena": {
+    "lugar": "Guarita do Portão Leste",
+    "tipo": "portao",
+    "pessoas": [
+     {
+      "nome": "Rurik",
+      "oficio": "guarda",
+      "vende": null
+     },
+     {
+      "nome": "Sabra Lopes",
+      "oficio": "capitã da guarda",
+      "vende": null
+     },
+     {
+      "nome": "Pavio",
+      "oficio": "contrabandista",
+      "vende": [
+       {
+        "item": "passagem sem registro",
+        "preco": 10
+       },
+       {
+        "item": "poção",
+        "preco": 12
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Teodoro Fox"
+    ],
+    "mortos": [],
+    "coisas": [
+     "portão",
+     "cancela",
+     "fogueira",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 14,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda",
+      "salvo-conduto vencido"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Pavio",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_o_que"
+   },
+   "armadilha": null,
+   "nota": "ele vende duas coisas"
+  },
+  {
+   "id": "T-072",
+   "frase": "leio o aviso sobre o preço das velas",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "vela",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-073",
+   "frase": "cobro o Ivarr",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Ivarr Tolmen",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "trocar/cobrar: nao (ausente)"
+  },
+  {
+   "id": "T-074",
+   "frase": "intimido ele",
+   "cena": {
+    "lugar": "Guarita do Portão Leste",
+    "tipo": "portao",
+    "pessoas": [
+     {
+      "nome": "Rurik",
+      "oficio": "guarda",
+      "vende": null
+     },
+     {
+      "nome": "Sabra Lopes",
+      "oficio": "capitã da guarda",
+      "vende": null
+     },
+     {
+      "nome": "Pavio",
+      "oficio": "contrabandista",
+      "vende": [
+       {
+        "item": "passagem sem registro",
+        "preco": 10
+       },
+       {
+        "item": "poção",
+        "preco": 12
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Teodoro Fox"
+    ],
+    "mortos": [],
+    "coisas": [
+     "portão",
+     "cancela",
+     "fogueira",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 14,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda",
+      "salvo-conduto vencido"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Rurik",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pronome",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-075",
+   "frase": "surrupio o colar da Sibila",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": null,
+    "coisa": "colar",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "verbo_raro",
+   "nota": "trocar/furtar: pergunta (dois_com_o_nome)"
+  },
+  {
+   "id": "T-076",
+   "frase": "dou uma moeda pra Dorva",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/dar: sim_com_preco"
+  },
+  {
+   "id": "T-077",
+   "frase": "furto o anel da Sibila Cruz",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Sibila Cruz",
+    "coisa": "anel",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/furtar: dado"
+  },
+  {
+   "id": "T-078",
+   "frase": "quem está aqui?",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "perguntar_ao_mestre"
+  },
+  {
+   "id": "T-079",
+   "frase": "peço a bênção ao Irmão Teo",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Irmão Teo",
+    "coisa": "bênção",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": "alvo_morto",
+   "nota": "trocar/pedir: nao (morto)"
+  },
+  {
+   "id": "T-080",
+   "frase": "não vou subornar ninguém, Rurik",
+   "cena": {
+    "lugar": "Guarita do Portão Leste",
+    "tipo": "portao",
+    "pessoas": [
+     {
+      "nome": "Rurik",
+      "oficio": "guarda",
+      "vende": null
+     },
+     {
+      "nome": "Sabra Lopes",
+      "oficio": "capitã da guarda",
+      "vende": null
+     },
+     {
+      "nome": "Pavio",
+      "oficio": "contrabandista",
+      "vende": [
+       {
+        "item": "passagem sem registro",
+        "preco": 10
+       },
+       {
+        "item": "poção",
+        "preco": 12
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Teodoro Fox"
+    ],
+    "mortos": [],
+    "coisas": [
+     "portão",
+     "cancela",
+     "fogueira",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 14,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda",
+      "salvo-conduto vencido"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Rurik",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-081",
+   "frase": "pago o quarto adiantado",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/pagar: sim_com_preco"
+  },
+  {
+   "id": "T-082",
+   "frase": "soco o Hugo",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "homonimo",
+   "nota": "lutar"
+  },
+  {
+   "id": "T-083",
+   "frase": "dou a adaga pra Marta",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Marta Quint",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/dar: sim_com_preco"
+  },
+  {
+   "id": "T-084",
+   "frase": "deixo duas moedas no cofre de esmolas",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "quantia_por_extenso",
+   "nota": "trocar/dar: sim_com_preco"
+  },
+  {
+   "id": "T-085",
+   "frase": "pego o livro da estante",
+   "cena": {
+    "lugar": "Casa de Dona Zelfa",
+    "tipo": "casa",
+    "pessoas": [
+     {
+      "nome": "Zelfa Montes",
+      "oficio": "viúva",
+      "vende": null
+     },
+     {
+      "nome": "Juca",
+      "oficio": "neto",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Armando Montes"
+    ],
+    "mortos": [],
+    "coisas": [
+     "mesa",
+     "estante",
+     "gaveta",
+     "relógio",
+     "bule"
+    ],
+    "heroi": {
+     "moeda": 10,
+     "carrega": [
+      "livro emprestado",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "livro",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/pegar: dado"
+  },
+  {
+   "id": "T-086",
+   "frase": "dou a espada pro Tomás Reis",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Tomás Reis",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null,
+   "nota": "trocar/dar: nao (nao_tem)"
+  },
+  {
+   "id": "T-087",
+   "frase": "vou no rastro",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "rastro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "mover"
+  },
+  {
+   "id": "T-088",
+   "frase": "não dou mais lenha pro Garrik Moura",
+   "cena": {
+    "lugar": "Aldeia de Pedra Alta",
+    "tipo": "aldeia",
+    "pessoas": [
+     {
+      "nome": "Garrik Salles",
+      "oficio": "chefe da aldeia",
+      "vende": null
+     },
+     {
+      "nome": "Garrik Moura",
+      "oficio": "lenhador",
+      "vende": [
+       {
+        "item": "lenha",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Olga",
+      "oficio": "padeira",
+      "vende": [
+       {
+        "item": "pão",
+        "preco": 1
+       },
+       {
+        "item": "bolo",
+        "preco": 3
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Padre Benício"
+    ],
+    "mortos": [],
+    "coisas": [
+     "poço",
+     "pelourinho",
+     "celeiro",
+     "galinheiro"
+    ],
+    "heroi": {
+     "moeda": 11,
+     "carrega": [
+      "machado",
+      "corda",
+      "ração",
+      "tocha"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Garrik Moura",
+    "coisa": "lenha",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-089",
+   "frase": "armo acampamento e durmo",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "duas_acoes",
+   "nota": "esperar"
+  },
+  {
+   "id": "T-090",
+   "frase": "oq eu carrego?",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "sem_acento_ou_erro",
+   "nota": "perguntar_ao_mestre"
+  },
+  {
+   "id": "T-091",
+   "frase": "quanto falta pra chegar?",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "perguntar_ao_mestre"
+  },
+  {
+   "id": "T-092",
+   "frase": "se eu subornasse o Kragg, dava certo?",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "perguntar_ao_mestre"
+  },
+  {
+   "id": "T-093",
+   "frase": "troco o mapa pelo rum do Pio",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Pio",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/escambo: sim_com_preco"
+  },
+  {
+   "id": "T-094",
+   "frase": "dou cinco pratas pela erva da Sibila Rand",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Sibila Rand",
+    "coisa": "erva",
+    "quantia": 5,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "quantia_por_extenso",
+   "nota": "dou X por Y = compra"
+  },
+  {
+   "id": "T-095",
+   "frase": "vendo a faca",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": null,
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ninguem_aqui"
+   },
+   "armadilha": null,
+   "nota": "trocar/vender: nao (ninguem_aqui)"
+  },
+  {
+   "id": "T-096",
+   "frase": "furto a carteira do Ivarr Tolmen",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Ivarr Tolmen",
+    "coisa": "carteira",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "trocar/furtar: nao (ausente)"
+  },
+  {
+   "id": "T-097",
+   "frase": "compro a ceia do Hugo",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "ceia",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "homonimo",
+   "nota": "dois Hugos"
+  },
+  {
+   "id": "T-098",
+   "frase": "pago o que devo",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_quem"
+   },
+   "armadilha": null,
+   "nota": "quatro comerciantes; a quem?"
+  },
+  {
+   "id": "T-099",
+   "frase": "vazo da caverna",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "mover"
+  },
+  {
+   "id": "T-100",
+   "frase": "pego a ração do Dolan",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Dolan",
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": "alvo_morto",
+   "nota": "saquear morto é pegar"
+  },
+  {
+   "id": "T-101",
+   "frase": "devolvo o mapa pro capitão",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Aurelio Duarte",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/devolver: sim"
+  },
+  {
+   "id": "T-102",
+   "frase": "uso o martelo",
+   "cena": {
+    "lugar": "Forja do Urso",
+    "tipo": "oficina",
+    "pessoas": [
+     {
+      "nome": "Bóris Kern",
+      "oficio": "ferreiro",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 28
+       },
+       {
+        "item": "ferradura",
+        "preco": 3
+       },
+       {
+        "item": "reparo",
+        "preco": 5
+       }
+      ]
+     },
+     {
+      "nome": "Lia Kern",
+      "oficio": "aprendiz",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Madame Orsolya"
+    ],
+    "mortos": [],
+    "coisas": [
+     "bigorna",
+     "forja",
+     "rack de armas",
+     "balde"
+    ],
+    "heroi": {
+     "moeda": 30,
+     "carrega": [
+      "espada quebrada",
+      "escudo",
+      "tocha",
+      "gazua"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "martelo",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null,
+   "nota": "usar: nao"
+  },
+  {
+   "id": "T-103",
+   "frase": "Bóris, quanto é a espada?",
+   "cena": {
+    "lugar": "Forja do Urso",
+    "tipo": "oficina",
+    "pessoas": [
+     {
+      "nome": "Bóris Kern",
+      "oficio": "ferreiro",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 28
+       },
+       {
+        "item": "ferradura",
+        "preco": 3
+       },
+       {
+        "item": "reparo",
+        "preco": 5
+       }
+      ]
+     },
+     {
+      "nome": "Lia Kern",
+      "oficio": "aprendiz",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Madame Orsolya"
+    ],
+    "mortos": [],
+    "coisas": [
+     "bigorna",
+     "forja",
+     "rack de armas",
+     "balde"
+    ],
+    "heroi": {
+     "moeda": 30,
+     "carrega": [
+      "espada quebrada",
+      "escudo",
+      "tocha",
+      "gazua"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Bóris Kern",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "falar"
+  },
+  {
+   "id": "T-104",
+   "frase": "cobro do Tomás",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": "homonimo",
+   "nota": "trocar/cobrar: pergunta (dois_com_o_nome)"
+  },
+  {
+   "id": "T-105",
+   "frase": "pago o conserto, Bóris",
+   "cena": {
+    "lugar": "Forja do Urso",
+    "tipo": "oficina",
+    "pessoas": [
+     {
+      "nome": "Bóris Kern",
+      "oficio": "ferreiro",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 28
+       },
+       {
+        "item": "ferradura",
+        "preco": 3
+       },
+       {
+        "item": "reparo",
+        "preco": 5
+       }
+      ]
+     },
+     {
+      "nome": "Lia Kern",
+      "oficio": "aprendiz",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Madame Orsolya"
+    ],
+    "mortos": [],
+    "coisas": [
+     "bigorna",
+     "forja",
+     "rack de armas",
+     "balde"
+    ],
+    "heroi": {
+     "moeda": 30,
+     "carrega": [
+      "espada quebrada",
+      "escudo",
+      "tocha",
+      "gazua"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Bóris Kern",
+    "coisa": "conserto",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/pagar: sim_com_preco"
+  },
+  {
+   "id": "T-106",
+   "frase": "boto 5 moedas na mão da capitã pra deixar passar",
+   "cena": {
+    "lugar": "Guarita do Portão Leste",
+    "tipo": "portao",
+    "pessoas": [
+     {
+      "nome": "Rurik",
+      "oficio": "guarda",
+      "vende": null
+     },
+     {
+      "nome": "Sabra Lopes",
+      "oficio": "capitã da guarda",
+      "vende": null
+     },
+     {
+      "nome": "Pavio",
+      "oficio": "contrabandista",
+      "vende": [
+       {
+        "item": "passagem sem registro",
+        "preco": 10
+       },
+       {
+        "item": "poção",
+        "preco": 12
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Teodoro Fox"
+    ],
+    "mortos": [],
+    "coisas": [
+     "portão",
+     "cancela",
+     "fogueira",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 14,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda",
+      "salvo-conduto vencido"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Sabra Lopes",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "trocar/subornar: dado"
+  },
+  {
+   "id": "T-107",
+   "frase": "dou um pulo na pedra",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "pedra",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "agir"
+  },
+  {
+   "id": "T-108",
+   "frase": "passo o mapa rasgado pro Cado, quanto ele dá?",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Cado Ferraz",
+    "coisa": "mapa rasgado",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "passo = vendo, por causa do quanto ele dá"
+  },
+  {
+   "id": "T-109",
+   "frase": "recolho os ossos",
+   "cena": {
+    "lugar": "Caverna da Chuva",
+    "tipo": "caverna",
+    "pessoas": [],
+    "ausentes": [],
+    "mortos": [
+     "Dolan"
+    ],
+    "coisas": [
+     "poça",
+     "estalactite",
+     "ossos",
+     "brasas"
+    ],
+    "heroi": {
+     "moeda": 5,
+     "carrega": [
+      "tocha",
+      "corda",
+      "ração",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "ossos",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro",
+   "nota": "trocar/pegar: sim"
+  },
+  {
+   "id": "T-110",
+   "frase": "olho o rastro no chao",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "rastro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "sem_acento_ou_erro",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-111",
+   "frase": "adulo o Osk pra ele me levar de graça",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Osk",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "verbo_raro",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-112",
+   "frase": "pego uma vela do altar",
+   "cena": {
+    "lugar": "Santuário da Aurora",
+    "tipo": "templo",
+    "pessoas": [
+     {
+      "nome": "Irmã Cora",
+      "oficio": "sacerdotisa",
+      "vende": [
+       {
+        "item": "bênção",
+        "preco": 5
+       },
+       {
+        "item": "vela",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Frei Odo",
+      "oficio": "monge",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Abade Lucan"
+    ],
+    "mortos": [
+     "Irmão Teo"
+    ],
+    "coisas": [
+     "altar",
+     "vitral",
+     "pia",
+     "banco",
+     "cofre de esmolas"
+    ],
+    "heroi": {
+     "moeda": 8,
+     "carrega": [
+      "símbolo sagrado",
+      "vela",
+      "adaga"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "vela",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/pegar: dado"
+  },
+  {
+   "id": "T-113",
+   "frase": "Dorva, se eu der uma moeda, você me conta o que viu?",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-114",
+   "frase": "me penduro no leme",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "leme",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "agir"
+  },
+  {
+   "id": "T-115",
+   "frase": "vendo o anel pra Sibila Cruz por cinquenta, nem um a menos",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Sibila Cruz",
+    "coisa": "anel de cobre",
+    "quantia": 50,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "quantia_por_extenso",
+   "nota": "anel de cobre por 50: o preço é duro"
+  },
+  {
+   "id": "T-116",
+   "frase": "durmo no canto ate amanhecer",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "sem_acento_ou_erro",
+   "nota": "esperar"
+  },
+  {
+   "id": "T-117",
+   "frase": "uso a corda",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "usar: sim"
+  },
+  {
+   "id": "T-118",
+   "frase": "me vê uma espada aí, Hilda",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hilda Voss",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "me vê = quero comprar"
+  },
+  {
+   "id": "T-119",
+   "frase": "dou dez moedas pro Kragg",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Kragg",
+    "coisa": "moeda",
+    "quantia": 10,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": "quantia_por_extenso",
+   "nota": "trocar/dar: nao (sem_moeda)"
+  },
+  {
+   "id": "T-120",
+   "frase": "qnto ta a cerveja?",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "pergunta de preço, escrita sem acento nem vogais"
+  },
+  {
+   "id": "T-121",
+   "frase": "devolvo o cantil pro Varge",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Varge",
+    "coisa": "cantil",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": "alvo_morto",
+   "nota": "trocar/devolver: nao (morto)"
+  },
+  {
+   "id": "T-122",
+   "frase": "rapino um figo da banca",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": null,
+    "coisa": "figo",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro",
+   "nota": "trocar/furtar: dado"
+  },
+  {
+   "id": "T-123",
+   "frase": "empresto a corda pra alguém",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ninguem_aqui"
+   },
+   "armadilha": null,
+   "nota": "trocar/emprestar: nao (ninguem_aqui)"
+  },
+  {
+   "id": "T-124",
+   "frase": "não pago esse absurdo, ferreiro",
+   "cena": {
+    "lugar": "Forja do Urso",
+    "tipo": "oficina",
+    "pessoas": [
+     {
+      "nome": "Bóris Kern",
+      "oficio": "ferreiro",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 28
+       },
+       {
+        "item": "ferradura",
+        "preco": 3
+       },
+       {
+        "item": "reparo",
+        "preco": 5
+       }
+      ]
+     },
+     {
+      "nome": "Lia Kern",
+      "oficio": "aprendiz",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Madame Orsolya"
+    ],
+    "mortos": [],
+    "coisas": [
+     "bigorna",
+     "forja",
+     "rack de armas",
+     "balde"
+    ],
+    "heroi": {
+     "moeda": 30,
+     "carrega": [
+      "espada quebrada",
+      "escudo",
+      "tocha",
+      "gazua"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Bóris Kern",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-125",
+   "frase": "— Cado, tem notícia da estrada?",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Cado Ferraz",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "fala_entre_aspas",
+   "nota": "fala com travessão"
+  },
+  {
+   "id": "T-126",
+   "frase": "parto pra cima do Varge",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Varge",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "alvo_morto",
+   "nota": "lutar"
+  },
+  {
+   "id": "T-127",
+   "frase": "peço uma esmola pro bardo",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Tomás Reis",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/pedir: dado"
+  },
+  {
+   "id": "T-128",
+   "frase": "procuro lenha por aí",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria",
+   "nota": "olhar"
+  },
+  {
+   "id": "T-129",
+   "frase": "jogo uma moeda pro mendigo e sigo andando",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "duas_acoes",
+   "nota": "dar + mover; o dar muda a ficha"
+  },
+  {
+   "id": "T-130",
+   "frase": "entro pela porta dupla",
+   "cena": {
+    "lugar": "Antessala do Barão Veltrin",
+    "tipo": "palacio",
+    "pessoas": [
+     {
+      "nome": "Ferran",
+      "oficio": "camareiro",
+      "vende": null
+     },
+     {
+      "nome": "Dessa",
+      "oficio": "guarda",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Barão Veltrin"
+    ],
+    "mortos": [],
+    "coisas": [
+     "tapete",
+     "lustre",
+     "porta dupla",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 50,
+     "carrega": [
+      "carta lacrada",
+      "anel",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "porta dupla",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "mover"
+  },
+  {
+   "id": "T-131",
+   "frase": "escuto atrás da grade",
+   "cena": {
+    "lugar": "Câmara dos Ossos",
+    "tipo": "masmorra",
+    "pessoas": [
+     {
+      "nome": "Fenn",
+      "oficio": "prisioneiro",
+      "vende": null
+     },
+     {
+      "nome": "Kragg",
+      "oficio": "carcereiro",
+      "vende": [
+       {
+        "item": "chave",
+        "preco": 15
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Lorde Vael"
+    ],
+    "mortos": [
+     "Aldric",
+     "Thessa"
+    ],
+    "coisas": [
+     "alavanca",
+     "grade",
+     "tocha de parede",
+     "baú",
+     "corpo"
+    ],
+    "heroi": {
+     "moeda": 3,
+     "carrega": [
+      "tocha",
+      "gazua",
+      "corda",
+      "poção",
+      "espada"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "grade",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "olhar"
+  },
+  {
+   "id": "T-132",
+   "frase": "Bóris, se eu pagar mais, faz pra amanhã?",
+   "cena": {
+    "lugar": "Forja do Urso",
+    "tipo": "oficina",
+    "pessoas": [
+     {
+      "nome": "Bóris Kern",
+      "oficio": "ferreiro",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 28
+       },
+       {
+        "item": "ferradura",
+        "preco": 3
+       },
+       {
+        "item": "reparo",
+        "preco": 5
+       }
+      ]
+     },
+     {
+      "nome": "Lia Kern",
+      "oficio": "aprendiz",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Madame Orsolya"
+    ],
+    "mortos": [],
+    "coisas": [
+     "bigorna",
+     "forja",
+     "rack de armas",
+     "balde"
+    ],
+    "heroi": {
+     "moeda": 30,
+     "carrega": [
+      "espada quebrada",
+      "escudo",
+      "tocha",
+      "gazua"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Bóris Kern",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "convencer"
+  },
+  {
+   "id": "T-133",
+   "frase": "não quero quarto, só uma informação",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-134",
+   "frase": "disparo contra o Velho Hurt",
+   "cena": {
+    "lugar": "Acampamento dos Caçadores",
+    "tipo": "acampamento",
+    "pessoas": [
+     {
+      "nome": "Tarsa",
+      "oficio": "caçadora",
+      "vende": [
+       {
+        "item": "flecha",
+        "preco": 1
+       },
+       {
+        "item": "pele",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Dunga",
+      "oficio": "cozinheiro",
+      "vende": [
+       {
+        "item": "ensopado",
+        "preco": 2
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Joaquim Hurt"
+    ],
+    "mortos": [
+     "Velho Hurt"
+    ],
+    "coisas": [
+     "fogueira",
+     "tenda",
+     "caldeirão",
+     "estandarte"
+    ],
+    "heroi": {
+     "moeda": 9,
+     "carrega": [
+      "arco",
+      "flechas",
+      "faca"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Velho Hurt",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "alvo_morto",
+   "nota": "lutar"
+  },
+  {
+   "id": "T-135",
+   "frase": "parto pra cima do Garrik Salles com o machado",
+   "cena": {
+    "lugar": "Aldeia de Pedra Alta",
+    "tipo": "aldeia",
+    "pessoas": [
+     {
+      "nome": "Garrik Salles",
+      "oficio": "chefe da aldeia",
+      "vende": null
+     },
+     {
+      "nome": "Garrik Moura",
+      "oficio": "lenhador",
+      "vende": [
+       {
+        "item": "lenha",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Olga",
+      "oficio": "padeira",
+      "vende": [
+       {
+        "item": "pão",
+        "preco": 1
+       },
+       {
+        "item": "bolo",
+        "preco": 3
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Padre Benício"
+    ],
+    "mortos": [],
+    "coisas": [
+     "poço",
+     "pelourinho",
+     "celeiro",
+     "galinheiro"
+    ],
+    "heroi": {
+     "moeda": 11,
+     "carrega": [
+      "machado",
+      "corda",
+      "ração",
+      "tocha"
+     ],
+     "companheiro": "Bruma"
+    }
+   },
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Garrik Salles",
+    "coisa": "machado",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "lutar"
+  },
+  {
+   "id": "T-136",
+   "frase": "empresto a corda pro Osk",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Osk",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/emprestar: sim"
+  },
+  {
+   "id": "T-137",
+   "frase": "quanto é o frete?",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "frete",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "falar"
+  },
+  {
+   "id": "T-138",
+   "frase": "e a ceia, quanto fica?",
+   "cena": {
+    "lugar": "Estalagem da Ponte",
+    "tipo": "estalagem",
+    "pessoas": [
+     {
+      "nome": "Hugo Pires",
+      "oficio": "estalajadeiro",
+      "vende": [
+       {
+        "item": "quarto",
+        "preco": 8
+       },
+       {
+        "item": "ceia",
+        "preco": 4
+       },
+       {
+        "item": "estábulo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Hugo Mallo",
+      "oficio": "viajante",
+      "vende": null
+     },
+     {
+      "nome": "Dona Ruth",
+      "oficio": "hóspede",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Capitão Sorrel"
+    ],
+    "mortos": [],
+    "coisas": [
+     "escada",
+     "lareira",
+     "balcão",
+     "chave pendurada"
+    ],
+    "heroi": {
+     "moeda": 22,
+     "carrega": [
+      "corda",
+      "tocha",
+      "mapa",
+      "adaga"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "ceia",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco",
+   "nota": "falar"
+  },
+  {
+   "id": "T-139",
+   "frase": "peço o ensopado pro Orlan",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Orlan Brisa",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "trocar/pedir: nao (ausente)"
+  },
+  {
+   "id": "T-140",
+   "frase": "conto minhas rações",
+   "cena": {
+    "lugar": "Charneca Seca",
+    "tipo": "ermo",
+    "pessoas": [],
+    "ausentes": [
+     "Mira Dantas"
+    ],
+    "mortos": [],
+    "coisas": [
+     "pedra",
+     "arbusto",
+     "rastro",
+     "fogueira apagada",
+     "poça"
+    ],
+    "heroi": {
+     "moeda": 7,
+     "carrega": [
+      "corda",
+      "tocha",
+      "saco de dormir",
+      "ração",
+      "faca"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca",
+   "nota": "perguntar_ao_mestre"
+  },
+  {
+   "id": "T-141",
+   "frase": "troco meu cantil pelo cavalo do Ledo",
+   "cena": {
+    "lugar": "Estrada do Velho Marco",
+    "tipo": "estrada",
+    "pessoas": [
+     {
+      "nome": "Osk",
+      "oficio": "carroceiro",
+      "vende": [
+       {
+        "item": "água",
+        "preco": 1
+       },
+       {
+        "item": "pão",
+        "preco": 1
+       }
+      ]
+     },
+     {
+      "nome": "Ledo",
+      "oficio": "peregrino",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Prior Matias"
+    ],
+    "mortos": [
+     "Varge"
+    ],
+    "coisas": [
+     "carroça",
+     "marco de pedra",
+     "poça",
+     "mato"
+    ],
+    "heroi": {
+     "moeda": 6,
+     "carrega": [
+      "corda",
+      "tocha",
+      "cantil",
+      "faca"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Ledo",
+    "coisa": "cantil",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_vende"
+   },
+   "armadilha": null,
+   "nota": "trocar/escambo: nao (nao_vende)"
+  },
+  {
+   "id": "T-142",
+   "frase": "troco uma coisa por outra",
+   "cena": {
+    "lugar": "Mercado das Três Pontes",
+    "tipo": "mercado",
+    "pessoas": [
+     {
+      "nome": "Hilda Voss",
+      "oficio": "armeira",
+      "vende": [
+       {
+        "item": "espada",
+        "preco": 30
+       },
+       {
+        "item": "escudo",
+        "preco": 18
+       },
+       {
+        "item": "adaga",
+        "preco": 6
+       }
+      ]
+     },
+     {
+      "nome": "Cado Ferraz",
+      "oficio": "cartógrafo",
+      "vende": [
+       {
+        "item": "mapa",
+        "preco": 8
+       },
+       {
+        "item": "bússola",
+        "preco": 15
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Rand",
+      "oficio": "herbalista",
+      "vende": [
+       {
+        "item": "poção",
+        "preco": 10
+       },
+       {
+        "item": "erva",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Sibila Cruz",
+      "oficio": "ourives",
+      "vende": [
+       {
+        "item": "anel",
+        "preco": 25
+       },
+       {
+        "item": "colar",
+        "preco": 40
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Bruno Falk"
+    ],
+    "mortos": [
+     "Edrik Sorn"
+    ],
+    "coisas": [
+     "barraca",
+     "balança",
+     "caixote",
+     "toldo"
+    ],
+    "heroi": {
+     "moeda": 40,
+     "carrega": [
+      "gazua",
+      "mapa rasgado",
+      "anel de cobre",
+      "corda",
+      "tocha"
+     ],
+     "companheiro": "Lyra"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_o_que"
+   },
+   "armadilha": null,
+   "nota": "trocar/escambo: pergunta (falta_o_que)"
+  },
+  {
+   "id": "T-143",
+   "frase": "devolvo isso ao Juca",
+   "cena": {
+    "lugar": "Casa de Dona Zelfa",
+    "tipo": "casa",
+    "pessoas": [
+     {
+      "nome": "Zelfa Montes",
+      "oficio": "viúva",
+      "vende": null
+     },
+     {
+      "nome": "Juca",
+      "oficio": "neto",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Armando Montes"
+    ],
+    "mortos": [],
+    "coisas": [
+     "mesa",
+     "estante",
+     "gaveta",
+     "relógio",
+     "bule"
+    ],
+    "heroi": {
+     "moeda": 10,
+     "carrega": [
+      "livro emprestado",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Juca",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_o_que"
+   },
+   "armadilha": "pronome",
+   "nota": "isso não diz o quê"
+  },
+  {
+   "id": "T-144",
+   "frase": "Irene, se eu levar duas flores, sai por quanto?",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Irene Carvalho",
+    "coisa": "flor",
+    "quantia": 2,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "falar"
+  },
+  {
+   "id": "T-145",
+   "frase": "não vou dar esmola hoje, Dorva",
+   "cena": {
+    "lugar": "Praça do Sal",
+    "tipo": "praca",
+    "pessoas": [
+     {
+      "nome": "Dorva",
+      "oficio": "mendiga",
+      "vende": null
+     },
+     {
+      "nome": "Bento Carvalho",
+      "oficio": "vendedor de frutas",
+      "vende": [
+       {
+        "item": "maçã",
+        "preco": 1
+       },
+       {
+        "item": "figo",
+        "preco": 2
+       }
+      ]
+     },
+     {
+      "nome": "Irene Carvalho",
+      "oficio": "florista",
+      "vende": [
+       {
+        "item": "flor",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Ivarr Tolmen"
+    ],
+    "mortos": [],
+    "coisas": [
+     "chafariz",
+     "carroça",
+     "banco"
+    ],
+    "heroi": {
+     "moeda": 12,
+     "carrega": [
+      "gazua",
+      "tocha",
+      "corda"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Dorva",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-146",
+   "frase": "me empresta a bússola, capitão",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Aurelio Duarte",
+    "coisa": "bússola",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "trocar/emprestar: dado"
+  },
+  {
+   "id": "T-147",
+   "frase": "pergunto ao Gil quem era aquele homem que saiu",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null,
+   "nota": "falar"
+  },
+  {
+   "id": "T-148",
+   "frase": "empresto a adaga pro Orlan",
+   "cena": {
+    "lugar": "O Javali Torto",
+    "tipo": "taverna",
+    "pessoas": [
+     {
+      "nome": "Marta Quint",
+      "oficio": "taverneira",
+      "vende": [
+       {
+        "item": "cerveja",
+        "preco": 2
+       },
+       {
+        "item": "ensopado",
+        "preco": 3
+       },
+       {
+        "item": "quarto",
+        "preco": 10
+       }
+      ]
+     },
+     {
+      "nome": "Tomás Reis",
+      "oficio": "bardo",
+      "vende": null
+     },
+     {
+      "nome": "Tomás Veiga",
+      "oficio": "caçador",
+      "vende": [
+       {
+        "item": "pele de lobo",
+        "preco": 7
+       }
+      ]
+     },
+     {
+      "nome": "Gil",
+      "oficio": "bêbado",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Orlan Brisa"
+    ],
+    "mortos": [],
+    "coisas": [
+     "balcão",
+     "lareira",
+     "mesa",
+     "banco",
+     "barril"
+    ],
+    "heroi": {
+     "moeda": 15,
+     "carrega": [
+      "adaga",
+      "corda",
+      "tocha",
+      "ração"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Orlan Brisa",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": "alvo_ausente",
+   "nota": "trocar/emprestar: nao (ausente)"
+  },
+  {
+   "id": "T-149",
+   "frase": "não tenho dívida nenhuma com a Zelfa",
+   "cena": {
+    "lugar": "Casa de Dona Zelfa",
+    "tipo": "casa",
+    "pessoas": [
+     {
+      "nome": "Zelfa Montes",
+      "oficio": "viúva",
+      "vende": null
+     },
+     {
+      "nome": "Juca",
+      "oficio": "neto",
+      "vende": null
+     }
+    ],
+    "ausentes": [
+     "Armando Montes"
+    ],
+    "mortos": [],
+    "coisas": [
+     "mesa",
+     "estante",
+     "gaveta",
+     "relógio",
+     "bule"
+    ],
+    "heroi": {
+     "moeda": 10,
+     "carrega": [
+      "livro emprestado",
+      "adaga",
+      "tocha"
+     ],
+     "companheiro": null
+    }
+   },
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Zelfa Montes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao",
+   "nota": "falar"
+  },
+  {
+   "id": "T-150",
+   "frase": "capitão, se eu pagar, o senhor leva a gente?",
+   "cena": {
+    "lugar": "Gaivota Cinza",
+    "tipo": "navio",
+    "pessoas": [
+     {
+      "nome": "Aurelio Duarte",
+      "oficio": "capitão",
+      "vende": [
+       {
+        "item": "passagem",
+        "preco": 20
+       }
+      ]
+     },
+     {
+      "nome": "Pio",
+      "oficio": "marujo",
+      "vende": [
+       {
+        "item": "rum",
+        "preco": 3
+       }
+      ]
+     },
+     {
+      "nome": "Dona Neca",
+      "oficio": "cozinheira",
+      "vende": [
+       {
+        "item": "biscoito",
+        "preco": 1
+       }
+      ]
+     }
+    ],
+    "ausentes": [
+     "Brás Tamm"
+    ],
+    "mortos": [],
+    "coisas": [
+     "convés",
+     "mastro",
+     "barril",
+     "leme",
+     "rede"
+    ],
+    "heroi": {
+     "moeda": 25,
+     "carrega": [
+      "mapa",
+      "bússola quebrada",
+      "faca",
+      "rum"
+     ],
+     "companheiro": "Rhogar"
+    }
+   },
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Aurelio Duarte",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional",
+   "nota": "convencer"
+  }
+ ]
+}
