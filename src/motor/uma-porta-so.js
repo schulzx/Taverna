@@ -20,7 +20,9 @@
                  "pergunta" (o turno para; a resposta completa a leitura) ·
                  "nao" | "aplicado" | "desiste" (o veredito já decidido) ·
                  "recolher" (o que está solto no chão, pelo caminho do botão) ·
-                 "dado" (o teste decide: o caminho do dado de hoje, ou adiado);
+                 "dado" (o teste decide: o caminho do dado de hoje, ou adiado) ·
+                 "cartao" (o preço é do sistema: o cartão de sempre mostra o
+                 preço e a bolsa, e a troca só acontece no clique);
      troca     — a frase é de troca: nenhuma porta antiga abre;
      veredito  — na forma de oVereditoDaTroca (tipo, estado, ficha, mudou,
                  linha, fato, veto): o que vai à ficha, à tela e à pauta;
@@ -29,6 +31,9 @@
      recolher  — os ids do chão;
      pergunta  — { texto, linha, opcoes: [{ rotulo, valor }], pendente };
      fato      — o fato do turno quando não é troca (o preço que o sistema sabe);
+     cartao    — { tipo, total, chave, leitura }: a leitura é a que a proposta da
+                 frase já sabe compor (compras, pagar, venda, escambo); a chave
+                 volta em ctx.confirmado no clique, e só então a troca aplica;
      frase     — a frase que parte como turno (a da escolha, se houve).
 
    Módulo puro, determinístico, sem React. Tudo o que é palavra mora em
@@ -224,13 +229,14 @@ function oNomeDeFora(frase, cena) {
      pendente    — a pergunta pendente (a de um resultado «pergunta»), ou null;
      ofertaDe    — (item) → { valor, quem } (quem compra aqui);
      ofertaDoUso — (id, quantos) → { valor, quem } (a revenda do que é de uso);
-     vaiAoCorpo  — os tipos de item que entram no equipamento
+     vaiAoCorpo  — os tipos de item que entram no equipamento;
+     confirmado  — a chave do cartão que o jogador viu e confirmou (o clique)
    }
    ============================================================ */
 export function aPortaUnica(frase, retrato, ctx) {
   const R = UMA_PORTA_SO;
   const f = str(frase).trim();
-  const vazio = Object.freeze({ lido: false, troca: false, caminho: null, frase: f, leitura: null, resposta: null, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null });
+  const vazio = Object.freeze({ lido: false, troca: false, caminho: null, frase: f, leitura: null, resposta: null, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null });
   try {
     if (!f) return vazio;
     const r0 = obj(retrato) || {};
@@ -246,7 +252,7 @@ export function aPortaUnica(frase, retrato, ctx) {
     /* as bancas para aplicar: as do retrato (com o estoque inteiro e o id) e a casa, como banca de quem a serve */
     const quemServe = arr(cena.pessoas).find((p) => A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)));
     const casaBanca = arr(r0.casa).length ? [{ nome: quemServe ? quemServe.nome : str(cena.lugar) || A_CENA_DO_OUVIDO.aCasa, estoque: arr(r0.casa).map((x) => ({ nome: x.nome, preco: x.preco, consumo: true })) }] : [];
-    const ctxT = { ficha, bancas: [...arr(r0.bancas), ...casaBanca], porta: "", vaiAoCorpo: arr(c.vaiAoCorpo), ofertaDe: c.ofertaDe, ofertaDoUso: c.ofertaDoUso };
+    const ctxT = { ficha, bancas: [...arr(r0.bancas), ...casaBanca], porta: "", vaiAoCorpo: arr(c.vaiAoCorpo), ofertaDe: c.ofertaDe, ofertaDoUso: c.ofertaDoUso, confirmado: obj(c.confirmado) ? str(c.confirmado.chave) : str(c.confirmado) };
 
     /* 1. A PERGUNTA PENDENTE: a resposta completa a leitura (a estrutura), e não se cola ao texto */
     const pend = obj(c.pendente) && obj(c.pendente.pendente) ? c.pendente.pendente : obj(c.pendente);
@@ -264,7 +270,7 @@ export function aPortaUnica(frase, retrato, ctx) {
     if (!o) o = oOuvidoNaTroca(f, cena);
     if (!o || !o.lido) return vazio;
     const l = o.leitura;
-    const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null };
+    const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null };
     const sai = (x) => Object.freeze({ ...base, ...x });
 
     /* não é troca: o preço que o sistema sabe vai ao Narrador como fato (frase 43) */
@@ -306,7 +312,50 @@ export function aPortaUnica(frase, retrato, ctx) {
   }
 }
 
-/* o veredito de uma leitura já sem pergunta: nao, dado, recolher, aplicado */
+/* ============================================================
+   O VEREDITO ANTES DO CLIQUE (23/11) — quem pôs o preço?
+   A lei da casa: toda ação irreversível mostra o resultado antes de acontecer.
+   Quando o jogador disse a quantia («pago cinco moedas ao altar», «passo dez
+   moedas pra Thaddeus») ou entregou uma coisa nomeada a alguém, ele já viu o
+   que sai da mão: aplica direto. Quando é o sistema que põe o preço (a compra
+   da banca ou da casa, a venda, o serviço pago sem dizer quanto, o escambo com
+   a casa), o resultado é o cartão de sempre (a-proposta-da-frase.js) com o
+   preço e a bolsa, e a troca só acontece no clique (ctx.confirmado = chave).
+   → null (direto) | { tipo, total, chave, leitura }
+   ============================================================ */
+function oCartao(l, t, ficha) {
+  const s = l.subtipo;
+  const disse = Number(l.quantia) > 0 && l.quantiaDe !== "coisa";
+  const bolsa = Math.max(0, Number(obj(ficha) && ficha.moedas) || 0);
+  const m = arr(t.mudou);
+  const moeda = m.find((x) => x && x.coisa === "moedas");
+  const coisa = m.find((x) => x && x.coisa !== "moedas");
+  const total = moeda ? Math.max(0, Number(moeda.quantos) || 0) : 0;
+  const cartao = (tipo, leitura, extra) => Object.freeze({ tipo, total, chave: [tipo, total, ...(extra || [])].join("|"), leitura: Object.freeze(leitura) });
+  if (s === "comprar") {
+    if (disse || !coisa) return null;
+    const nome = maiuscula((t.comprado && t.comprado.nome) || coisa.coisa);
+    const quantos = Math.max(1, Number(coisa.quantos) || 1);
+    return cartao("compra", { compras: [{ fecha: true, total, bolsa, itens: [{ nome, quantos }] }] }, [sem(nome), quantos]);
+  }
+  if (s === "pagar") {
+    if (disse) return null;
+    const nome = maiuscula(str(l.coisa));
+    return cartao("pagar", { pagar: { total, bolsa, itens: nome ? [{ nome, quantos: 1 }] : [] } }, [sem(nome)]);
+  }
+  if (s === "vender" && coisa) {
+    const quantos = Math.max(1, Number(coisa.quantos) || 1);
+    const rotulo = (quantos > 1 ? `${quantos} × ` : "") + maiuscula(coisa.coisa);
+    return cartao("venda", { venda: { item: coisa.coisa, rotulo, valor: total, bolsa, quem: str(coisa.para) } }, [sem(coisa.coisa), quantos]);
+  }
+  if (s === "escambo" && m.length >= 2) {
+    const da = maiuscula(m[0].coisa), por = maiuscula(m[1].coisa);
+    return cartao("escambo", { escambo: { da, por, quem: str(m[0].para) } }, [sem(da), sem(por)]);
+  }
+  return null;
+}
+
+/* o veredito de uma leitura já sem pergunta: nao, dado, recolher, cartao, aplicado */
 function decidir(o, sai, ctxT, cena, r0, R) {
   const l = o.leitura;
   if (o.caminho === "nao" && o.negada) return sai({ caminho: "nao", veredito: o.negada });
@@ -329,7 +378,12 @@ function decidir(o, sai, ctxT, cena, r0, R) {
     return sai({ caminho: "dado", adiado: true });
   }
   const t = aTrocaDoOuvido(o, ctxT);
-  if (t && t.estado === "aplicada") return sai({ caminho: "aplicado", veredito: t });
+  if (t && t.estado === "aplicada") {
+    /* o veredito antes do clique: o preço que o jogador não disse vira o cartão, e só o clique aplica */
+    const k = oCartao(l, t, ctxT.ficha);
+    if (k && k.chave !== ctxT.confirmado) return sai({ caminho: "cartao", cartao: k });
+    return sai({ caminho: "aplicado", veredito: t });
+  }
   if (t && t.estado === "negada") return sai({ caminho: "nao", veredito: t });
   /* sem caminho que aplique (nunca o silêncio, nunca item inventado): nada muda de mão */
   return sai({ caminho: "nao", veredito: negada("semCaminho", R.tela.semCaminho, tpl(R.fato.semCaminho, { gesto: oGesto(l) })) });

@@ -48,7 +48,9 @@
                     lido aqui de `alvo` (a masmorra do mundo) e `pers`;
                     `aBoca`: o herói já está diante dela, e o verbo é entrar
          sono?:    { tipo: "longo"|"curto", preco, retorno }
-         compras?: [{ fecha, total, bolsa, itens: [{ nome, quantos }] }] }
+         compras?: [{ fecha, total, bolsa, itens: [{ nome, quantos }] }]
+         escambo?: { da, por, quem } — 23/11: a troca coisa por coisa que a
+                    porta única (motor/uma-porta-so.js) põe no cartão }
      oQueSeSabeDoSitio(estado, sitio) → [linha]
 
    O VEREDITO ANTES DO CLIQUE QUE MAIS CUSTA (MC8, 11/11). A 18.ª sessão: o
@@ -88,9 +90,9 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
      cena), depois o sono, depois a moeda; os outros efeitos vão nas linhas */
   /* a 2.ª leva (04/11): a luta e a habilidade vêm à frente (são o ato
      inteiro da frase); quem não está aqui e a espera só valem sozinhos */
-  ordem: Object.freeze(["agressao", "habilidade", "masmorra", "seguir", "viagem", "passo", "ausente", "espera", "sono", "pagar", "compra", "venda"]),
+  ordem: Object.freeze(["agressao", "habilidade", "masmorra", "seguir", "viagem", "passo", "ausente", "espera", "sono", "pagar", "compra", "venda", "escambo"]),
   /* o glifo de cada um (ui.jsx; a forma é a da casa) */
-  glifo: Object.freeze({ agressao: "espada", habilidade: "faiscas", passo: "alfinete", ausente: "alfinete", viagem: "mapa", seguir: "mapa", masmorra: "mapa", espera: "ampulheta", sono: "ampulheta", pagar: "bolsa", compra: "bolsa", venda: "bolsa" }),
+  glifo: Object.freeze({ agressao: "espada", habilidade: "faiscas", passo: "alfinete", ausente: "alfinete", viagem: "mapa", seguir: "mapa", masmorra: "mapa", espera: "ampulheta", sono: "ampulheta", pagar: "bolsa", compra: "bolsa", venda: "bolsa", escambo: "bolsa" }),
   /* o que o botão faz, no App: «turno» é a frase pelo turno de sempre; os
      outros têm executor próprio (o veredito do crime já visto, a habilidade
      pela porta da ficha, o relógio, o «ir» da planta) */
@@ -117,10 +119,11 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     pagar: "Pagar {I}",
     pagarQuantia: "Pagar ◉ {T}",
     venda: "Vender {I}",
+    escambo: "Trocar {I} por {O}",
   }),
   /* o botão que confirma — curto, o verbo de mesa */
   confirmar: Object.freeze({ passo: "Ir", viagem: "Partir", seguir: "Seguir", masmorra: "Ir", masmorraNaBoca: "Entrar", sono: Object.freeze({ longo: "Dormir", curto: "Descansar" }), compra: "Comprar",
-    agressao: "Atacar", habilidade: "Usar", ausente: "Ir", ausenteSemSitio: "Dizer na mesma", espera: "Esperar", pagar: "Pagar", venda: "Vender" }),
+    agressao: "Atacar", habilidade: "Usar", ausente: "Ir", ausenteSemSitio: "Dizer na mesma", espera: "Esperar", pagar: "Pagar", venda: "Vender", escambo: "Trocar" }),
   linhas: Object.freeze({
     /* {M} é a gramática do «▸ ir» (aPeEmTexto, coordenadas.js): «5 min a pé» */
     dentro: "dentro dos muros, a {M}",
@@ -141,6 +144,8 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     pagarNaoChega: "a bolsa só tem ◉ {B}",
     /* {N} já com a preposição contraída: «à Vela Silenciosa», «a Joric» */
     venda: "{N}: a bolsa fica com ◉ {B}",
+    /* 23/11: os dois lados do escambo, antes do clique */
+    escambo: "{N} fica com {I}, e você com {O}",
     /* MC8: o preço da masmorra é o patamar da porta — «● Difícil» */
     desafio: "{I} {R}",
   }),
@@ -420,6 +425,11 @@ function osEfeitos(l, e) {
     /* `rotulo`: o nome como se diz (sem o aposto); `item`, o da bolsa, é o do executor */
     ef.venda = { verbo: tpl(V.venda, { I: limpo(v.rotulo) || limpo(v.item) }), confirmar: C.venda, preco: valor > 0 ? `◉ +${valor}` : "", minutos: null,
       linhas: limpo(v.motivo) ? [limpo(v.motivo)] : [tpl(LN.venda, { N: contrair(`a ${artigoMinusculo(v.quem)}`), B: bolsa + valor })], impedido: limpo(v.motivo) };
+  }
+  if (ehObj(l.escambo) && limpo(l.escambo.da) && limpo(l.escambo.por)) {
+    const x = l.escambo;
+    ef.escambo = { verbo: tpl(V.escambo, { I: limpo(x.da), O: limpo(x.por) }), confirmar: C.escambo, preco: "", minutos: null,
+      linhas: [tpl(LN.escambo, { N: limpo(x.quem).split(",")[0].trim(), I: limpo(x.da).toLowerCase(), O: limpo(x.por).toLowerCase() })] };
   }
   /* quem não está aqui e a espera só valem sozinhos: juntos de outro ato,
      o turno é desse ato (e a frase vai inteira ao Narrador) */

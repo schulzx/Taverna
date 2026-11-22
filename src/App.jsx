@@ -19178,6 +19178,35 @@ export default function Taverna() {
     portaUnicaRef.current = r ? { entrada: frase, frase: r.frase, r, em: Date.now() } : null;
     return r;
   };
+  /* O VEREDITO ANTES DO CLIQUE (23/11): quando é o sistema que põe o preço (a compra da
+     banca ou da casa, a venda, o serviço pago sem dizer quanto, o escambo com a casa), o
+     resultado único é o cartão de sempre — o da proposta da frase, com o preço e como a
+     bolsa fica — e nada muda de mão até o clique. A função pura decide (r.caminho
+     "cartao"); aqui só se mostra. Devolve true quando a frase virou cartão. */
+  const mostrarOCartaoDaPorta = (r) => {
+    try {
+      const p = aPropostaDaFrase({ frase: r.frase, ...r.cartao.leitura }, estadoDoPedido());
+      if (!p) return false;
+      /* sem os dados das listas: quem aplica no clique é a porta única, nunca o executor antigo */
+      setPropostaDaFrase({ ...p, dados: {}, porta: r.cartao }); setPropostaAberta(false);
+      /* como o cartão de sempre: o campo esvazia, e o «Agora não» devolve a frase */
+      setEntrada("");
+      try { setCampoFocado(false); const foco = typeof document !== "undefined" ? document.activeElement : null; if (foco && typeof foco.blur === "function") foco.blur(); } catch (e) { calou("o campo descansa com o cartão", e); }
+      return true;
+    } catch (e) { calou("o veredito antes do clique · o cartão", e); return false; }
+  };
+  /* o clique: a frase é relida com a chave do cartão confirmado (o preço que o jogador viu),
+     e o turno aplica esse resultado pela porta de sempre (ouvirAFrase). Se o preço mudou
+     entre o cartão e o clique, volta o cartão com o preço de agora — nunca cobra outro sem mostrar */
+  const confirmarOCartaoDaPorta = (p) => {
+    try {
+      let r = null;
+      try { r = aPortaUnica(p.frase, retratoDoOuvido(), { pendente: null, confirmado: p.porta, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO }); } catch (e) { calou("o veredito antes do clique · a releitura", e); r = null; }
+      if (r && r.caminho === "cartao" && r.cartao) { mostrarOCartaoDaPorta(r); return; }
+      portaUnicaRef.current = r ? { entrada: p.frase, frase: r.frase, r, em: Date.now() } : null;
+      partirOTurno(p.frase);
+    } catch (e) { calou("o veredito antes do clique · o clique", e); }
+  };
   /* executa o resultado único. Devolve o que o turno faz a seguir: { parou } (a
      pergunta: o turno para aqui, sem Narrador), { fechou } (o veredito já foi à
      ficha, à tela e à pauta) ou a leitura (o dado: o caminho de hoje, ou adiado) */
@@ -19197,6 +19226,12 @@ export default function Taverna() {
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: r.pergunta.linha }]);
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true, parou: true };
+    }
+    /* o preço do sistema que chegou ao turno sem passar pela proposta: o cartão, e o turno para (nunca aplica sem clique) */
+    if (r.caminho === "cartao" && r.cartao) {
+      ouvidoDoTurnoRef.current = { ...ov, fechou: true };
+      if (mostrarOCartaoDaPorta(r)) return { ...ov, fechou: true, parou: true };
+      return { ...ov, fechou: true };
     }
     if ((r.caminho === "nao" || r.caminho === "aplicado" || r.caminho === "desiste") && r.veredito) {
       aplicarOVereditoDaTroca(r.veredito);
@@ -27953,6 +27988,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         const acao0 = String(texto || "").trim();
         if (acao0 && !acao0.startsWith("/") && !acao0.startsWith("[") && !salaRef.current && !combateRef.current && !carregando && !rolagem) {
           const rU = aPortaDaFrase(acao0);
+          /* 23/11 (o veredito antes do clique): o preço que o jogador não disse é o cartão de sempre, e só o clique aplica */
+          if (rU && rU.caminho === "cartao" && rU.cartao) return mostrarOCartaoDaPorta(rU);
           if (rU && rU.troca) {
             setPropostaDaFrase(null); setPropostaAberta(false);
             if (rU.frase !== acao0) { partirOTurno(rU.frase); return true; }
@@ -28020,6 +28057,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     const p = propostaDaFrase;
     if (!p || carregando || rolagem || p.impedido) return;
     setPropostaDaFrase(null); setPropostaAberta(false);
+    /* 23/11: o cartão da porta única (o preço do sistema) aplica pela releitura com a chave */
+    if (p.porta) { confirmarOCartaoDaPorta(p); return; }
     /* CB3: o pedido do sinal não manda frase — o d20 rola aqui e lê o sinal */
     try {
       const ep = encontroPendenteRef.current;
@@ -28282,7 +28321,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          a troca que a porta única nega ou pergunta não abre a encruzilhada */
       let rBQ = null;
       try { const e0 = String(entrada || "").trim(); if (mestreVivoLigado() && lista.length && e0 && !e0.startsWith("/") && !e0.startsWith("[")) rBQ = aPortaDaFrase(e0); } catch (e) { calou("Mestre vivo · a porta única na encruzilhada", e); rBQ = null; }
-      if (lista.length && !carregando && !rolagem && !combateRef.current && !(rBQ && rBQ.troca && (rBQ.caminho === "nao" || rBQ.caminho === "pergunta"))) {
+      if (lista.length && !carregando && !rolagem && !combateRef.current && !(rBQ && rBQ.troca && (rBQ.caminho === "nao" || rBQ.caminho === "pergunta" || rBQ.caminho === "cartao"))) {
         const c = aEscolhaDaFrase(entrada, lista);
         const esc = c ? lista.find((x) => x.quest === c.quest && x.chave === c.chave) : null;
         if (esc) { abrirAEscolha(esc, { preEscolhida: c.opcao, frase: entrada.trim() }); setEntrada(""); return; }
