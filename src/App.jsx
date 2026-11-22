@@ -214,7 +214,7 @@ import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
-import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
+import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, sinosForaDeHora, tramaTemEspaco, aAberturaDaQuest } from "./abertura.js";
 import { secundariasAbertas, falaDoPortao, PORTAO_DAS_SECUNDARIAS } from "./portao-das-secundarias.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
@@ -222,7 +222,7 @@ import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA, compraSemQuemVenda, falaDaCompraSemQuemVenda, vetoDaCompraSemQuemVenda } from "./bolsa-da-frase.js";
-import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA, aCoisaDaFrase, nomesDoAchado, pautaDosAusentesDaHistoria, osPrecosDaPergunta } from "./a-ficha-da-cena.js";
+import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA, aCoisaDaFrase, nomesDoAchado, pautaDosAusentesDaHistoria, osPrecosDaPergunta, oBalcaoComoBanca } from "./a-ficha-da-cena.js";
 import { conferirAProsa, quemFicaCalado, aBolsaAgora, oQueEntrou } from "./motor/o-conferente-da-prosa.js";
 import { aCoisaAoToqueDaFrase, oQueOAchadoDa, telaDoAchadoNaCoisa, envelopeDoAchadoNaCoisa } from "./o-que-ha-nas-coisas.js";
 import { coisasQueAFraseNomeia } from "./cena-do-momento.js";
@@ -6434,6 +6434,11 @@ export default function Taverna() {
   const plantaDaLuta = () => {
     let ondeG = {};
     try { ondeG = { emViagem: !!jornadaRef.current, cidade: cidadeAtualRef.current || "", lugar: lugarRef.current || null }; } catch (e) { calou("o lugar da planta", e); ondeG = {}; }
+    /* 22/11 (a décima segunda sessão): a luta da fera na furna abria no salão de uma taverna, e a
+       da estrada por terra, no convés — o chão da rota e o covil do confronto dizem onde se pisa */
+    try { ondeG = { ...ondeG, chao: (jornadaRef.current && jornadaRef.current.terreno) || "", covil: typeof confrontoEmLutaRef !== "undefined" && !!(confrontoEmLutaRef && confrontoEmLutaRef.current) }; } catch (e) { calou("o chão e o covil da planta", e); }
+    /* (o typeof: a planta é recortada à letra pela prova da luta, teste-motor-luta, que corre sem esta ref;
+       no App ela existe sempre que a planta é chamada — numa luta, depois do render) */
     return {
       emMasmorra: !!masmorraRef.current,
       ...ondeG,
@@ -12469,6 +12474,19 @@ export default function Taverna() {
           try {
             const v0 = estadoDaQuest(R0.id, R0, { estado: estadoDasQuests(), mundo: mundoDoLivro(), quests: Q0.registos });
             if (v0 && v0.gancho) questDaAbertura = { gancho: v0.gancho, passo: v0.etapaTexto || "" };
+            /* 22/11 (a décima segunda sessão): a tela nomeava um, o save guardava outro
+               («Ivarr… O rasto de Joric») e a quest era a terceira história — com quest no
+               ato 0, a pessoa e o título da abertura são os DELA (aAberturaDaQuest). Só aqui,
+               na criação: o save antigo fica como está */
+            try {
+              if (ab && v0) {
+                const F0 = questPorId(R0.id);
+                const pe = Object.entries((F0 && F0.papeis) || {}).find(([k, d]) => d && d.de === "elenco" && R0.papeis && R0.papeis[k] && R0.papeis[k].nome);
+                const rp = pe ? R0.papeis[pe[0]] : null;
+                aberturaMundoRef.current = aAberturaDaQuest(ab.abertura, { titulo: (F0 && F0.titulo) || "", pessoa: rp ? { nome: rp.nome, papel: rp.oficio || rp.papel || "", local: rp.local || "" } : null });
+                ab = { ...ab, abertura: aberturaMundoRef.current };
+              }
+            } catch (e) { calou("a abertura com a pessoa da quest", e); }
           } catch (e) { calou("BQ7b · a pista da abertura", e); questDaAbertura = null; }
         }
       }
@@ -18891,6 +18909,23 @@ export default function Taverna() {
      o sistema sabe noutro lugar — a mesma conta para o momento (que deixa de
      julgar a conversa com quem não ouve) e para a ficha da cena (a linha e a
      pauta). Lixo devolve null. */
+  /* 22/11 (a décima segunda sessão): a lista de quem o sistema sabe noutro lugar, numa
+     função — e quem a tela põe em cena (o mesmo Em cena), que ganha o primeiro nome
+     dito quando casa com um presente e com um ausente (quemONomeDiz) */
+  const ausentesAgora = () => {
+    let aus = [], conhecidos = [], protegidos = [];
+    try {
+      const qA = quemAgora();
+      const pA = personagemRef.current || personagem || {};
+      const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
+      const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
+      protegidos = [divindadeRef.current && divindadeRef.current.nome].filter(Boolean);
+      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, protegidos });
+      conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
+    } catch (e) { calou("quem o sistema sabe noutro lugar", e); }
+    return { aus, conhecidos, protegidos };
+  };
+  const presentesDaTela = () => { try { return (Array.isArray(emCenaRef.current) ? emCenaRef.current : []).filter((x) => x && x.tipo === "pessoa" && x.aqui && x.nome).map((x) => x.nome); } catch (e) { calou("quem a tela põe em cena", e); return []; } };
   const quemNaoEstaDaFrase = (acao, cena) => {
     let aus = [], conhecidos = [], protegidos = [];
     try {
@@ -18902,7 +18937,7 @@ export default function Taverna() {
       aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, protegidos });
       conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
     } catch (e) { calou("Mestre vivo · quem o sistema sabe noutro lugar", e); }
-    try { return quemNaoEstaNaCena(acao, cena, { ausentes: aus, conhecidos, protegidos }); } catch (e) { calou("Mestre vivo · quem não está", e); return null; }
+    try { return quemNaoEstaNaCena(acao, cena, { ausentes: aus, conhecidos, protegidos, presentes: presentesDaTela() }); } catch (e) { calou("Mestre vivo · quem não está", e); return null; }
   };
   const fichaDaCenaNoTurno = (acao, m) => {
     if (!m || !m.cena) return;
@@ -18919,7 +18954,7 @@ export default function Taverna() {
       conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
     } catch (e) { calou("Mestre vivo · quem o sistema sabe noutro lugar", e); }
     let qn = m.ausente || null;
-    if (!qn) try { qn = quemNaoEstaNaCena(acao, m.cena, { ausentes: aus, conhecidos, protegidos }); } catch (e) { calou("Mestre vivo · quem não está", e); qn = null; }
+    if (!qn) try { qn = quemNaoEstaNaCena(acao, m.cena, { ausentes: aus, conhecidos, protegidos, presentes: presentesDaTela() }); } catch (e) { calou("Mestre vivo · quem não está", e); qn = null; }
     let bancas = [];
     try { bancas = bancasDaCena(); } catch (e) { calou("Mestre vivo · as bancas da ficha", e); }
     /* §24: quem falou há pouco (a memória do conferente) e a frase não chama fica quieto */
@@ -18938,6 +18973,8 @@ export default function Taverna() {
     } catch (e) { calou("Mestre vivo · quem da história está longe", e); }
     /* 22/11 (a décima primeira sessão, T2): o preço perguntado chega como fato (a secção EM CENA encolhe) */
     try { const pp = osPrecosDaPergunta(acao, bancas); if (pp) porNaPautaDoTurno(pp); } catch (e) { calou("Mestre vivo · o preço perguntado", e); }
+    /* 22/11 (a décima segunda sessão, T34): o balcão de mantimentos não é banca — a mesma pergunta, com ele */
+    try { if (!osPrecosDaPergunta(acao, bancas)) { const cidB = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null; const bb = cidB ? oBalcaoComoBanca(balcaoAqui(cidB)) : null; const pb = bb ? osPrecosDaPergunta(acao, [bb]) : null; if (pb) porNaPautaDoTurno(pb); } } catch (e) { calou("Mestre vivo · o preço do balcão", e); }
     /* 21/11 (o-mestre-vivo.md §25): quem deve a quem, como o jogador disse —
        uma linha da pauta do turno, para a prosa não inverter a dívida */
     try { const dv = aDividaDita(acao, typeof m.alvo === "string" ? m.alvo : ""); if (dv) porNaPautaDoTurno(dv); } catch (e) { calou("Mestre vivo · a dívida dita", e); }
@@ -19198,6 +19235,10 @@ export default function Taverna() {
       lugarAtual: (lugarRef.current && lugarRef.current.nome) || "",
       mapa: mapaRef.current,
       presentes: pessoasDaCena(),
+      /* 22/11 (a décima segunda sessão, T18 e T59): «🔎 Morgane está aqui — Casa do Calafate» dito
+         no Pátio, e «🔎 Joric está aqui — Ponta Quebrada» na estrada. Quem a conta única de
+         presença sabe noutro sítio (osAusentes sobre quemEstaAqui) está lá */
+      longe: ausentesAgora().aus,
       /* E1: os mesmos três que o Geógrafo recebe — a procura e o "não entra
          nesta cena" dizem o mesmo número */
       coord: meuPonto(), lugar: lugarRef.current, jornada: jornadaRef.current,
@@ -20017,7 +20058,10 @@ export default function Taverna() {
       /* 22/11 (a décima sessão, T16): a moeda do suborno com quantia é cobrada no sim — não é blefe */
       let subornoPago = false;
       try { subornoPago = oSubornoDaFrase(acao, moedaDoMundo()) && aQuantiaDita(acao, moedaDoMundo()) > 0; } catch (e) { calou("o suborno com quantia", e); }
-      const blefe = falaDaMesaOu(() => falaDosBlefesNaMesa(v.social, { subornoComQuantia: subornoPago }), () => falaDosBlefes(v.social), "a fala do blefe");
+      /* 22/11 (a décima segunda sessão, T53): a mesa calava o «Não contou» do suborno pago no sim
+         (null), e o null caía na linha de antes — que dizia «Não contou: ouro na mesa» antes do
+         sucesso que levou as moedas. O nada da mesa é nada (""), não «faça como antes» */
+      const blefe = falaDaMesaOu(() => falaDosBlefesNaMesa(v.social, { subornoComQuantia: subornoPago }) || "", () => falaDosBlefes(v.social), "a fala do blefe");
       if (blefe) linhasDoTeste.push({ autor: "sistema", texto: blefe });
     }
     /* ---------------- A PORTA VIGIADA (v9.64) ----------------
