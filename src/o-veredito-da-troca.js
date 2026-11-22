@@ -72,9 +72,18 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   /* onde a coisa comprada acaba: antes destas palavras */
   fimDaCoisa: Object.freeze(["ao", "aos", "a", "as", "para", "pra", "e", "que", "com", "se", "porque", "enquanto", "mas"]),
   palavrasDaCoisa: 4,
+  /* «compro duas rações e pago dez moedas»: a moeda é da compra */
+  compraDeclarada: /\b(compro|compramos|comprei)\b/,
+  /* o que se paga e não se leva na mão: saber (o gesto da carta) */
+  naoEMercadoria: Object.freeze(["informacao", "informacoes", "noticia", "noticias", "segredo", "resposta", "nome", "caminho", "conversa", "dica", "pista", "pistas", "verdade", "paradeiro"]),
   /* O SUBORNO: moeda oferecida para que alguém faça vista grossa — é conversa
      com dado (desafios.js, «convencer»), e a quantia sai só se ele aceitar */
-  suborno: /\b(?:para|pra)\s+(?:(?:ele|ela|eles|elas|o guarda|a guarda)\s+)?(?:me\s+|nos\s+)?(?:fingir|fechar os olhos|fazer vista grossa|olhar (?:para|pro) (?:o )?outro lado|esquecer|nao (?:me |nos )?ver|nao (?:me |nos )?ter visto|deixar (?:eu |a gente )?(?:passar|entrar|subir|sair)|(?:me|nos) deixar (?:passar|entrar|subir|sair)|ficar calad[oa]|calar)\b/,
+  /* 21/11 (a nona sessão, T35): «ofereço 4 moedas à vendedora para ela não
+     gritar ladrão» abria o cartão «Pagar» — o silêncio comprado tem mais
+     formas do que «ficar calado»: não gritar, não contar, não chamar a guarda,
+     guardar segredo, ficar quieto. Esta é a ÚNICA lista do suborno: o catálogo
+     (desafios.js, lerAcao) pergunta a oSubornoDaFrase em vez de ter a sua. */
+  suborno: /\b(?:para|pra)\s+(?:(?:ele|ela|eles|elas|o guarda|a guarda)\s+)?(?:me\s+|nos\s+)?(?:fingir|fechar os olhos|fazer vista grossa|olhar (?:para|pro) (?:o )?outro lado|esquecer|nao (?:me |nos )?ver|nao (?:me |nos )?ter visto|deixar (?:eu |a gente )?(?:passar|entrar|subir|sair)|(?:me|nos) deixar (?:passar|entrar|subir|sair)|ficar calad[oa]|ficar quiet[oa]|calar|guardar (?:o |esse |este )?segredo|manter a boca fechada|nao (?:me |nos )?(?:gritar|contar|dizer|falar|chamar|denunciar|entregar|dedurar|acusar|delatar))\b/,
   quantiaVaga: /\b(algum dinheiro|umas moedas|umas pratas|alguma moeda|algumas moedas|uns cobres)\b/,
   /* O FIADO: o que se leva hoje e se paga depois */
   fiado: /\b(fiado|fiada|pendur[ao]|na conta|a credito|pago (?:amanha|depois|mais tarde|na volta|outro dia|quando (?:voltar|puder))|pagar (?:amanha|depois|mais tarde))\b/,
@@ -144,8 +153,8 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     companheiroNaoTem: "🤝 {Nome} não tem isso consigo.",
     dar: "🤝 {Coisa} agora é de {Quem}.",
     fiado: "⛔ Fiado não: aqui se paga na hora.",
-    furto: "🤲 Da bolsa de {Alvo}: {Ganho} (bolsa: ◉ {B}).",
-    furtoVazio: "🤲 A bolsa de {Alvo} estava quase vazia: nada que valha levar.",
+    furto: "🤲 Da bolsa {doAlvo}: {Ganho} (bolsa: ◉ {B}).",
+    furtoVazio: "🤲 A bolsa {doAlvo} estava quase vazia: nada que valha levar.",
     furtoSemACoisa: "🤲 {Alvo} não tinha {Coisa} com ele: a mão volta vazia.",
     deGraca: "🎁 {Alvo} lhe dá: {Coisa}.",
     deGracaAli: "🎁 {Alvo} deixa você provar ali mesmo.",
@@ -160,10 +169,10 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     companheiroNega: "{Nome} não me passou nada: {motivo}. Nada mudou de mão.",
     dar: "Dei {Coisa} a {Quem}; saiu da minha bolsa e está com {Quem}.",
     fiado: "Pedi fiado e não me deram: quem vende quer a moeda agora. Nada mudou de mão.",
-    furto: "O furto deu certo: tirei de {Alvo} {Ganho}; já está comigo. Use exatamente isto.",
-    furtoVazio: "O furto passou sem ser notado, mas a bolsa de {Alvo} estava quase vazia: nada entrou na minha bolsa.",
+    furto: "O furto deu certo: tirei {doAlvo} {Ganho}; já está comigo. Use exatamente isto.",
+    furtoVazio: "O furto passou sem ser notado, mas a bolsa {doAlvo} estava quase vazia: nada entrou na minha bolsa.",
     furtoSemACoisa: "O furto passou sem ser notado, mas {Alvo} não tinha {Coisa}: nada entrou na minha bolsa.",
-    furtoFalhou: "O furto falhou: nada saiu de {Alvo}, nada entrou na minha bolsa.",
+    furtoFalhou: "O furto falhou: nada saiu da bolsa {doAlvo}, nada entrou na minha bolsa.",
     deGraca: "{Alvo} me deu {Coisa}, de graça; já está na minha mochila.",
     deGracaAli: "{Alvo} me deixou provar ali mesmo; nada foi para a minha mochila.",
     deGracaNao: "{Alvo} não me deu nada de graça: nada mudou de mão.",
@@ -185,6 +194,14 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     fato: "Procurei e não achei nada que se leve: só o que já é do lugar, preso, quebrado ou sem valor.",
     veto: "descrever objeto solto, inteiro e de valor que se possa pegar e levar daqui — a busca não achou nada",
   }),
+  /* QUEM É O ALVO (a nona sessão, T22, T29–T32, T56): «Da bolsa de a vítima» —
+     a frase dizia «da vendedora», «da Gwynn», «de um dos estivadores», e o
+     sistema não lia. O nome vem de quem está (presentes), ou do papel dito na
+     frase, com o artigo dela; a contração sai daqui («de» + «o» = «do»). */
+  contracao: Object.freeze({ o: "do", a: "da", os: "dos", as: "das" }),
+  alvoSemNome: "quem estava ao seu lado",
+  papelNaFrase: /\b(?:(do|da|dos|das|ao|aos|a|as)\s+)(?:(?:um|uma) (?:dos|das) |(?:o |a )?(?:outr[oa]s?) )?([a-z]{4,})\b/g,
+  naoEAlvo: Object.freeze(["bolsa", "bolsinha", "bolso", "bolsos", "moeda", "moedas", "mao", "maos", "banca", "bancas", "cinto", "carteira", "algibeira", "graca", "amostra", "provar", "vela", "racao", "racoes", "agua", "odre", "tocha", "tochas", "sais", "frasco", "faca", "porta", "rua", "praca", "doca", "fonte", "taberna", "mochila", "conta", "credito", "vista", "volta", "frente", "ponto", "beira", "sombra", "noite", "manha", "tarde", "hora", "viagem", "rota", "trave", "quilha", "mesa", "balcao", "pressa", "toa", "quem", "alguem", "ninguem", "todos", "todas", "gente"]),
   motivoCompanheiro: Object.freeze({
     semMoeda: "não guarda moeda à parte; a bolsa do grupo é a minha",
     uso: "o que o grupo leva de {Coisa} está na minha mochila",
@@ -251,6 +268,9 @@ export function aCompraPorMoeda(frase, moeda) {
     const coisa = out.join(" ");
     /* «por favor», «por pena», «por aqui»: não é coisa que se compre */
     if (!coisa || /^(favor|pena|gentileza|aqui|ali|isso|isto|tudo|nada|ele|ela|mim|voce|hoje|agora)$/.test(coisa)) return null;
+    /* «pago cinco moedas pela informação», «pelo nome dele»: o que se paga é
+       saber, e saber é do gesto da carta (pagar a quem sabe), não da banca */
+    if (V.naoEMercadoria.includes(coisa.split(" ")[0])) return null;
     return { quantia: quantiaNa(t, moeda), coisa };
   } catch { return null; }
 }
@@ -268,6 +288,26 @@ export function oSubornoDaFrase(frase, moeda) {
 /* oFiadoDaFrase(frase) → true quando a frase pede para levar agora e pagar depois */
 export function oFiadoDaFrase(frase) {
   try { return V.fiado.test(sem(frase)); } catch { return false; }
+}
+
+/* ============================================================
+   aPortaDaMoeda(frase, moeda?) → "fiado" | "suborno" | "compra" | ""
+   UMA PORTA COBRA (a nona sessão, T57). «dou 10 moedas à vendedora por duas
+   rações de viagem» cobrou ◉ 20: a bolsa da frase cobrou as rações (◉ 10) e
+   o gesto da carta da quest («pagar a quem sabe», quadro-da-quest.js) leu
+   «dou 10 moedas» como pagamento ao Kael, que estava em cena, e cobrou o
+   preço do caminho por cima. A moeda que a frase põe na mesa tem um dono só:
+   o fiado não se paga, o suborno é da conversa com dado, a compra é da
+   bolsa da frase — e o que sobra ("") é que pode ser o pagar da carta ou da
+   taverna.
+   ============================================================ */
+export function aPortaDaMoeda(frase, moeda) {
+  try {
+    if (oFiadoDaFrase(frase)) return "fiado";
+    if (oSubornoDaFrase(frase, moeda)) return "suborno";
+    if (aCompraPorMoeda(frase, moeda) || V.compraDeclarada.test(sem(frase))) return "compra";
+    return "";
+  } catch { return ""; }
 }
 
 /* a coisa como o jogador a escreveu (com acento), a partir da forma sem acento */
@@ -402,7 +442,40 @@ export function oButimDoFurto(o) {
   return { moedas, item, nada: false, semACoisa: false };
 }
 
-const nomeDoAlvo = (alvo) => maiuscula(str(obj(alvo) ? alvo.nome : alvo).split(",")[0]) || "a vítima";
+const nomeDoAlvo = (alvo) => maiuscula(str(obj(alvo) ? alvo.nome : alvo).split(",")[0]) || maiuscula(V.alvoSemNome);
+/* «o estivador» → «do estivador»; «Gwynn» → «de Gwynn»; sem nome, «de quem estava ao seu lado» */
+export function deQuem(nome) {
+  const n = str(nome).split(",")[0].trim() || V.alvoSemNome;
+  const m = n.match(/^(o|a|os|as)\s+(.+)$/i);
+  return m ? `${V.contracao[m[1].toLowerCase()]} ${m[2]}` : `de ${n}`;
+}
+/* o singular de «estivadores», «vendedoras» */
+const singular = (w) => (/ores$/.test(w) ? w.slice(0, -2) : /(r|z)es$/.test(w) ? w.slice(0, -2) : /s$/.test(w) ? w.slice(0, -1) : w);
+/* ============================================================
+   quemDaFrase(frase, presentes) → null | { nome }
+   Quem a frase aponta: primeiro quem está (pelo primeiro nome), depois o
+   papel dito com o artigo dele («da vendedora» → «a vendedora», «de um dos
+   estivadores» → «o estivador»). O que é lugar ou coisa não é gente.
+   ============================================================ */
+export function quemDaFrase(frase, presentes) {
+  try {
+    const t = sem(frase);
+    if (!t) return null;
+    for (const p of arr(presentes).map(nomeDe).filter(Boolean)) {
+      const w = primeiro(p);
+      if (w.length >= 3 && new RegExp(`\\b${w}\\b`).test(t)) return { nome: p };
+    }
+    const orig = str(frase).normalize("NFC");
+    for (const m of t.matchAll(V.papelNaFrase)) {
+      const w = m[2];
+      if (V.naoEAlvo.includes(w) || V.naoEAlvo.includes(singular(w))) continue;
+      const art = /^(da|das|a|as)$/.test(m[1]) ? "a" : "o";
+      const s1 = singular(w);
+      return { nome: `${art} ${doOriginal(orig, s1) || s1}` };
+    }
+    return null;
+  } catch { return null; }
+}
 
 /* ============================================================
    oVereditoDaTroca(frase, ctx) → null | veredito
@@ -490,28 +563,31 @@ export function oVereditoDaTroca(frase, ctx) {
       return aplicada("dar", nova, [{ coisa: k.n, quantos: 1, de: "heroi", para: Quem }], tpl(T.dar, { Coisa: maiuscula(k.n), Quem }), tpl(F.dar, { Coisa: k.n, Quem }), tpl(X.dar, { Coisa: k.n }));
     }
 
+    /* o alvo: o que veio (a régua, o desafio), ou quem a frase aponta */
+    const alvoC = obj(c.alvo) && str(c.alvo.nome).trim() ? c.alvo : str(c.alvo).trim() ? { nome: str(c.alvo) } : quemDaFrase(frase, c.presentes);
     if (it.tipo === "furto") {
-      const Alvo = nomeDoAlvo(c.alvo);
+      const Alvo = nomeDoAlvo(alvoC);
+      const doAlvo = deQuem(str(alvoC && alvoC.nome));
       const d = obj(c.dado);
       if (!d) return Object.freeze({ tipo: "furto", estado: "pendente", ficha: null, mudou: Object.freeze([]), linha: "", fato: "", veto: [] });
       const passou = d.passou === true || d.acontece === true;
-      if (!passou) return negada("furto", "falhou", "", tpl(F.furtoFalhou, { Alvo }), X.furto);
-      const b = oButimDoFurto({ semente: c.semente, alvo: c.alvo, lugar: c.lugar, dia: c.dia, coisa: it.coisa });
+      if (!passou) return negada("furto", "falhou", "", tpl(F.furtoFalhou, { Alvo, doAlvo }), X.furto);
+      const b = oButimDoFurto({ semente: c.semente, alvo: alvoC, lugar: c.lugar, dia: c.dia, coisa: it.coisa });
       if (b.nada) {
         const Coisa = it.coisa;
         return b.semACoisa
           ? negada("furto", "semACoisa", tpl(T.furtoSemACoisa, { Alvo, Coisa }), tpl(F.furtoSemACoisa, { Alvo, Coisa }), X.furto)
-          : negada("furto", "vazia", tpl(T.furtoVazio, { Alvo }), tpl(F.furtoVazio, { Alvo }), X.furto);
+          : negada("furto", "vazia", tpl(T.furtoVazio, { Alvo, doAlvo }), tpl(F.furtoVazio, { Alvo, doAlvo }), X.furto);
       }
       const moedas = (Number(ficha.moedas) || 0) + b.moedas;
       const nova = { ...ficha, moedas, ...(b.item ? { inventario: [...arr(ficha.inventario), b.item] } : {}) };
       const ganho = [b.moedas ? `◉ ${b.moedas}` : "", b.item].filter(Boolean).join(" e ");
       const mudou = [...(b.moedas ? [{ coisa: "moedas", quantos: b.moedas, de: Alvo, para: "heroi" }] : []), ...(b.item ? [{ coisa: b.item, quantos: 1, de: Alvo, para: "heroi" }] : [])];
-      return aplicada("furto", nova, mudou, tpl(T.furto, { Alvo, Ganho: ganho, B: moedas }), tpl(F.furto, { Alvo, Ganho: ganho }), X.furto);
+      return aplicada("furto", nova, mudou, tpl(T.furto, { Alvo, doAlvo, Ganho: ganho, B: moedas }), tpl(F.furto, { Alvo, doAlvo, Ganho: ganho }), X.furto);
     }
 
     if (it.tipo === "deGraca") {
-      const Alvo = nomeDoAlvo(c.alvo);
+      const Alvo = nomeDoAlvo(alvoC);
       const d = obj(c.dado);
       if (!d) return Object.freeze({ tipo: "deGraca", estado: "pendente", ficha: null, mudou: Object.freeze([]), linha: "", fato: "", veto: [] });
       const passou = d.passou === true || d.acontece === true;

@@ -38,7 +38,7 @@ import { MERCADORIAS } from "./mercado.js";
 import { semConfusao, nomeiaACoisa } from "./economia.js";
 /* 21/11 (a oitava sessão do Mestre vivo): «dou duas moedas ao vendedor pelos
    sais» é COMPRA — a moeda vai, a coisa vem (o-veredito-da-troca.js) */
-import { aCompraPorMoeda } from "./o-veredito-da-troca.js";
+import { aCompraPorMoeda, oFiadoDaFrase } from "./o-veredito-da-troca.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -184,6 +184,10 @@ export function compraNaFrase(frase, opcoes) {
      é compra da banca (`compraNaBanca`) — e deixa de ser o veto "isso
      vende-se nas bancas" deste balcão */
   const daBancaJa = Array.isArray(op.bancas) && op.bancas.length ? compraNaBanca(frase, { bancas: op.bancas, bolsa }) : null;
+  /* 21/11 (a nona sessão, T23): «levo uma ração… e pago amanhã, fiado» era
+     compra — cobrava, entregava, e só depois vinha «Fiado não». Fiado não é
+     compra: nada cobra, e o veredito da troca diz por quê. */
+  if (oFiadoDaFrase(frase)) return null;
   frase = semConfusao(frase);
   if (RX_PERGUNTA_DE_PRECO.test(norm(frase))) return null;
   for (const o of oracoes(frase)) {
@@ -256,6 +260,7 @@ export function compraNaBanca(frase, opcoes) {
   const op = opcoes && typeof opcoes === "object" ? opcoes : {};
   const bancas = (Array.isArray(op.bancas) ? op.bancas : []).filter((b) => b && Array.isArray(b.estoque));
   if (!bancas.length) return null;
+  if (oFiadoDaFrase(frase)) return null;
   const f = semConfusao(frase);
   if (!f.trim() || RX_PERGUNTA_DE_PRECO.test(norm(f))) return null;
   const itens = [];
@@ -309,7 +314,7 @@ export const COMPRA_SEM_QUEM_VENDA = {
 export function compraSemQuemVenda(frase, opcoes) {
   const op = opcoes && typeof opcoes === "object" ? opcoes : {};
   const f = String(frase == null ? "" : frase);
-  if (!f.trim() || f.trimStart().startsWith("[")) return null;
+  if (!f.trim() || f.trimStart().startsWith("[") || oFiadoDaFrase(f)) return null;
   const t0 = norm(semConfusao(f));
   if (RX_PERGUNTA_DE_PRECO.test(t0)) return null;
   const bancas = (Array.isArray(op.bancas) ? op.bancas : []).filter((b) => b && Array.isArray(b.estoque));

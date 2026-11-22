@@ -189,7 +189,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, linhaDaCelula
 import { garantirForma, travaDaPartida, chaveDaMorte, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, contrair, aFraseMandaIr } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, COMODOS_PROMPT } from "./comodos.js";
-import { naoPedeDado, lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { naoPedeDado, lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT, FAIXAS_DA_MARGEM } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
    A palavra como AÇÃO dentro da luta — dobra o bando, ou não há com quem
    falar. Tudo por tabela em `sem-espada.js`; o App só lê o veredito, cobra
@@ -299,7 +299,7 @@ import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 /* 21/11 (a oitava sessão do Mestre vivo): a troca sai decidida antes do Narrador */
-import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado } from "./o-veredito-da-troca.js";
+import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA } from "./o-veredito-da-troca.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
@@ -17919,7 +17919,20 @@ export default function Taverna() {
     const total = valor + mod;
     const dc = r.dificuldade;
     const critico = valor === 20, desastre = valor === 1;
-    const resultado = dc == null ? "resultado livre" : critico ? "SUCESSO CRÍTICO" : desastre ? "FALHA CRÍTICA" : total >= dc ? "sucesso" : "falha";
+    /* 21/11 (a nona sessão, T31): «Prestidigitação 10 + 4 = 14 vs 15 · falha»,
+       a bandeja «falhou» — e o butim entrou, porque o motor dá o «quase»
+       (falhar por 1 ou 2, FAIXAS_DA_MARGEM) por conseguido pagando
+       (concluirRolagem, desfechoDaMargem). Um facto, um lugar: a linha do dado
+       e a bandeja dizem o que o motor decidiu, com a mesma conta. */
+    let fioDoDado = null;
+    try {
+      if (r.origem === "pedido" && r.desafio && dc != null && !critico && !desastre && total < dc) {
+        const dmF = desfechoDaMargem(r.desafio, { total, dc, critico, desastre, emCombate: !!combateRef.current, comMeiaVerdade: true, semMeio: semFioNoMomento(r.desafio) });
+        fioDoDado = dmF && dmF.porPouco ? dmF : null;
+      }
+    } catch (e) { calou("a linha do dado: o quase", e); fioDoDado = null; }
+    const vozDoFio = fioDoDado ? ((FAIXAS_DA_MARGEM.find((f) => f.id === fioDoDado.faixa) || {}).voz || "") : "";
+    const resultado = dc == null ? "resultado livre" : critico ? "SUCESSO CRÍTICO" : desastre ? "FALHA CRÍTICA" : total >= dc ? "sucesso" : vozDoFio || "falha";
     /* CÓDEX: 20 natural e 1 natural contam para as conquistas */
     if (critico) { bumpCont("criticos"); checarConquistas(); }
     if (desastre) { bumpCont("desastres"); checarConquistas(); }
@@ -17950,6 +17963,8 @@ export default function Taverna() {
         const cobrado = chP && chP.pousou && chP.chamado ? String(chP.chamado.cobrado || "") : "";
         if (lt && cobrado) lt = Object.freeze({ ...lt, consequencia: cobrado });
       } catch (e) { calou("EM3 · o preço cobrado na bandeja", e); }
+      /* o «quase» pousa como o que é: passou, pagando (a linha acima diz o preço) */
+      if (lt && fioDoDado && lt.desfecho === "falha") lt = Object.freeze({ ...lt, desfecho: "sucesso" });
       aBandeja(lt);
     }
     /* F4d (19/11): na luta, o teste rolado (Derrubar, Saltar, o que o Mestre
@@ -18950,7 +18965,7 @@ export default function Taverna() {
     let bancasT = [];
     try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas", e); bancasT = []; }
     const ctx = { ficha: f0, intencao: it, chao, presentes: pessoas.map((p) => p && p.nome).filter(Boolean), semente: sementeMundo(), lugar: lugarT, dia: diaRef.current, alvo, bancas: bancasT, moeda: moedaDoMundo() };
-    trocaDoTurnoRef.current = { frase: acao, intencao: it, ctx: { alvo, lugar: lugarT }, veredito: null };
+    trocaDoTurnoRef.current = { frase: acao, intencao: it, ctx: { alvo, lugar: lugarT, presentes: ctx.presentes }, veredito: null };
     if (it.tipo === "furto" || it.tipo === "deGraca") {
       /* o dado decide: com teste, espera a rolagem (resolverATrocaDoDado); sem
          risco (a régua diz que acontece), é sim; sem dado e sem acontecer, o
@@ -18974,7 +18989,7 @@ export default function Taverna() {
     const alvo = des && des.pessoa && des.pessoa.nome ? des.pessoa : des && des.quem ? { nome: des.quem } : (tr.ctx && tr.ctx.alvo) || null;
     let bancasT = [];
     try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas (dado)", e); bancasT = []; }
-    const v = oVereditoDaTroca(frase, { ficha: pers, intencao: tr.intencao, semente: sementeMundo(), lugar: (tr.ctx && tr.ctx.lugar) || "", dia: diaRef.current, alvo, bancas: bancasT, dado: { passou: !!passou }, moeda: moedaDoMundo() });
+    const v = oVereditoDaTroca(frase, { ficha: pers, intencao: tr.intencao, semente: sementeMundo(), lugar: (tr.ctx && tr.ctx.lugar) || "", dia: diaRef.current, alvo, presentes: (tr.ctx && tr.ctx.presentes) || [], bancas: bancasT, dado: { passou: !!passou }, moeda: moedaDoMundo() });
     if (!v || (v.estado !== "aplicada" && v.estado !== "negada")) return null;
     if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
     porNaPautaDoTurno({ acabou: v.fato ? [v.fato] : [], naoPode: v.veto || [] });
@@ -24697,6 +24712,15 @@ export default function Taverna() {
     if (!txt.trim() || txt.trimStart().startsWith("[") || txt.startsWith("/") || combateRef.current) return;
     const nota = (env) => { if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; };
     const vetar = (vs) => { if (vs && vs.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vs]; };
+    /* 21/11 (a nona sessão, T23): o fiado não é compra (bolsa-da-frase.js já não
+       o cobra). Com o Mestre vivo, o veredito da troca diz «Fiado não»; sem ele,
+       a linha e o veto vêm daqui — o jogo de todos também não fia. */
+    try {
+      if (oFiadoDaFrase(txt)) {
+        if (!mestreVivoLigado()) { vetar([O_VEREDITO_DA_TROCA.veto.fiado]); pushMsgs([{ autor: "sistema", texto: O_VEREDITO_DA_TROCA.tela.fiado }]); }
+        return;
+      }
+    } catch (e) { calou("o fiado da frase", e); }
     /* §22: a compra que a frase declarou e o sistema leu (fechando ou não) */
     let houveCompra = false;
     const negar = (c) => { try { if (mestreVivoLigado() && c && !c.fecha) semFolgaDoTurnoRef.current = [...(semFolgaDoTurnoRef.current || []), ...(c.itens || []).map((x) => x.nome), ...(c.daBanca || [])]; } catch (e) { calou("Mestre vivo · o que a compra negou", e); } };

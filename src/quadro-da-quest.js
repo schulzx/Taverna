@@ -70,6 +70,8 @@ import { FASES as FASES_DO_VILAO } from "./vilao.js";
 import { hashSemente, rng } from "./semente.js";
 import { noLugarDoPasso } from "./a-quest-manda.js";
 import { desafioPorPericia, desafioPorId } from "./desafios.js";
+/* 21/11 (a nona sessão, T57): a moeda que a frase dá pela coisa é da compra — uma porta cobra */
+import { aPortaDaMoeda, quemDaFrase } from "./o-veredito-da-troca.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -1044,11 +1046,19 @@ export function aCartaDoGesto(quadros, gesto, onde) {
     const frase = semAc(G.frase);
     const id = Object.keys(GESTOS_DA_CARTA).find((k) => GESTOS_DA_CARTA[k].rx.test(frase));
     if (!id) return null;
+    /* 21/11 (a nona sessão, T57): «dou 10 moedas à vendedora por duas rações»
+       é compra (a bolsa da frase cobra as rações); o suborno é da conversa com
+       dado; o fiado não se paga. Nenhum dos três é «pagar a quem sabe» — o
+       gesto cobrava o preço do caminho por cima, e a bolsa caiu ◉ 20 por ◉ 10. */
+    if (id === "pagar" && aPortaDaMoeda(G.frase)) return null;
     const moedas = typeof G.moedas === "number" && Number.isFinite(G.moedas) ? G.moedas : 0;
     /* o que a frase já deu (a proposta cobrou-o): manda ele, não a bolsa */
     const deu = inteiro(G.pago) > 0 ? inteiro(G.pago) : 0;
     const o = obj(onde) || {};
-    const ctx = { onde: o, cena: aCena(o.emCena), quem: semArtigo(G.quem), texto: G.frase };
+    /* a nona sessão: «dou 10 moedas à vendedora» virava a carta do Kael, que estava em cena —
+       a quem a frase dá a moeda é quem a frase diz (quemDaFrase), não quem calhou estar ali */
+    const quemDito = semArtigo(G.quem) || (() => { const q = quemDaFrase(G.frase, o.emCena); return q ? semArtigo(q.nome) : ""; })();
+    const ctx = { onde: o, cena: aCena(o.emCena), quem: quemDito, texto: G.frase };
     const cands = [];
     for (const x of asViraveis(quadros)) {
       arr(x.C.caminhos).forEach((k, ki) => {
