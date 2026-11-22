@@ -199,6 +199,7 @@ export const O_CONFERENTE = Object.freeze({
     ausente: "Ninguém responde ao chamado.",
     companheiro: "Ninguém paga nem entrega por você.",
     entrega: "Nada passa para a sua mão.",
+    recusa: "A coisa passa para a sua mão.",
   }),
   /* 21/11 (sessão 6 do Mestre vivo): CORTOU, REPÕE. O conferente disparou dez
      vezes e só cortou: a venda, a entrega e o pagamento sumiam e nada dizia o
@@ -212,6 +213,20 @@ export const O_CONFERENTE = Object.freeze({
     /* 21/11 (sessão 7): o companheiro não paga nem entrega por você — {nome} é o primeiro nome dele */
     companheiro: Object.freeze(["{nome} leva a mão à bolsa e para; a decisão é sua.", "{nome} não mexe na bolsa.", "{nome} hesita, e a bolsa fica fechada."]),
   }),
+  /* 22/11 (a décima sessão, T10): A TROCA QUE O SISTEMA FEZ PELO CARTÃO. «vendo
+     duas rações ao elfo» foi vendida pelo cartão «Vender» antes de o turno
+     partir — e a bolsa, lida quando a frase chegou, já tinha as moedas. O
+     conferente não via troca nenhuma (`troca: false`), cortou «Estende-lhe um
+     punhado de coroas…», que era a venda, e repôs «Nada muda de mão», falso. A
+     linha que o sistema escreveu neste turno diz o que mudou de mão: com ela, a
+     troca é aplicada, a moeda que a prosa conta é a dela, e nenhuma linha que
+     negue a troca entra no lugar de uma cortada. */
+  linhaDeTroca: /^(?:🛒 Vendido:|🛒 .+ — ◉ \d+ \(restam ◉|◉ \d+ moedas? mudaram de mão|🤲 Da bolsa|🤲 Você recolhe|🎁 .+ lhe dá:|🤝 .+ passa a você:|🤝 .+ agora é de|✋ Você arranca)/u,
+  moedaDaTroca: Object.freeze(["moeda", "moedas", "coroa", "coroas", "cobre", "cobres", "prata", "pratas", "ouro", "ouros", "tostao", "tostoes", "peca", "pecas", "dinheiro"]),
+  /* as razões cuja linha de reposição nega que algo mudou de mão: nunca com a troca aplicada */
+  negamATroca: Object.freeze(["objeto", "pagamento", "entrega"]),
+  /* a recusa de quem o sistema fez entregar (a décima sessão, T31) */
+  recusaDaEntrega: /\b(agora nao|ainda nao|nao (?:te |lhe |vou )?(?:dou|devolvo|entrego|passo|largo)|nao vou (?:dar|devolver|entregar)|fico com (?:ela|ele|isso|isto|a |o )|guardei|guardo eu|e minha|e meu)\b/,
   /* A FRASE ÓRFÃ: a que vem logo depois de uma cortada e abre referindo o que
      sumiu — o pronome sujeito («Ela espera a resposta»), o «isso», o «com ela
      na mão», o «os olhos dele», ou o gesto sem sujeito («Não tira os olhos de
@@ -769,13 +784,17 @@ export function conferirAProsa(narrativa, ctx) {
        Aplicada: o que ela passou de mão fica na prosa (nada dela se corta).
        Negada: sabe-se que nada mudou de mão por ela, e o fecho inventado sai. */
     const tv = obj(c.troca);
-    const trocaAplicada = !!(tv && tv.estado === "aplicada");
-    const trocaNegada = !!(tv && tv.estado === "negada");
+    /* 22/11 (a décima sessão, T10): a linha de troca que o sistema escreveu neste turno (o cartão da venda) */
+    const linhasDeTroca = arr(c.doSistema).map(txt).filter((l) => C.linhaDeTroca.test(l));
+    const trocaAplicada = !!(tv && tv.estado === "aplicada") || linhasDeTroca.length > 0;
+    const trocaNegada = !!(tv && tv.estado === "negada") && !linhasDeTroca.length;
     const transferiu = trocaAplicada || c.pagou === true || !!(bolsa && (bolsa.ganhou || arr(bolsa.entrou).length));
     const sabeBolsa = trocaNegada || trocaAplicada || c.pagou === true || c.pagou === false || !!(bolsa && bolsa.sabe);
     const semTroca = sabeBolsa && !transferiu;
-    const daTroca = trocaAplicada ? arr(tv.mudou).map((x) => txt(obj(x) ? x.coisa : x)) : [];
-    const doSistema = new Set([...ws(arr(c.doSistema).join(" ")), ...ws(arr(bolsa && bolsa.entrou).join(" ")), ...ws(daTroca.join(" "))].filter((x) => x.length >= 4).map(raiz));
+    const daTroca = tv && tv.estado === "aplicada" ? arr(tv.mudou).map((x) => txt(obj(x) ? x.coisa : x)) : [];
+    /* a moeda da troca aplicada é a que a prosa conta («um punhado de coroas»): o sistema a deu */
+    const moedaDaTroca = trocaAplicada && (linhasDeTroca.some((l) => /◉/.test(l)) || daTroca.includes("moedas")) ? C.moedaDaTroca : [];
+    const doSistema = new Set([...ws(arr(c.doSistema).join(" ")), ...ws(arr(bolsa && bolsa.entrou).join(" ")), ...ws(daTroca.join(" ")), ...moedaDaTroca].filter((x) => x.length >= 4).map(raiz));
     /* a coisa que a troca negada quis guardar, e o furto que não rendeu: a frase que a põe na mochila ou no bolso */
     /* 21/11 (a nona sessão, T21 a vela, T17 o escudo): toda negada que tem coisa (o de graça, o companheiro, o tomar), não só o pegar */
     const coisaNegada = trocaNegada && txt(tv.coisa) ? palavras(txt(tv.coisa)).filter((x) => x.length >= 4 && !VAZIAS.has(x)).map(raiz) : [];
@@ -808,7 +827,16 @@ export function conferirAProsa(narrativa, ctx) {
     const linhaRes = julgou ? linhaDoResultado(familia, c.teste.sucesso, alvo) : "";
     const exitoNaFalha = julgou && c.teste.sucesso === false && C.exitoNaFalha.familias.includes(familia);
     let anterior = "", compAntes = "", cortouACoisa = false;
+    /* 22/11 (a décima sessão, T31): «Isolde, me devolve a maçã» — o sistema
+       passou a maçã («🤝 Isolde passa a você: Maçã seca»), e a prosa a fez
+       recusar («Agora não… Pediste para guardar. Guardei»). O companheiro que o
+       sistema fez entregar não recusa na prosa: a fala ou a frase que recusa sai. */
+    const entregouOComp = !!(tv && tv.estado === "aplicada" && tv.tipo === "companheiro");
     for (const p of pedacos) {
+      if (entregouOComp && C.recusaDaEntrega.test(sem(p.texto)) && !C.daAoHeroi.test(sem(p.nar))) {
+        fora.add(p); razao.set(p, "recusa"); podadas.push({ motivo: "recusa", frase: p.texto.trim() });
+        continue;
+      }
       /* 21/11 (sessão 7, turnos 26 e 29): a fala que só entrega («— Leva.»)
          sem troca nenhuma, numa frase que pediu ou regateou */
       if (semTroca && pediu && (p.fala || p.citacao || p.linhaDeFala)) {
@@ -876,6 +904,8 @@ export function conferirAProsa(narrativa, ctx) {
       if (restoDaFala.has(p)) { repoe.set(p, restoDaFala.get(p).replace(/\s+$/, "")); continue; }
       /* com a troca negada, a linha dela já está na tela: a prosa não repete o sistema */
       if (trocaNegada && txt(tv.linha) && m !== "exito") continue;
+      /* a décima sessão (T10): com a troca aplicada, nenhuma linha diz que nada mudou de mão */
+      if (trocaAplicada && C.negamATroca.includes(m)) continue;
       const linha = m === "exito" ? linhaRes
         /* a fala que entrega só repõe quando nada mais repôs (o gesto ao lado já disse) */
         : m === "entrega" ? (repostas.length ? "" : linhaDeReposicao("objeto", chave))
@@ -965,7 +995,8 @@ export function conferirAProsa(narrativa, ctx) {
     let troca = "", frente = "";
     if (podadas.length && prosa.replace(/\s+/g, " ").trim().length < C.minLetras) {
       prosa = "";
-      if (!linhaRes) troca = C.troca[podadas[0].motivo] || C.troca.fala;
+      /* com a troca aplicada, a linha que nega a troca não entra (a décima sessão, T10) */
+      if (!linhaRes) troca = trocaAplicada && C.negamATroca.includes(podadas[0].motivo) ? "" : C.troca[podadas[0].motivo] || C.troca.fala;
     }
     if (julgou) {
       const chaves = [...(alvo ? chavesDoAlvo(alvo, pessoas) : []), ...palavras(c.coisa).filter((x) => x.length >= 4 && !VAZIAS.has(x))];
