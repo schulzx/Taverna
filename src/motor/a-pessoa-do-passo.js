@@ -196,6 +196,8 @@ export const A_PESSOA_DO_PASSO = Object.freeze({
      fora do EM CENA e sem botão). Quem já anda com o herói não entra: o
      grupo sai antes (aPessoaDoPasso). */
   daQuest: Object.freeze(["conversou", "consultou", "conheceu", "acompanha"]),
+  /* os predicados cujo encontro é no lugar do passo (a décima segunda sessão) */
+  noLugarDoPasso: Object.freeze(["conheceu"]),
 });
 
 /* ONDE ANDA QUEM NÃO ESTÁ NO POSTO (04/11, a 17.ª sessão, defeito 3). A
@@ -406,7 +408,14 @@ function asMissoesDasQuests(e) {
       if (c.predicado && !A_PESSOA_DO_PASSO.daQuest.includes(c.predicado)) continue;
       /* quem o passo pede AO LADO está em casa dela (não no destino da escolta,
          nem no desvio: lá só chega com o herói) */
-      const [casa, cid] = l0 && c.predicado !== "acompanha" ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
+      /* 22/11 (a décima segunda sessão, T25, T26 e a luta): «Encarar a fera na
+         toca» com «consultou(tratador)» punha o Joric, receptador do Pátio das
+         Trocas, na furna, falando — consultar é ir ter com ele. Só o encontro
+         («conheceu»: os da cara tapada esperados na estrada) acontece no lugar
+         do passo; quem tem casa e é consultado ou ouvido está em casa
+         (A_PESSOA_DO_PASSO.noLugarDoPasso) */
+      const noLugar = A_PESSOA_DO_PASSO.noLugarDoPasso.includes(c.predicado) || !limpo(c.onde);
+      const [casa, cid] = l0 && c.predicado !== "acompanha" && noLugar ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
       if (!casa && cid && limpo(e.cidadeAtual) && sem(cid) !== sem(e.cidadeAtual)) continue;
       etapas.push({ tipo: "falar_com", alvo: nome, onde: casa ? (cid ? `${casa}, em ${cid}` : casa) : "", feito: false,
         rotulo: limpo(c.rotulo), depois: limpo(p.depois) });

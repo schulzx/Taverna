@@ -40,6 +40,7 @@ import { CHAVE_FINA_PELO_ALVO } from "./desafios.js";
 import { pechinchar, PECHINCHA_GANHO } from "./comercio.js";
 import { nomeiaACoisa } from "./economia.js";
 import { MANTIMENTO_NA_FRASE } from "./bolsa-da-frase.js";
+import { oNomeDito, quemONomeDiz } from "./quem-esta-aqui.js";
 
 const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -207,6 +208,10 @@ function nomeDaTrocaAusente(frase, cena) {
   const pessoas = arr(lerCena(cena) ? lerCena(cena).pessoas : obj(cena) ? cena.pessoas : null);
   return pessoas.some((x) => obj(x) && txt(x.nome).split(/[\s,()]+/).some((w) => primeiro(w) === p)) ? "" : m[1];
 }
+/* 22/11 (a décima segunda sessão, T3, T4, T9): o nome é lido INTEIRO e decidido
+   por quemONomeDiz (quem-esta-aqui.js) — «Ulric Coração-de-Ferro» não é o Ulric
+   Olho-de-Corvo que está noutro lugar, e o primeiro nome que casa com quem está
+   (a cena, e `presentes`: quem a tela põe em cena) é de quem está */
 export function quemNaoEstaNaCena(frase, cena, ctx) {
   try {
     const c = obj(ctx) ? ctx : {};
@@ -214,10 +219,15 @@ export function quemNaoEstaNaCena(frase, cena, ctx) {
     if (!nome) return null;
     const p = primeiro(nome);
     if (arr(c.protegidos).some((x) => primeiro(x) === p)) return null;
-    const aus = arr(c.ausentes).filter(obj).find((a) => primeiro(a.nome) === p);
-    if (aus) return Object.freeze({ nome: txt(aus.nome) || nome, onde: aus.morto ? "" : txt(aus.onde), morto: !!aus.morto });
-    const conh = arr(c.conhecidos).map((x) => (obj(x) ? txt(x.nome) : txt(x))).find((n) => primeiro(n) === p);
-    return conh ? Object.freeze({ nome: conh, onde: "", morto: false }) : null;
+    const dito = oNomeDito(frase, nome) || nome;
+    const pessoas = arr(lerCena(cena) ? lerCena(cena).pessoas : obj(cena) ? cena.pessoas : null).filter(obj).map((x) => txt(x.nome));
+    const r = quemONomeDiz(dito, {
+      aqui: [...pessoas, ...arr(c.presentes).map((x) => (obj(x) ? txt(x.nome) : txt(x)))].filter(Boolean),
+      longe: arr(c.ausentes).filter(obj),
+      conhecidos: arr(c.conhecidos).map((x) => (obj(x) ? txt(x.nome) : txt(x))).filter(Boolean),
+    });
+    if (r.estado !== "longe") return null;
+    return Object.freeze({ nome: txt(r.nome) || nome, onde: r.morto ? "" : txt(r.onde), morto: !!r.morto });
   } catch {
     return null;
   }
@@ -251,6 +261,16 @@ export const O_PRECO_PERGUNTADO = Object.freeze({
   item: "{nome} ◉ {preco}",
   naoPode: "dizer, em {banca}, outro preço que não o perguntado ({lista})",
 });
+/* 22/11 (a décima segunda sessão, T34): «pergunto à vendedora do balcão de
+   mantimentos quanto custa a ração de viagem e o odre de água» — a prosa disse
+   «sai pelo justo», sem o número do painel. O balcão não é banca (não tem
+   estoque): vira uma, com o nome da tabela, para a mesma pergunta de preço.
+   `balcao`: [{ nome, preco }] (balcaoDeMantimentos, mercado.js) → banca | null */
+export const O_BALCAO_COMO_BANCA = Object.freeze({ nome: "Balcão de mantimentos" });
+export function oBalcaoComoBanca(balcao) {
+  const estoque = arr(balcao).filter((x) => obj(x) && txt(x.nome) && Number.isFinite(Number(x.preco))).map((x) => ({ nome: txt(x.nome), preco: Number(x.preco) }));
+  return estoque.length ? Object.freeze({ nome: O_BALCAO_COMO_BANCA.nome, estoque: Object.freeze(estoque) }) : null;
+}
 export function osPrecosDaPergunta(frase, bancas) {
   try {
     const P = O_PRECO_PERGUNTADO;

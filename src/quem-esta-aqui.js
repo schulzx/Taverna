@@ -160,18 +160,29 @@ export function quemEstaAqui(estado) {
   const outros = arr(e.lugares).filter((l) => ehObj(l) && nomeDe(l) && str(l.onde) !== QUEM_ESTA_AQUI_TABELA.ondeArredor
     && (!L || (semArtigo(l.nome) !== semArtigo(L.nome) && semArtigo(l.nome) !== semArtigo(L.dentroDe))));
   const aqui = [], longe = [...arr(el.longe)];
+  /* 22/11 (a décima segunda sessão, «Quorin» em todo lugar): quem a base põe
+     num posto tem a casa da base, diga o registo o que disser (aCasaNaBase);
+     o companheiro do registo anda com o herói e fica fora desta regra */
+  const casaDe = (n) => {
+    if (/companheir/i.test(str(n.relacao))) return null;
+    try { return aCasaNaBase(nomeDe(n), e.gente); } catch { return null; }
+  };
+  const localDe = (n) => { const c = casaDe(n); return c ? c.local : str(n.local || ""); };
   for (const n of arr(el.aqui)) {
     if (!ehObj(n)) continue;
     if (noGrupo.has(sem(n.nome))) { aqui.push(n); continue; }
-    const local = str(n.local || "");
+    const casa = casaDe(n);
+    const local = casa ? casa.local : str(n.local || "");
     if (fora) {
       if (L && nomeiaSitio(local, L.nome)) { aqui.push(n); continue; }
-      longe.push({ ...n, onde: cidade, dias: 0, laFora: cidade });
+      longe.push({ ...n, onde: cidade, dias: 0, laFora: casa ? casa.local : cidade });
       continue;
     }
     if (L) {
       const posto = outros.find((l) => nomeiaSitio(local, l.nome));
       if (posto && !nomeiaSitio(local, L.nome)) { longe.push({ ...n, onde: cidade, dias: 0, laFora: nomeDe(posto) }); continue; }
+      /* o posto da base vale mesmo que a planta não o liste entre os sítios conhecidos */
+      if (casa && !nomeiaSitio(local, L.nome)) { longe.push({ ...n, onde: cidade, dias: 0, laFora: casa.local }); continue; }
     }
     aqui.push(n);
   }
@@ -205,13 +216,15 @@ export function quemEstaAqui(estado) {
       if (!rot || !str(rot.agora)) return true;
       return rot.agora !== "morreu" && !!rot.noTurno;
     };
+    /* «Quorin» do registo e «Quorin Barba-Ruiva» da base são uma pessoa só (aCasaNaBase) */
+    const ident = (nome) => { let c = null; try { c = aCasaNaBase(nome, e.gente); } catch { c = null; } return sem(c ? c.nome : nome); };
     const por = (nome, rotulo, genero, local) => {
-      if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => mesmo(x.nome, nome)) || doSitio.some((x) => mesmo(x.nome, nome))) return;
+      if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => mesmo(x.nome, nome) || ident(x.nome) === ident(nome)) || doSitio.some((x) => mesmo(x.nome, nome) || ident(x.nome) === ident(nome))) return;
       if (ausentes.some((a) => mesmo(a, nome)) || !deTurno(nome, rotulo, local)) return;
       if (doSitio.length >= QUEM_ESTA_AQUI_TABELA.doSitio.max) return;
       doSitio.push({ nome, rotulo: str(rotulo).trim(), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde });
     };
-    for (const n of aqui) if (ehObj(n) && ali(n.local)) por(nomeDe(n), n.papel, n.genero, n.local);
+    for (const n of aqui) if (ehObj(n) && ali(localDe(n))) { const c = casaDe(n); por(c ? c.nome : nomeDe(n), n.papel, n.genero, localDe(n)); }
     for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero, p.local);
     /* S4e: o posto vazio num lugar com função, à hora do expediente — o
        sistema escala quem o atende (elenco-do-lugar.js). Antes a estalagem
@@ -227,7 +240,13 @@ export function quemEstaAqui(estado) {
   }
   /* quem entra pelo passo, pela carta ou pelo posto não fica no longe */
   const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)) && !doSitio.some((x) => mesmo(x.nome, n && n.nome)));
-  return { aqui, longe: longe2, doPasso, doSitio, noSitio, fora, grupo: grupo.map((g) => nomeDe(g)) };
+  /* 22/11 (a décima segunda sessão): a gente da base com posto NOUTRO sítio (com o
+     herói num sítio ou fora dos muros) — o nome dela que a prosa trouxer não
+     fica «em cena» (em-cena.js, ehLonge) */
+  const postosLonge = (noSitio || fora) ? arr(e.gente).filter((p) => ehObj(p) && nomeDe(p) && str(p.local).trim() && !/morto/i.test(str(p.status))
+    && !(L && nomeiaSitio(p.local, L.nome)) && !noGrupo.has(sem(p.nome)) && !doPasso.some((x) => mesmo(x.nome, p.nome)) && !doSitio.some((x) => mesmo(x.nome, p.nome)))
+    .map((p) => ({ nome: nomeDe(p), onde: str(p.local).trim() })) : [];
+  return { aqui, longe: longe2, doPasso, doSitio, noSitio, fora, grupo: grupo.map((g) => nomeDe(g)), postosLonge };
 }
 
 /* S4c · QUEM AGE AQUI: a lista que o Intérprete (A GENTE) lê. Num sítio da
@@ -291,7 +310,134 @@ export function linhaDeQuemNaoEsta(q, ctx) {
    pauta (motor/pauta-do-turno.js) e para a tela (App#contextoDoEmCena). */
 export function contextoDeQuemEsta(q) {
   const x = ehObj(q) ? q : {};
-  return { presentes: arr(x.aqui), longe: arr(x.longe), doPasso: arr(x.doPasso), doSitio: arr(x.doSitio), foraDaCidade: !!x.fora };
+  return { presentes: arr(x.aqui), longe: arr(x.longe), doPasso: arr(x.doPasso), doSitio: arr(x.doSitio), foraDaCidade: !!x.fora, postosLonge: arr(x.postosLonge) };
+}
+
+/* ============================================================
+   QUEM O NOME DIZ (22/11/2026, a décima segunda sessão do Mestre vivo)
+
+   A sessão (T3, T4, T9): «pergunto a Ulric Coração-de-Ferro…», «furto a bolsa
+   de Ulric Coração-de-Ferro…», «dou 3 moedas a Ulric Coração-de-Ferro…» — e as
+   três linhas disseram «🧭 Ulric Olho-de-Corvo não está aqui». O primeiro nome
+   casava com o primeiro ausente que o tinha, e o resto do nome, que a frase
+   dizia, não era lido: o furto não rolou, o pagamento foi negado com o nome de
+   outro e o conferente cortou a fala de quem estava.
+
+   A regra de mesa, numa função que toda leitura de «quem a frase diz» chama:
+     · o nome dito é lido INTEIRO (o primeiro nome e o que vem colado a ele: o
+       sobrenome, «Coração-de-Ferro», «da Foz», «o Exilado»);
+     · quem tem as palavras ditas é candidato; com o sobrenome dito, quem não o
+       tem não é;
+     · um nome que casa com quem está e com quem não está é QUEM ESTÁ;
+     · dois que estão e a frase não os separa: a linha pergunta qual;
+     · só o ausente casa: está noutro lugar (com onde, se o sistema sabe);
+     · ninguém que o sistema conheça: nada se afirma.
+   ============================================================ */
+export const QUEM_O_NOME_DIZ = Object.freeze({
+  /* as partículas que vivem dentro de um nome («Falk da Foz», «Merek o Exilado») */
+  particulas: Object.freeze(["de", "do", "da", "dos", "das", "o", "a"]),
+  primeiroMinimo: 3,
+  /* a linha da mesa quando dois que estão aqui respondem pelo mesmo nome */
+  qual: "✋ Qual {deles}: {Lista}? Diga o nome inteiro.",
+  deles: "deles",
+  porque: "o nome dito inteiro decide; o primeiro nome que casa com quem está e com quem não está é de quem está",
+});
+const palavrasDoNomeDito = (nome) => sem(str(nome).split(",")[0]).replace(/[^a-z0-9-]+/g, " ").trim().split(" ").filter((w) => w && !QUEM_O_NOME_DIZ.particulas.includes(w));
+/* o nome como a frase o diz, a partir do primeiro nome (com a caixa original):
+   «Ulric Coração-de-Ferro», «Merek o Exilado», «Quorin» → "" se não há */
+export function oNomeDito(frase, primeiro) {
+  try {
+    const f = str(frase);
+    const p = sem(primeiro);
+    if (!f || p.length < QUEM_O_NOME_DIZ.primeiroMinimo) return "";
+    const toks = [...f.matchAll(/[\p{L}][\p{L}'-]*/gu)];
+    for (let i = 0; i < toks.length; i++) {
+      if (sem(toks[i][0]) !== p || !/^\p{Lu}/u.test(toks[i][0])) continue;
+      const out = [toks[i][0]];
+      let j = i + 1;
+      while (j < toks.length) {
+        const entre = f.slice(toks[j - 1].index + toks[j - 1][0].length, toks[j].index);
+        if (!/^\s+$/.test(entre)) break;
+        const w = toks[j][0];
+        if (/^\p{Lu}/u.test(w)) { out.push(w); j++; continue; }
+        /* a partícula só entra com um nome maiúsculo logo depois («da Foz»; «de Ulric» não) */
+        const prox = toks[j + 1];
+        if (QUEM_O_NOME_DIZ.particulas.includes(sem(w)) && prox && /^\s+$/.test(f.slice(toks[j].index + w.length, prox.index)) && /^\p{Lu}/u.test(prox[0])) { out.push(w, prox[0]); j += 2; continue; }
+        break;
+      }
+      return out.join(" ");
+    }
+    return "";
+  } catch { return ""; }
+}
+/* quemONomeDiz(dito, { aqui, longe, conhecidos }) →
+     { estado: "aqui" | "qual" | "longe" | "ninguem", nome, onde, morto, opcoes }
+   `aqui`: os nomes de quem está (a cena, o grupo); `longe`: [{ nome, onde, morto }]
+   (osAusentes); `conhecidos`: os nomes que o sistema sabe que existem (sem onde). */
+export function quemONomeDiz(dito, quem) {
+  const nada = Object.freeze({ estado: "ninguem", nome: "", onde: "", morto: false, opcoes: Object.freeze([]) });
+  try {
+    const W = palavrasDoNomeDito(dito);
+    if (!W.length || W[0].length < QUEM_O_NOME_DIZ.primeiroMinimo) return nada;
+    const q = ehObj(quem) ? quem : {};
+    const cabe = (nome) => { const N = palavrasDoNomeDito(nome); return N.length > 0 && N[0] === W[0] && W.every((w) => N.includes(w)); };
+    const inteiro = (nome) => { const N = palavrasDoNomeDito(nome); return N.length === W.length && N.every((w) => W.includes(w)); };
+    const unicos = (lista) => lista.filter((x, i) => lista.findIndex((y) => palavrasDoNomeDito(nomeDe(y)).join(" ") === palavrasDoNomeDito(nomeDe(x)).join(" ")) === i);
+    const aqui = unicos(arr(q.aqui).filter((x) => cabe(nomeDe(x))));
+    if (aqui.length === 1) return Object.freeze({ estado: "aqui", nome: nomeDe(aqui[0]), onde: "", morto: false, opcoes: Object.freeze([]) });
+    if (aqui.length > 1) {
+      const exato = aqui.filter((x) => inteiro(nomeDe(x)));
+      if (exato.length === 1) return Object.freeze({ estado: "aqui", nome: nomeDe(exato[0]), onde: "", morto: false, opcoes: Object.freeze([]) });
+      return Object.freeze({ estado: "qual", nome: "", onde: "", morto: false, opcoes: Object.freeze(aqui.map((x) => nomeDe(x).split(",")[0].trim())) });
+    }
+    const longe = unicos(arr(q.longe).filter((x) => ehObj(x) && cabe(nomeDe(x))));
+    if (longe.length) {
+      const um = longe.length === 1 ? longe[0] : longe.find((x) => inteiro(nomeDe(x))) || null;
+      if (um) return Object.freeze({ estado: "longe", nome: nomeDe(um), onde: um.morto ? "" : str(um.onde).trim(), morto: !!um.morto, opcoes: Object.freeze([]) });
+      return Object.freeze({ estado: "longe", nome: str(dito).trim(), onde: "", morto: false, opcoes: Object.freeze(longe.map((x) => nomeDe(x))) });
+    }
+    const conh = unicos(arr(q.conhecidos).filter((x) => cabe(nomeDe(x))));
+    if (conh.length) {
+      const um = conh.length === 1 ? conh[0] : conh.find((x) => inteiro(nomeDe(x))) || null;
+      return Object.freeze({ estado: "longe", nome: um ? nomeDe(um) : str(dito).trim(), onde: "", morto: false, opcoes: Object.freeze(um ? [] : conh.map((x) => nomeDe(x))) });
+    }
+    return nada;
+  } catch { return nada; }
+}
+/* a linha da mesa quando dois que estão respondem pelo nome dito */
+export function linhaDeQual(opcoes) {
+  const l = arr(opcoes).map(str).filter(Boolean);
+  if (l.length < 2) return "";
+  const Lista = `${l.slice(0, -1).join(", ")} ou ${l[l.length - 1]}`;
+  return QUEM_O_NOME_DIZ.qual.replace("{deles}", QUEM_O_NOME_DIZ.deles).replace("{Lista}", Lista);
+}
+
+/* ============================================================
+   A CASA DE QUEM TEM POSTO (22/11/2026, a décima segunda sessão)
+
+   «Em cena: Quorin» na Casa do Calafate, no Molhe Velho e no Pátio das Trocas,
+   e «Quorin Barba-Ruiva, Quorin» no Gabinete do Prático, onde ele trabalha. O
+   registo guardava um «Quorin» de primeiro nome só, com paradeiro escrito pela
+   cena (a cidade, ou o sítio onde a prosa o mostrou), e a base do mundo sabe
+   que Quorin Barba-Ruiva tem posto no Gabinete. Dois registos, duas verdades,
+   e o de primeiro nome ia atrás do herói.
+
+   A regra: a gente da base que tem posto (o `local` da base) é ESTA pessoa em
+   qualquer registo que diga o nome dela inteiro, ou só o primeiro nome quando
+   nenhum outro da base o partilha — e a casa dela é a da base. O registo e a
+   prosa não mudam o posto de quem tem posto. → { nome, local } | null */
+export function aCasaNaBase(nome, gente) {
+  try {
+    const W = palavrasDoNomeDito(nome);
+    if (!W.length || W[0].length < QUEM_O_NOME_DIZ.primeiroMinimo) return null;
+    const comPosto = arr(gente).filter((p) => ehObj(p) && nomeDe(p) && str(p.local).trim() && !/morto/i.test(str(p.status)));
+    const inteiro = comPosto.filter((p) => palavrasDoNomeDito(nomeDe(p)).join(" ") === W.join(" "));
+    if (inteiro.length === 1) return { nome: nomeDe(inteiro[0]), local: str(inteiro[0].local).trim() };
+    if (W.length !== 1) return null;
+    const mesmoPrimeiro = arr(gente).filter((p) => ehObj(p) && palavrasDoNomeDito(nomeDe(p))[0] === W[0]);
+    if (mesmoPrimeiro.length !== 1 || !str(mesmoPrimeiro[0].local).trim()) return null;
+    return { nome: nomeDe(mesmoPrimeiro[0]), local: str(mesmoPrimeiro[0].local).trim() };
+  } catch { return null; }
 }
 
 /* ============================================================

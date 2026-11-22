@@ -399,7 +399,21 @@ export function montarEmCena(ctx) {
   const curto = (nome) => norm(String(nome || "").split(",")[0]).trim();
   const longeN = new Set(longeDaHistoria({ longe: c.longe, presentes: c.presentes, nucleo: c.nucleo, espinha: c.espinha, cidade: c.cidade, grupo: [...grupo, ...comigo] })
     .map((x) => curto(nomeDe(x))).filter(Boolean));
-  const ehLonge = (nome) => !comigoN.has(norm(nome)) && longeN.has(curto(nome));
+  /* 22/11 (a décima segunda sessão, «Quorin» em todo lugar): a gente da base com
+     posto noutro sítio (quem-esta-aqui.js, postosLonge) — pelo nome inteiro, ou
+     pelo primeiro nome solto quando só ela o tem — não fica à vista pela prosa */
+  const postosN = arr(c.postosLonge).map((x) => curto(nomeDe(x))).filter(Boolean);
+  const primeirosDosDaqui = new Set([...arr(c.doSitio), ...arr(c.doPasso)].map((x) => palavras(curto(nomeDe(x)))[0]).filter(Boolean));
+  const postoLonge = (nome) => {
+    const k = curto(nome);
+    if (!k || primeirosDosDaqui.has(palavras(k)[0]) && !postosN.includes(k)) return false;
+    if (postosN.includes(k)) return true;
+    const ps = palavras(k);
+    if (ps.length !== 1) return false;
+    const mesmos = postosN.filter((n) => palavras(n)[0] === ps[0]);
+    return mesmos.length === 1;
+  };
+  const ehLonge = (nome) => !comigoN.has(norm(nome)) && (longeN.has(curto(nome)) || postoLonge(nome));
   const O = EM_CENA_DO_LUGAR.ordemDoNome;
   const donos = new Map();
   const dono = (nome, nivel) => {

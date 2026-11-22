@@ -173,8 +173,17 @@ function vaiAntesDeProcurar(t) {
   }
   return false;
 }
+/* 22/11 (a décima segunda sessão, T54): «ameaço Merek o Exilado: conta quem anda
+   atrás de mim ou eu rasgo todos os seus mapas» virou «🔎 Merek o Exilado está
+   aqui», sem dado — o «atrás de» da fala exigida casava o verbo da procura. A
+   frase que abre com ameaça (ou coação) é intimidação: o catálogo a julga, com
+   o dado dela. */
+export const PROCURA_NAO_E_AMEACA = Object.freeze({
+  abre: /^\s*(?:eu\s+)?(?:ameaco|ameacamos|intimido|intimidamos|coajo|coagimos|encosto a (?:faca|lamina|espada|adaga)|pressiono|pressionamos|aperto)\b/,
+});
 export function ehProcura(texto) {
   const t = norm(texto);
+  if (PROCURA_NAO_E_AMEACA.abre.test(t)) return false;
   return VERBOS.test(t) && !vaiAntesDeProcurar(t);
 }
 
@@ -314,6 +323,18 @@ function procurarPeloNome(nome, ctx = {}) {
   if (sit === SITUACOES.morta) {
     const n = Object.values(npcs || {}).find((x) => casa(x && x.nome)) || null;
     return { nome, onde: (n && n.local) || "", situacao: sit, desfecho: "morta" };
+  }
+
+  /* 3b — 22/11 (a décima segunda sessão, T18 e T59): «🔎 Morgane Barba-Ruiva
+     está aqui — Casa do Calafate» dito no Pátio das Trocas, e «🔎 Joric está
+     aqui — Ponta Quebrada» dito na estrada. Os degraus de baixo liam «mora
+     nesta cidade» como «está aqui». Quem a conta única de presença (`longe`:
+     osAusentes, poda-do-ausente.js, sobre quemEstaAqui) sabe noutro sítio está
+     lá — e a resposta diz onde. */
+  const longeAgora = (Array.isArray(ctx && ctx.longe) ? ctx.longe : []).find((x) => x && !x.morto && (norm(x.nome) === alvo || casa(x.nome)));
+  if (longeAgora) {
+    const onde = String(longeAgora.onde || "").trim();
+    return { nome: String(longeAgora.nome), onde, situacao: sit, desfecho: "noutro_lugar", ...(onde ? rumoPara(mapa, onde, origem) : {}) };
   }
 
   /* 4 — no elenco: o jogo sabe quem é e onde foi vista pela última vez */
