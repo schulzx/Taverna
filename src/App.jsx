@@ -299,7 +299,7 @@ import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 /* 21/11 (a oitava sessão do Mestre vivo): a troca sai decidida antes do Narrador */
-import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA, oItemDaFrase } from "./o-veredito-da-troca.js";
+import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA, oItemDaFrase, oFatoDaTroca } from "./o-veredito-da-troca.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
@@ -11556,6 +11556,8 @@ export default function Taverna() {
             } catch (e) { calou("Mestre vivo · as linhas do sistema do turno", e); doSistemaC = []; }
             const cfr = conferirAProsa(resp.narrativa, {
               frase: cf.frase, cena: cf.cena, alvo: cf.alvo, aoGrupo: cf.aoGrupo, coisa: cf.coisa, ausente: cf.ausente || null,
+              /* 21/11 (a nona sessão, T47): com quem o herói falava no turno anterior não fala «fora da vez» */
+              fraseAnterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "",
               negados: semFolgaDoTurnoRef.current || [], teste: testeDoTurnoRef.current,
               posses: [...(Array.isArray(pC.inventario) ? pC.inventario : []), ...Object.values(pC.equipado || {})],
               estado: { ...retratoDoLivro(), personagem: pC, missoes: missoesRef.current, quests: questsRef.current, abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo, baseMundo: baseMundoRef.current },
@@ -18942,7 +18944,7 @@ export default function Taverna() {
       try { salvar({ personagem: np }); } catch (e) { calou("o veredito da troca · gravar", e); }
     }
     if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
-    porNaPautaDoTurno({ acabou: v.fato ? [v.fato] : [], naoPode: v.veto || [] });
+    { const fp = oFatoDaTroca(v); if (fp) porNaPautaDoTurno(fp); } /* a nona sessão: o fato é a 1.ª linha da pauta, de ferro, e fecha a porta barata em NÃO PODE */
     trocaDoTurnoRef.current = { ...(trocaDoTurnoRef.current || {}), veredito: v };
     return np;
   };
@@ -18993,7 +18995,7 @@ export default function Taverna() {
     const v = oVereditoDaTroca(frase, { ficha: pers, intencao: tr.intencao, semente: sementeMundo(), lugar: (tr.ctx && tr.ctx.lugar) || "", dia: diaRef.current, alvo, presentes: (tr.ctx && tr.ctx.presentes) || [], bancas: bancasT, dado: { passou: !!passou }, moeda: moedaDoMundo() });
     if (!v || (v.estado !== "aplicada" && v.estado !== "negada")) return null;
     if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
-    porNaPautaDoTurno({ acabou: v.fato ? [v.fato] : [], naoPode: v.veto || [] });
+    { const fp = oFatoDaTroca(v); if (fp) porNaPautaDoTurno(fp); } /* a nona sessão: o fato é a 1.ª linha da pauta, de ferro, e fecha a porta barata em NÃO PODE */
     trocaDoTurnoRef.current = { ...tr, veredito: v };
     return v;
   };
@@ -25275,7 +25277,7 @@ export default function Taverna() {
   };
   const porNaPautaDoTurno = (pa) => {
     try {
-      if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length)) return;
+      if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length && !(pa.fato || []).length)) return;
       pautaDeUmTurnoRef.current = juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, pa);
     } catch (e) { calou("a pauta do encontro", e); }
   };

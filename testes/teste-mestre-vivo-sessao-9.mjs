@@ -16,9 +16,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  O_VEREDITO_DA_TROCA, aPortaDaMoeda, quemDaFrase, deQuem, oVereditoDaTroca, aIntencaoDaTroca, oSubornoDaFrase, oItemDaFrase,
+  O_VEREDITO_DA_TROCA, aPortaDaMoeda, quemDaFrase, deQuem, oVereditoDaTroca, aIntencaoDaTroca, oSubornoDaFrase, oItemDaFrase, oFatoDaTroca,
 } from "../src/o-veredito-da-troca.js";
-import { compraNaFrase, compraNaBanca, compraSemQuemVenda } from "../src/bolsa-da-frase.js";
+import { textoDaPauta, TETO_DA_PAUTA, SECOES, PRIO_DE_FERRO } from "../src/pauta.js";
+import { PAUTA_DE_UM_TURNO } from "../src/motor/pauta-do-turno.js";
+import { compraNaFrase, compraNaBanca, compraSemQuemVenda, dadivaNaFrase } from "../src/bolsa-da-frase.js";
+import { aMaoDaFrase } from "../src/motor/a-mao-da-frase.js";
 import { aCartaDoGesto } from "../src/quadro-da-quest.js";
 import { FAIXAS_DA_MARGEM, lerAcao } from "../src/desafios.js";
 import { oPagamentoDaFrase } from "../src/motor/o-pagamento-da-frase.js";
@@ -181,6 +184,104 @@ sec("8. T28: tomar da mão de alguém pede dado");
   const nao = oVereditoDaTroca(f, ctx({ dado: { passou: false } }));
   t("falhou: ele segura firme, nada muda de mão", nao && nao.estado === "negada" && nao.ficha === null && /segura firme/.test(nao.linha));
   t("a fiação: tomar espera o dado como o furto, e o dado que decide é o da força", /if \(it\.tipo === "furto" \|\| it\.tipo === "deGraca" \|\| it\.tipo === "tomar"\)/.test(app) && /tipo === "tomar" \? !\(des && des\.id === "forcar"\)/.test(app));
+}
+
+sec("9. a varredura: toda frase de troca das sessões 8 e 9 sai com veredito do sistema");
+{
+  /* a porta que decide a frase, na ordem do turno: a mão da frase (antes do
+     turno), a bolsa da frase (compra, banca, «ninguém vende»), o pagamento, a
+     dádiva, a venda do que é de uso (o cartão), o veredito da troca (com o dado
+     do catálogo quando espera), o suborno (o dado do catálogo) e a venda da bolsa
+     (o cartão, pelo nome casado). "" = a prosa decidiria sozinha. */
+  const aPorta = (frase, cena) => {
+    const f0 = cena.ficha;
+    const bolsa = [...(f0.inventario || []), ...(f0.equipamento || []), ...Object.values(f0.equipados || {})].map((x) => (typeof x === "string" ? x : x.nome));
+    const mao = aMaoDaFrase(frase, { chao: cena.chao || [], bolsa });
+    if (mao.recusa) return "mão: recusa";
+    if (mao.pegar.length) return "mão: apanha";
+    if (compraNaFrase(frase, { balcao: BALCAO, bolsa: f0.moedas, temKit: true, bancas: cena.bancas })) return "compra";
+    if (compraNaBanca(frase, { bancas: cena.bancas, bolsa: f0.moedas })) return "banca";
+    if (compraSemQuemVenda(frase, { bancas: cena.bancas, balcao: BALCAO, comuns: [] })) return "ninguém vende";
+    if (oPagamentoDaFrase(frase, { fator: 1, pouso: null, moeda: "moedas" })) return "pagar";
+    if (dadivaNaFrase(frase, { pessoas: cena.presentes.map((n) => ({ nome: n, companheiro: (f0.grupo || []).some((g) => g.nome === n) })), suprimentos: f0.suprimentos })) return "dádiva";
+    const it = aIntencaoDaTroca(frase, { grupo: f0.grupo });
+    if (it && it.tipo === "vendaDeUso") return "vender (uso)";
+    const lido = lerAcao(frase, { personagem: f0 });
+    const v = oVereditoDaTroca(frase, { ficha: f0, presentes: cena.presentes, chao: (cena.chao || []).map((x) => x.nome), bancas: cena.bancas, semente: "varredura", lugar: "aqui", dia: 1 });
+    if (v && (v.estado !== "pendente" || (lido && lido.tipo === "teste"))) return `troca: ${v.tipo}`;
+    if (oSubornoDaFrase(frase) && lido && lido.tipo === "teste") return "suborno: dado";
+    if (/\bvend/.test(frase.toLowerCase()) && oItemDaFrase(frase, bolsa)) return "vender (bolsa)";
+    return "";
+  };
+  const CENA9 = { ficha: { ...GODFREY, inventario: ["Distintivo do antigo regimento", "Maçã seca"], grupo: [{ ...TORVALD, inventario: ["Distintivo do antigo regimento"] }] }, presentes: [...PRACA, ...DOCA], bancas: [SINO], chao: [] };
+  const QUILLA = { nome: "Quilla", moedas: 15, inventario: ["Bússola empenada"], equipamento: [], equipados: { arma: { nome: "Espada Curta" }, armadura: { nome: "Gibão de Couro" } }, suprimentos: { racoes: 10, agua: 10, tochas: 5, kit: true }, grupo: [{ nome: "Helga", inventario: [] }] };
+  const CALICE = { id: "m2", nome: "O Cálice Silencioso", estoque: [{ nome: "Antídoto", preco: 17 }, { nome: "Ataduras de Linho", preco: 3 }, { nome: "Sais Aromáticos", preco: 19 }] };
+  const CENA8 = { ficha: QUILLA, presentes: ["Freya Punho-de-Pedra", "Fenna Olho-de-Corvo", "Lucan", "Helga", "Eamon"], bancas: [CALICE], chao: [{ id: "m", nome: "Rústico Martelo de Batalha" }] };
+  const S9 = [
+    "dou 5 moedas à vendedora por uma ração de viagem", "dou 3 moedas à vendedora pelos sais aromáticos", "compro uma espada longa da vendedora",
+    "compro duas tochas da vendedora", "dou 2 moedas à vendedora por um odre de água", "vendo duas rações à vendedora", "vendo duas tochas ao ferreiro da Doca Seca",
+    "vendo o distintivo à vendedora", "vendo o couro à vendedora", "dou o distintivo do regimento à Gwynn Mata-Lobos", "dou o distintivo ao Torvald",
+    "Torvald, paga uma caneca de hidromel para mim na taberna", "Torvald, me empresta cinco moedas da sua bolsa", "Torvald, me entrega a sua espada longa",
+    "Torvald, me entrega o seu escudo de ferro", "Torvald, compra uma ração da vendedora com o seu dinheiro e me dá",
+    "peço à vendedora uma amostra dos sais aromáticos, de graça, para provar", "peço à vendedora, de graça, a vela que não derrete",
+    "peço emprestado à vendedora um odre de água, devolvo amanhã", "levo uma ração de viagem da vendedora e pago amanhã, fiado",
+    "pego o mapa da rota de Recife Funda e guardo na mochila", "pego o remo rachado e levo comigo",
+    "pego o frasco de sais aromáticos da banca da vendedora e guardo na mochila", "tomo a faca de peixe da mão do estivador e guardo no cinto",
+    "furto a bolsa de moedas da vendedora sem que ela perceba", "furto a bolsa de moedas da Gwynn", "furto a bolsa de moedas de um dos estivadores",
+    "furto a bolsa do outro estivador", "ofereço 3 moedas ao estivador para ele ficar calado sobre a bolsa", "ofereço 5 moedas à Gwynn para ela esquecer",
+    "ofereço 4 moedas à vendedora para ela não gritar ladrão", "aceito o rosário de marfim que Torvald me estendeu e guardo", "dou a maçã seca ao Kael",
+    "dou o Distintivo do antigo regimento ao Torvald", "Torvald, me devolve o Distintivo do antigo regimento", "furto a bolsa de moedas do Kael",
+    "dou 10 moedas à vendedora por duas rações de viagem", "pego a metade da fruta seca que Ulric deixou na trave e guardo",
+  ];
+  const S8 = [
+    "vendo a minha bússola empenada à vendedora de água", "compro uma corda ao vendedor do mercado", "compro uma poção de cura da mulher do Cálice, pago cinco moedas",
+    "dou três moedas ao vendedor pelas ataduras de linho", "compro um antídoto do vendedor, pago quatro moedas", "pago duas moedas à mulher da banca e levo os sais aromáticos",
+    "peço a Helga que pague uma caneca de hidromel para mim", "peço a Helga que me dê uma das tochas dela", "Helga, me empresta cinco moedas da sua bolsa",
+    "peço a Helga que compre um pedaço de pão da banca com o dinheiro dela", "peço ao tiefling do portal uma amostra do que ele tem, de graça",
+    "regateio com a vendedora de água: um copo de graça, para provar", "pego a lâmina de podão do barril e guardo na mochila",
+    "pego uma das tábuas de Freya e guardo na mochila", "vendo duas rações à vendedora de água", "vendo o meu gibão de couro ao vendedor de água",
+    "furto a bolsa de moedas de Freya sem que ela perceba", "pego o martelo de batalha do chão e guardo na mochila",
+    "vendo o Rústico Martelo de Batalha à Fenna Olho-de-Corvo, a trocadora", "vendo a minha espada curta à Fenna", "vendo um graveto ao Freya",
+    "ofereço duas moedas a Freya para ela fingir que não me viu passar pelo portal fechado", "tento subornar Freya com algum dinheiro para ela me deixar passar pelo portal",
+    "pego a corda curta do caixote e guardo na mochila", "guardo o pedaço de espelho lascado no bolso", "dou uma moeda a Lucan por um odre de água",
+  ];
+  const sem9 = S9.filter((f) => !aPorta(f, CENA9));
+  const sem8 = S8.filter((f) => !aPorta(f, CENA8.ficha.inventario.includes("Rústico Martelo de Batalha") ? CENA8 : (/martelo/i.test(f) && /vendo/.test(f) ? { ...CENA8, ficha: { ...QUILLA, equipamento: ["Rústico Martelo de Batalha"] }, chao: [] } : CENA8)));
+  t(`sessão 9: ${S9.length - sem9.length} de ${S9.length} frases de troca com veredito`, sem9.length === 0, J(sem9));
+  t(`sessão 8: ${S8.length - sem8.length} de ${S8.length} frases de troca com veredito`, sem8.length === 0, J(sem8));
+  t("T2 da sessão 8: «à vendedora de água» não é vender água (o objeto é o que vem depois do verbo)", (aIntencaoDaTroca("vendo a minha bússola empenada à vendedora de água", { grupo: [] }) || {}).tipo !== "vendaDeUso" && aIntencaoDaTroca("vendo duas rações à vendedora de água", { grupo: [] }).id === "racoes");
+  const g = aMaoDaFrase("vendo um graveto ao Freya", { chao: [], bolsa: ["Bússola empenada"] });
+  t("T47 da sessão 8: vender o que não se tem, fora da lista de coisas, também é recusado", g.recusa && /graveto/.test(g.recusa.linha), J(g.recusa));
+  t("e vender o que se tem pelo nome encurtado não é recusado", aMaoDaFrase("vendo o distintivo à vendedora", { chao: [], bolsa: ["Distintivo do antigo regimento"] }).recusa === null);
+}
+
+sec("10. o fato chega ao Narrador como a primeira linha, de ferro, e fecha a porta barata");
+{
+  const v21 = oVereditoDaTroca("peço à vendedora, de graça, a vela que não derrete", ctx({ dado: { passou: true } }));
+  const fp = oFatoDaTroca(v21);
+  t("negada (T21, a vela): «… Narre só isto; nada mais muda de mão.»", fp && fp.fato.length === 1 && fp.fato[0].endsWith(O_VEREDITO_DA_TROCA.fatoFecho) && /nada mudou de mão/i.test(fp.fato[0]) && /Vela que não derrete/.test(fp.fato[0]), J(fp));
+  t("e em NÃO PODE o veto dele e o que fecha a porta barata", fp && fp.naoPode.includes(O_VEREDITO_DA_TROCA.vetoDoFato) && fp.naoPode.length === 2);
+  const comDist = { ...GODFREY, inventario: [], grupo: [{ ...TORVALD, inventario: ["Distintivo do antigo regimento"] }] };
+  const fa = oFatoDaTroca(oVereditoDaTroca("Torvald, me devolve o Distintivo do antigo regimento", ctx({ ficha: comDist })));
+  t("aplicada (T55): o que mudou de mão, com o mesmo fecho", fa && /Distintivo do antigo regimento/.test(fa.fato[0]) && fa.fato[0].endsWith(O_VEREDITO_DA_TROCA.fatoFecho));
+  t("o pendente (à espera do dado) não vai à pauta", oFatoDaTroca(oVereditoDaTroca("furto a bolsa do outro estivador", ctx())) === null && oFatoDaTroca(null) === null);
+  /* a pauta cheia: o ONDE comprido, vetos, a gente, a batida — o fato tem de sair primeiro e inteiro */
+  const cheia = {
+    onde: ["Praça do Ilhéu do Vento Sul, o mercado de peixe e sal".repeat(2), "⌖ junto à fonte", "comporta: correr, cercar, atirar de longe".repeat(3)],
+    naoPode: Array.from({ length: 6 }, (_, i) => `veto de prova número ${i} com corpo suficiente para pesar no teto da pauta deste turno`),
+    gente: Array.from({ length: 6 }, (_, i) => `a gente ${i} faz alguma coisa longa o bastante para empurrar o fato para fora do teto`),
+    momento: ["a batida da espinha, com a obra do antagonista e o que ela custa"],
+    acabou: ["outra coisa que acabou de acontecer"],
+    fato: fp.fato,
+  };
+  const txt = textoDaPauta(cheia, { turno: 21 });
+  const corpoP = txt.slice(txt.indexOf("]") + 1).trim();
+  t("a primeira linha depois da cabeça é «FATO DESTE TURNO: …»", corpoP.startsWith("FATO DESTE TURNO: ") && corpoP.split("\n")[0].includes(O_VEREDITO_DA_TROCA.fatoFecho), corpoP.slice(0, 160));
+  t("e cabe dentro do TETO_DA_PAUTA, com a gente de prio baixa cortada antes dele", txt.length <= TETO_DA_PAUTA + 200 && txt.includes(fp.fato[0]));
+  const s0 = SECOES[0];
+  t("a secção é a primeira da leitura, de ferro, e só existe pelo canal de um turno (nenhum bloco estático)", s0.id === "fato" && s0.prio === PRIO_DE_FERRO && PAUTA_DE_UM_TURNO.secoes.includes("fato"));
+  t("a fiação: o veredito vai à pauta por oFatoDaTroca, antes e depois do dado", (app.match(/const fp = oFatoDaTroca\(v\); if \(fp\) porNaPautaDoTurno\(fp\);/g) || []).length === 2);
+  t("src/prompt.js não muda (o teto é sagrado): nenhuma menção ao fato da troca lá", !/FATO DESTE TURNO/.test(fs.readFileSync(path.join("..", "src", "prompt.js"), "utf8")));
 }
 
 sec("T27: o frasco da banca é da banca (a negativa diz de quem)");

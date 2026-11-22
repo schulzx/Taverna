@@ -262,7 +262,9 @@ sec("12. a fiação: o veredito aplica antes do Narrador, pela porta da ficha vi
   const corpo = (ini, fim = "\n  };\n") => { const i = app.indexOf(ini); return i >= 0 ? app.slice(i, app.indexOf(fim, i)) : ""; };
   const ap = corpo("const aplicarOVereditoDaTroca = (v) => {");
   t("a aplicação grava por mudarFicha (o espelho e o estado de uma vez), nunca só por setPersonagem", /mudarFicha\(v\.ficha\)/.test(ap) && !/setPersonagem\(/.test(ap));
-  t("o fato e o veto vão à pauta de um turno (porNaPautaDoTurno), não a um bloco fixo", /porNaPautaDoTurno\(\{ acabou: v\.fato \? \[v\.fato\] : \[\], naoPode: v\.veto \|\| \[\] \}\)/.test(ap));
+  /* 21/11 (a nona sessão): o fato deixou ACABOU DE (prio 3, cortável) e passou a FATO DESTE TURNO,
+     a 1.ª linha da pauta, de ferro (oFatoDaTroca). A intenção que fica: pelo canal de um turno, nunca bloco fixo. */
+  t("o fato e o veto vão à pauta de um turno (porNaPautaDoTurno), não a um bloco fixo", /const fp = oFatoDaTroca\(v\); if \(fp\) porNaPautaDoTurno\(fp\);/.test(ap));
   t("a linha vai à tela pela forma de sempre (a linha do sistema)", /pushMsgs\(\[\{ autor: "sistema", texto: v\.linha \}\]\)/.test(ap));
   const iMV = app.indexOf("if (mestreVivoLigado()) {\n      try {\n        momentoDoTurnoRef.current = null;");
   const iFC = app.indexOf("fichaDaCenaNoTurno(acao, momentoDoTurnoRef.current)", iMV);

@@ -205,6 +205,15 @@ export function aMaoDaFrase(frase, contexto) {
         if (doChao.length) out.recusa = recusar(verbo, curto(doChao[0]), true);
         else if (cabeca) out.recusa = recusar(verbo, nomeNaFrase(frase, palavras, cabeca) || comArtigo(cabeca), false);
         else if (ehVenda && pronomeSo) out.recusa = recusar(verbo, M.recusa.semNome, false);
+        else if (ehVenda && !pronomeSo) {
+          /* 21/11 (a sessão 8, T47: «vendo um graveto ao Freya»): vender o que não
+             se tem, fora da lista de coisas, ficava sem veredito e a prosa decidia
+             — a coisa dita (artigo + nome, até a quem se vende) é recusada igual */
+          const k = i + 1;
+          const art = M.objeto.slice(0, 8).includes(palavras[k]) ? 1 : 0;
+          const nome = palavras.slice(k + art).join(" ").split(/\s(?:ao|aos|a|as|para|pra|pro|por|e)\s/)[0].split(" ").slice(0, 3).join(" ");
+          if (nome && nome.length >= M.palavraMinima - 1) out.recusa = recusar(verbo, nomeNaFrase(frase, palavras, nome.split(" ")[0]) || `${art ? palavras[k] + " " : ""}${nome}`, false);
+        }
       }
     }
     return out;

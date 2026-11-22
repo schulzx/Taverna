@@ -76,6 +76,10 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   ligaDoNome: Object.freeze(["o", "a", "os", "as", "de", "do", "da", "dos", "das", "e", "meu", "minha", "seu", "sua", "um", "uma"]),
   abreONome: Object.freeze(["rustico", "rustica", "velho", "velha", "pequeno", "pequena", "grande", "simples", "fino", "fina", "bom", "boa", "antigo", "antiga", "novo", "nova", "gasto", "gasta", "surrado", "surrada"]),
   fimDoNome: Object.freeze(["a", "ao", "aos", "as", "para", "pra", "pro", "e", "que", "com", "por", "pelo", "pela", "no", "na", "em", "sem", "se", "mas", "enquanto", "dele", "dela", "ali", "aqui", "agora", "de", "do", "da"]),
+  /* O FATO NA PAUTA (a nona sessão, T21, T34, T55): a primeira linha que o
+     Narrador lê, de ferro, e o veto que fecha a porta barata */
+  fatoFecho: "Narre só isto; nada mais muda de mão.",
+  vetoDoFato: "pôr, tirar ou trocar de mão qualquer coisa ou moeda além do FATO DESTE TURNO — nem a prosa dá o que o sistema negou, nem tira o que ele deu",
   /* «compro duas rações e pago dez moedas»: a moeda é da compra */
   compraDeclarada: /\b(compro|compramos|comprei)\b/,
   /* o que se paga e não se leva na mão: saber (o gesto da carta) */
@@ -186,6 +190,7 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     deGraca: "{Alvo} me deu {Coisa}, de graça; já está na minha mochila.",
     deGracaAli: "{Alvo} me deixou provar ali mesmo; nada foi para a minha mochila.",
     deGracaNao: "{Alvo} não me deu nada de graça: nada mudou de mão.",
+    deGracaCaro: "Pedi {Coisa} de graça, e não me deram: custa ◉ {P}, e continua na banca. Nada mudou de mão.",
     qual: "Eu disse uma coisa que pode ser mais de uma ({Lista}); nada mudou de mão até eu dizer qual.",
     tomar: "Arranquei {Coisa} da mão {doAlvo}; já está comigo. Use exatamente isto.",
     tomarFalhou: "Tentei tomar «{coisa}» da mão {doAlvo} e não consegui: {Alvo} segurou firme. Nada mudou de mão.",
@@ -475,8 +480,13 @@ export function aIntencaoDaTroca(frase, ctx) {
     if (oFiadoDaFrase(t)) return { tipo: "fiado" };
     /* vender o que é de uso */
     if (V.vender.test(t)) {
+      /* só o que se vende, não a quem: «vendo a bússola à vendedora de água» não
+         vende água (a sessão 8, T2, com a leitura de antes) — o objeto é o que
+         vem depois do verbo, até o «a/ao/para» de quem compra */
+      const mObj = t.match(/\b(?:vendo|vendemos|vender|vendi)\s+(?:(?:o|a|os|as|um|uma|meu|minha|meus|minhas)\s+)?(.*)$/);
+      const objV = mObj ? mObj[1].split(/\s(?:ao|aos|a|as|para|pra|pro)\s/)[0] : t;
       for (const u of V.usoDaVenda) {
-        const m = t.match(u.rx);
+        const m = objV.match(u.rx) ? t.match(u.rx) : null;
         if (!m) continue;
         const antes = t.slice(0, m.index).trim().split(/\s+/).slice(-2);
         let q = 0;
@@ -519,6 +529,22 @@ export function aIntencaoDaTroca(frase, ctx) {
 /* ---------------- o veredito, a forma ---------------- */
 const aplicada = (tipo, ficha, mudou, linha, fato, veto) => Object.freeze({ tipo, estado: "aplicada", ficha, mudou: Object.freeze(mudou), linha, fato, veto: veto ? [veto] : [] });
 const negada = (tipo, motivo, linha, fato, veto) => Object.freeze({ tipo, estado: "negada", ficha: null, mudou: Object.freeze([]), motivo, linha, fato, veto: veto ? [veto] : [] });
+
+/* ============================================================
+   oFatoDaTroca(veredito) → null | { fato: [linha], naoPode: [vetos] }
+   O que vai à pauta do turno: o fato na secção FATO DESTE TURNO (a primeira,
+   de ferro: pauta.js), fechado por «Narre só isto; nada mais muda de mão.», e
+   em NÃO PODE o veto do veredito mais o que fecha a porta barata. Só para
+   `aplicada` e `negada` (o pendente espera o dado).
+   ============================================================ */
+export function oFatoDaTroca(v) {
+  const o = obj(v);
+  if (!o || (o.estado !== "aplicada" && o.estado !== "negada") || !str(o.fato).trim()) return null;
+  return Object.freeze({
+    fato: Object.freeze([`${str(o.fato).trim()} ${V.fatoFecho}`]),
+    naoPode: Object.freeze([...arr(o.veto).filter((x) => str(x).trim()), V.vetoDoFato]),
+  });
+}
 
 /* ============================================================
    oButimDoFurto({ semente, alvo, lugar, dia, coisa }) →
@@ -646,7 +672,7 @@ export function oVereditoDaTroca(frase, ctx) {
       const k = qual && qual.i < inv.length ? qual.i : -1;
       if (qual && qual.i >= inv.length) {
         const Coisa = qual.nome;
-        return negada("companheiro", "emUso", tpl(T.companheiroEmUso, { Nome, Coisa }), tpl(F.companheiroNega, { Nome, motivo: tpl(V.motivoCompanheiro.emUso, { Coisa }) }), tpl(X.companheiro, { Nome }));
+        return Object.freeze({ ...negada("companheiro", "emUso", tpl(T.companheiroEmUso, { Nome, Coisa }), tpl(F.companheiroNega, { Nome, motivo: tpl(V.motivoCompanheiro.emUso, { Coisa }) }), tpl(X.companheiro, { Nome })), coisa: Coisa });
       }
       if (k >= 0 && !uso) {
         const nomeItem = nomeDe(inv[k]);
@@ -659,7 +685,7 @@ export function oVereditoDaTroca(frase, ctx) {
         const nomeUso = (V.usoDaVenda.find((u) => u.id === uso) || {}).varios || coisa;
         return negada("companheiro", "uso", tpl(T.companheiroUso, { Nome, coisa: nomeUso }), tpl(F.companheiroNega, { Nome, motivo: tpl(V.motivoCompanheiro.uso, { Coisa: nomeUso }) }), tpl(X.companheiro, { Nome }));
       }
-      return negada("companheiro", "naoTem", tpl(T.companheiroNaoTem, { Nome }), tpl(F.companheiroNega, { Nome, motivo: V.motivoCompanheiro.naoTem }), tpl(X.companheiro, { Nome }));
+      return Object.freeze({ ...negada("companheiro", "naoTem", tpl(T.companheiroNaoTem, { Nome }), tpl(F.companheiroNega, { Nome, motivo: V.motivoCompanheiro.naoTem }), tpl(X.companheiro, { Nome })), coisa: doOriginal(frase, coisa) });
     }
 
     if (it.tipo === "fiado") return negada("fiado", "fiado", T.fiado, F.fiado, X.fiado);
@@ -715,8 +741,8 @@ export function oVereditoDaTroca(frase, ctx) {
       const d = obj(c.dado);
       if (!d) return Object.freeze({ tipo: "tomar", estado: "pendente", ficha: null, mudou: Object.freeze([]), linha: "", fato: "", veto: [] });
       const passou = d.passou === true || d.acontece === true;
-      if (!passou) return negada("tomar", "falhou", tpl(T.tomarFalhou, { Alvo }), tpl(F.tomarFalhou, { Alvo, doAlvo, coisa: coisaT }), X.tomar);
-      if (!V.tomaveis.includes(sem(it.coisa).split(" ")[0])) return negada("tomar", "naoHa", tpl(T.tomarNaoHa, { coisa: coisaT, doAlvo }), tpl(F.tomarNaoHa, { coisa: coisaT, doAlvo }), X.tomar);
+      if (!passou) return Object.freeze({ ...negada("tomar", "falhou", tpl(T.tomarFalhou, { Alvo }), tpl(F.tomarFalhou, { Alvo, doAlvo, coisa: coisaT }), X.tomar), coisa: coisaT });
+      if (!V.tomaveis.includes(sem(it.coisa).split(" ")[0])) return Object.freeze({ ...negada("tomar", "naoHa", tpl(T.tomarNaoHa, { coisa: coisaT, doAlvo }), tpl(F.tomarNaoHa, { coisa: coisaT, doAlvo }), X.tomar), coisa: coisaT });
       const Coisa = maiuscula(coisaT);
       const nova = { ...ficha, inventario: [...arr(ficha.inventario), Coisa] };
       return aplicada("tomar", nova, [{ coisa: Coisa, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.tomar, { Coisa: coisaT, doAlvo }), tpl(F.tomar, { Coisa, doAlvo }), X.tomar);
@@ -733,7 +759,7 @@ export function oVereditoDaTroca(frase, ctx) {
       const doEstoque = arr(c.bancas).flatMap((b) => arr(obj(b) ? b.estoque : null)).map(obj).filter((x) => x && x.nome)
         .filter((x) => nomeiaOItem(frase, x.nome)).sort((a, b) => (Number(a.preco) || 0) - (Number(b.preco) || 0))[0];
       if (doEstoque && (Number(doEstoque.preco) || 0) > V.tetoDaAmostra) {
-        return negada("deGraca", "caro", tpl(T.deGracaCaro, { Coisa: doEstoque.nome, P: Number(doEstoque.preco) || 0 }), tpl(F.deGracaNao, { Alvo }), X.deGraca);
+        return Object.freeze({ ...negada("deGraca", "caro", tpl(T.deGracaCaro, { Coisa: doEstoque.nome, P: Number(doEstoque.preco) || 0 }), tpl(F.deGracaCaro, { Coisa: doEstoque.nome, P: Number(doEstoque.preco) || 0 }), X.deGraca), coisa: doEstoque.nome });
       }
       /* a nona sessão, T22: pediu um odre, entrou uma «Maçã seca» da tabela. A
          coisa dita é a que vem (o que é de uso barato: uma unidade), ou não vem;
@@ -748,7 +774,7 @@ export function oVereditoDaTroca(frase, ctx) {
           return aplicada("deGraca", nova, [{ coisa: usoG.id, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.deGraca, { Alvo, Coisa }), tpl(F.deGraca, { Alvo, Coisa }), X.deGraca);
         }
         const coisaO = doOriginal(frase, coisaG);
-        return negada("deGraca", "naoTem", tpl(T.deGracaNaoTem, { Alvo, coisa: coisaO }), tpl(F.deGracaNaoTem, { coisa: coisaO, Alvo }), X.deGraca);
+        return Object.freeze({ ...negada("deGraca", "naoTem", tpl(T.deGracaNaoTem, { Alvo, coisa: coisaO }), tpl(F.deGracaNaoTem, { coisa: coisaO, Alvo }), X.deGraca), coisa: coisaO });
       }
       const item = doEstoque ? (() => { const { preco, detalhe, ...limpo } = doEstoque; return limpo; })() : V.amostras[Math.floor(sorteDe(`${chave}|amostra|${sem(Alvo)}`) * V.amostras.length)];
       const nomeItem = nomeDe(item);

@@ -156,7 +156,11 @@ for (const f of PECA) for (const s of Object.keys(f.pautaObj || {})) vivos[s] = 
    gravados é um turno de volta; o dourado fica byte a byte o de antes. A
    prova dela pela mesma aPautaDoTurno, e a medida contra o teto, é
    teste-registro-da-sessao.mjs (a secção «a linha da volta na pauta»). */
-const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso", "nomes", "ultimaVez"];
+/* MOVIDA (21/11, a nona sessão do Mestre vivo): e O FATO DESTE TURNO — a secção só se escreve
+   pelo canal de um turno quando o veredito da troca decide (aplicada ou negada), e nenhum dos
+   casos gravados tem troca; o dourado fica byte a byte o de antes. A prova dela (a 1.ª linha,
+   de ferro, dentro do teto) é teste-mestre-vivo-sessao-9.mjs §10. */
+const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso", "nomes", "ultimaVez", "fato"];
 const POUCOS = SECOES.map((s) => s.id).filter((s) => !FALTAM.includes(s) && !(vivos[s] >= 5));
 t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que nenhum sítio da pauta escreve)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
   SECOES.map((s) => `${s.id} ${vivos[s.id] || 0}`).join(" · "));
@@ -295,7 +299,10 @@ sec("9. O canal de um turno (CB lote 2) — o encontro já não vai emprestado p
 {
   /* CB lote 2 (10/11): `pautaDeUmTurno` ({ acabou, naoPode }) é consumido no
      sítio do crime, com as mesmas secções, uma vez só, e limpo. */
-  t("as secções do canal são as duas que a pauta já tem para isto", JSON.stringify(PAUTA_DE_UM_TURNO.secoes) === JSON.stringify(["acabou", "naoPode"]) && PAUTA_DE_UM_TURNO.secoes.every((x) => SECOES.some((s) => s.id === x)));
+  /* 21/11 (a nona sessão do Mestre vivo): o canal ganhou «fato» — a troca que o sistema decidiu,
+     a 1.ª linha da pauta (FATO DESTE TURNO, de ferro). A intenção que fica: o canal só escreve
+     em secções que a pauta já tem, e nenhum bloco estático nasce dele. */
+  t("as secções do canal são as que a pauta tem para isto (o fato da troca, ACABOU DE e NÃO PODE)", JSON.stringify(PAUTA_DE_UM_TURNO.secoes) === JSON.stringify(["fato", "acabou", "naoPode"]) && PAUTA_DE_UM_TURNO.secoes.every((x) => SECOES.some((s) => s.id === x)));
   const j = juntarNaPautaDeUmTurno({ acabou: ["o lobo uivou"] }, { acabou: "a ponte rangeu", naoPode: ["não abra luta"], outra: ["fica de fora"] });
   t("juntar soma ao que já lá estava, sem apagar, e só as duas secções", JSON.stringify(j) === JSON.stringify({ acabou: ["o lobo uivou", "a ponte rangeu"], naoPode: ["não abra luta"] }));
   t("juntar nada dá nada, e o lixo não estoura", juntarNaPautaDeUmTurno(null, null) === null && juntarNaPautaDeUmTurno([], "x") === null && juntarNaPautaDeUmTurno({ acabou: [3, "", null] }, {}) === null);

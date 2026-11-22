@@ -241,7 +241,9 @@ export const REFS_DA_PAUTA = Object.freeze({
    estiver (dois órgãos no mesmo clique não se apagam), devolve objeto novo,
    e lixo é nada. Quem escreve: `pautaDeUmTurnoRef.current =
    juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, { acabou, naoPode })`. */
-export const PAUTA_DE_UM_TURNO = Object.freeze({ secoes: Object.freeze(["acabou", "naoPode"]) });
+/* 21/11 (a nona sessão): e `fato` — a troca que o sistema decidiu, a primeira
+   linha da pauta, de ferro (pauta.js, SECOES) */
+export const PAUTA_DE_UM_TURNO = Object.freeze({ secoes: Object.freeze(["fato", "acabou", "naoPode"]) });
 const linhasDe = (x) => (Array.isArray(x) ? x : typeof x === "string" && x.trim() ? [x] : []).filter((l) => typeof l === "string" && l.trim());
 export function juntarNaPautaDeUmTurno(atual, mais) {
   const a = atual && typeof atual === "object" && !Array.isArray(atual) ? atual : {};
