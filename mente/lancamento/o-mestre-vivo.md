@@ -1902,3 +1902,30 @@ quest; o nome do herói é sorteado de novo ao trocar o gênero do mundo (causa 
 tela).
 
 **Não verificado até a décima segunda sessão:** nada disso foi jogado contra um Narrador real.
+
+## 32. Quem está em cena: uma função só (23/11/2026)
+
+A décima segunda sessão (v9.670) não avançou: as trocas ficaram em 22 de 33 pela segunda vez e o dado
+caiu para 51 de 55 (3 sem dado, 1 indevido). Confirmou os consertos da seção 31 (o alvo do furto, a
+moeda posta na mesa em 4 de 4, a venda que diz a quem em 4 de 5, a carta que não engole frase), e
+mostrou a causa do patamar: **o sistema errava quem está presente**, e furto, pagamento, venda, fala e
+o corte da rede erravam juntos. Das 11 discordâncias, 6 nasceram no sistema.
+
+**A presença (`3822545` a `90a1345`).** `quemEstaAqui` já era a conta única; o nome dito numa frase
+passou a decidir-se também numa função só, `quemONomeDiz`: lê o nome inteiro, o presente ganha do
+ausente, e com dois presentes de mesmo nome a linha pergunta qual. Seis leitores casavam pelo primeiro
+nome ou por regra própria (o ausente e o alvo do veredito, a procura, que lia «mora nesta cidade» como
+«está aqui», a pessoa do passo, o registro) e passaram a ler dali. Isso fecha o homônimo (os dois
+Ulric), a pessoa presa «em cena» em todo lugar e a linha de procura que dizia «está aqui» de quem
+estava longe. Vale para todos.
+
+**O resto.** O tomar do que não se segura («a coragem») é negado antes do dado; «pego… às escondidas»
+é furto; a frase que abre com ameaça rola Intimidação e não é procura; a companheira citada num pedido
+não é alvo; a fera abatida tira da carta o caminho que a quer viva e vai em `naoPode`; com quest no
+primeiro ato, a pessoa e o título da abertura vêm dela (só em campanha nova); a linha «Não contou» não
+sai mais num suborno que passou.
+
+**Sem conserto:** a chegada com duas narrações (suspeita: o confronto da quest narra logo depois; sem
+prova), a pista com zero caminhos, o furto cuja prosa repete a do furto anterior.
+
+**Não verificado até a décima terceira sessão:** nada disso foi jogado contra um Narrador real.
