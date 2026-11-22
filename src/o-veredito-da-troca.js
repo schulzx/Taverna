@@ -166,7 +166,17 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     companheiroNaoTem: "🤝 {Nome} não tem isso consigo.",
     companheiroEmUso: "🤝 {Nome} usa {Coisa} e não a tira de si para dar.",
     qual: "✋ Qual deles: {Lista}? Diga o nome inteiro.",
-    tomar: "✋ Você arranca {Coisa} da mão {doAlvo}.",
+    /* a décima sessão (T44): «Você arranca faca da mão da mulher» — a coisa vai com o artigo que a frase disse */
+    tomar: "✋ Você arranca {aCoisa} da mão {doAlvo}.",
+    /* a décima sessão (T55): o que se veste não se dá numa frase */
+    darEmUso: "🤝 Você usa {Coisa}: tire antes de dar.",
+    /* a décima sessão (T29, T41): o que já se conseguiu aqui não vem de novo — o
+       «já tentou e não deu» tem a sua própria linha na tela, e ela basta */
+    repetidaFeita: Object.freeze({
+      deGraca: "🎁 Isso já lhe deram aqui: não dão de novo.",
+      tomar: "✋ Isso já está com você: não há o que tomar de novo.",
+      furto: "🤲 Essa bolsa já passou pela sua mão: não sobrou o que levar.",
+    }),
     tomarFalhou: "✋ {Alvo} segura firme: a mão volta vazia.",
     tomarNaoHa: "✋ Não há {coisa} na mão {doAlvo} que se tome.",
     deGracaNaoTem: "🎁 {Alvo} não tem {coisa} para dar.",
@@ -201,6 +211,12 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     tomarFalhou: "Tentei tomar «{coisa}» da mão {doAlvo} e não consegui: {Alvo} segurou firme. Nada mudou de mão.",
     tomarNaoHa: "Quis tomar «{coisa}» da mão {doAlvo}, mas não há tal coisa ali: nada mudou de mão.",
     deGracaNaoTem: "Pedi {coisa} de graça, e {Alvo} não tem isso para me dar: nada mudou de mão.",
+    darEmUso: "Quis dar {Coisa}, mas estou usando: não dei, e nada mudou de mão.",
+    /* a décima sessão (T29, T44): a tentativa repetida que o livro barrou não aplica o ganho */
+    repetidaFalhou: "Tentei de novo, do mesmo jeito, e não deu: nada mudou de mão.",
+    repetidaFeita: "Pedi de novo o que já tinha conseguido aqui, e não veio mais nada: nada mudou de mão.",
+    /* a décima sessão (T15): quem a frase nomeia e o sistema sabe noutro lugar não recebe nem dá nada */
+    ausente: "{Nome} não está aqui: não houve com quem trocar, e nada mudou de mão.",
   }),
   veto: Object.freeze({
     pegar: "pôr «{coisa}» na minha mochila, no meu bolso ou na minha mão",
@@ -211,7 +227,23 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     deGraca: "pôr nas minhas mãos outra coisa dada de graça além do que está dito",
     qual: "entregar, vender ou tirar da bolsa {Lista} nesta resposta",
     tomar: "pôr nas minhas mãos outra coisa tomada além do que está dito",
+    repetida: "fazer dar certo agora o que já foi tentado e negado, ou dar de novo o que já foi dado",
+    ausente: "pôr {Nome} nesta cena para receber, dar, aceitar ou recusar qualquer coisa",
   }),
+  /* A TENTATIVA REPETIDA (a décima sessão, T29 e T44): o livro de tentativas
+     barrou a frase («↺ Desse jeito você já tentou aqui, e não deu») e a régua
+     disse que acontece sem dado — e o veredito da troca lia «acontece» como
+     sim: a Maçã seca e a Faca entraram na mochila ao lado da linha que dizia
+     que não deu. O veredito do catálogo manda: o que ele barrou não ganha. */
+  dadoDaTroca: Object.freeze({
+    comDado: Object.freeze(["furto", "deGraca", "tomar"]),
+    /* o «livre» com chave é «isso você já conseguiu aqui» (desafios.js) */
+    jaFeito: "livre",
+    jaTentou: "jaTentou",
+  }),
+  /* a décima sessão (T42): «uma das cordas da banca» — a coisa pedida é «cordas»;
+     o «da banca» diz onde ela está, e a linha não o repete */
+  coisaSemBanca: /\s+d[ao]s?\s+(?:banca|bancas|balcao|loja|tenda|barraca|prateleira|mesa)(?:\s.*)?$/,
   /* A BUSCA QUE NÃO ACHOU (a oitava sessão, T18): «olho dentro dos barris» sem
      dado, e a prosa pôs «uma lâmina de podão encostada na borda» — que o
      jogador tentou levar no turno seguinte. A busca sem achado diz ao Narrador,
@@ -430,11 +462,13 @@ function coisaDoPedido(frase, presentes) {
     if (w) t = t.replace(new RegExp(`\\b(?:a|ao|as|aos|da|do|de)?\\s*(?:o |a )?${w}\\b`), " ");
   }
   t = t.replace(/\b(?:de graca|gratis|gratuitamente|emprestad[oa]s?|de presente|para provar|pra provar|para experimentar|por favor)\b/g, " ").replace(/\s+/g, " ");
-  const m = t.match(/\b(?:peco|pedimos|quero|me da|me de|me empresta|me empreste|me arruma)\b[^.!?;]*?\b(?:um|uma|uns|umas|o|a|os|as)\s+([a-z]+(?:\s+(?:de|que)\s+[a-z]+)?(?:\s+[a-z]+)?)/);
+  /* a décima sessão (T29, T42): «uma amostra das ervas», «uma das cordas da banca» —
+     o «das» do meio liga, o do começo pula, e o «da banca» do fim é lugar */
+  const m = t.match(/\b(?:peco|pedimos|quero|me da|me de|me empresta|me empreste|me arruma)\b[^.!?;]*?\b(?:um|uma|uns|umas|o|a|os|as)\s+(?:d[aeo]s\s+)?([a-z]+(?:\s+(?:de|da|do|das|dos|que)\s+[a-z]+)?(?:\s+[a-z]+)?)/);
   if (!m) return "";
   const out = [];
-  for (const w of m[1].split(" ")) { if (/^(a|ao|as|aos|para|pra|e|com|se|mas)$/.test(w)) break; out.push(w); }
-  while (out.length && /^(de|que)$/.test(out[out.length - 1])) out.pop();
+  for (const w of m[1].replace(V.coisaSemBanca, "").split(" ")) { if (/^(a|ao|as|aos|para|pra|e|com|se|mas)$/.test(w)) break; out.push(w); }
+  while (out.length && /^(de|da|do|das|dos|que)$/.test(out[out.length - 1])) out.pop();
   const coisa = out.join(" ");
   return /^(do|da|de|que|isso|algo|nada|um|uma)$/.test(coisa.split(" ")[0] || "") ? "" : coisa;
 }
@@ -464,6 +498,7 @@ function classeDaVitima(alvo) {
      fiado        {}
      furto        { coisa }      (o veredito espera o dado)
      deGraca      { coisa }      (o veredito espera o dado)
+     suborno      {}             (o dado é do catálogo; o veredito só nega a quem não está)
      vendaDeUso   { id, quantos, nome }
    ============================================================ */
 export function aIntencaoDaTroca(frase, ctx) {
@@ -483,6 +518,9 @@ export function aIntencaoDaTroca(frase, ctx) {
       if (ehMoeda || coisa) return { tipo: "companheiro", quem: nomeDe(comp), oQue: ehMoeda ? "moeda" : "coisa", coisa: ehMoeda ? "" : coisa };
     }
     if (oFiadoDaFrase(t)) return { tipo: "fiado" };
+    /* a décima sessão (T15): o suborno é lido aqui também — o dado é do catálogo
+       (desafios.js), mas a quem ele vai (o ausente) é do veredito */
+    if (oSubornoDaFrase(frase, c.moeda)) return { tipo: "suborno" };
     /* vender o que é de uso */
     if (V.vender.test(t)) {
       /* só o que se vende, não a quem: «vendo a bússola à vendedora de água» não
@@ -552,6 +590,37 @@ export function oFatoDaTroca(v) {
 }
 
 /* ============================================================
+   oDadoDaTrocaSemRolar(tipo, porta, vCatalogo) →
+     "espera" | "acontece" | "jaTentou" | "jaFeito" | "nao" | "fora" | ""
+   O que o veredito da troca recebe como dado ANTES de o jogador rolar, para
+   o furto, o de graça e o tomar (os outros tipos não esperam dado: ""):
+     "espera"   — há teste (a régua rola, ou o catálogo diz teste): o veredito
+                  vem depois do dado (resolverATrocaDoDado);
+     "jaTentou" — o livro de tentativas barrou («↺ você já tentou aqui, e não
+                  deu»): negada, nada entra (a décima sessão, T29 e T44);
+     "jaFeito"  — o livro diz «isso você já conseguiu aqui»: não vem de novo;
+     "acontece" — sem risco (a régua diz que acontece): sim;
+     "nao"      — o de graça sem dado e sem acontecer: não;
+     "fora"     — o furto e o tomar sem dado e sem acontecer: não houve.
+   `porta`: a do momento (oQueOMomentoFaz); `vCatalogo`: o veredito que a régua
+   julgou (momento.veredito) ou o do catálogo de hoje. O livro manda antes da
+   porta: o «acontece» da régua sobre um «jaTentou» é a régua dizendo que a
+   tentativa de antes continua valendo — e ela não deu.
+   ============================================================ */
+export function oDadoDaTrocaSemRolar(tipo, porta, vCatalogo) {
+  try {
+    const D = V.dadoDaTroca;
+    if (!D.comDado.includes(tipo)) return "";
+    const v = obj(vCatalogo);
+    if (v && v.tipo === D.jaTentou && !v.apósSucesso) return "jaTentou";
+    if (v && v.tipo === D.jaFeito && v.chave) return "jaFeito";
+    if (porta === "rola" || (porta !== "acontece" && v && v.tipo === "teste")) return "espera";
+    if (porta === "acontece") return "acontece";
+    return tipo === "deGraca" ? "nao" : "fora";
+  } catch { return ""; }
+}
+
+/* ============================================================
    oButimDoFurto({ semente, alvo, lugar, dia, coisa }) →
      { moedas, item, nada, semACoisa }
    Por semente: o mesmo furto (mundo, vítima, lugar, dia) dá o mesmo butim.
@@ -609,6 +678,34 @@ export function quemDaFrase(frase, presentes) {
 }
 
 /* ============================================================
+   oCompradorDaFrase(frase, pessoas) → "" | o nome de quem compra
+   A décima sessão (T10, T32, T48, T57): «vendo a maçã a Rhogar», «vendo duas
+   rações ao elfo» — a linha dizia «Vendido… à Vela Silenciosa», a banca cujo
+   preço a venda usa. Quem a frase diz que compra, se está na cena (pelo nome,
+   ou pelo papel que alguém da cena tem), é quem a linha diz; senão, "" e fica
+   a banca. `pessoas`: [{ nome, papel }] de quem está.
+   ============================================================ */
+export function oCompradorDaFrase(frase, pessoas) {
+  try {
+    const t = sem(frase).replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ");
+    const mV = t.match(/\b(?:vendo|vendemos|vender|vendi)\b(.*)$/);
+    if (!mV) return "";
+    const resto = ` ${mV[1].trim()} `;
+    const ps = arr(pessoas).map((p) => (obj(p) ? p : { nome: str(p) })).filter((p) => str(p.nome).trim());
+    for (const p of ps) {
+      const w = primeiro(p.nome);
+      if (w.length >= 3 && new RegExp(`\\s(?:a|ao|para|pra|pro)\\s+(?:o\\s+|a\\s+)?${w}\\b`).test(resto)) return str(p.nome).split(",")[0].trim();
+    }
+    const mP = resto.match(/\s(ao|a|pro|pra|para o|para a)\s+([a-z]{3,})\s*$/);
+    if (!mP || V.naoEAlvo.includes(mP[2])) return "";
+    const papel = mP[2];
+    const quem = ps.find((p) => sem(`${str(p.papel)} ${str(p.nome)}`).split(/[^a-z]+/).includes(papel));
+    if (!quem) return "";
+    return /^(o|a|os|as)\s/i.test(str(quem.nome)) || !/^[A-ZÀ-Ý]/.test(str(quem.nome)) ? `${/^(a|para a)$/.test(mP[1]) ? "a" : "o"} ${papel}` : str(quem.nome).split(",")[0].trim();
+  } catch { return ""; }
+}
+
+/* ============================================================
    oVereditoDaTroca(frase, ctx) → null | veredito
    ctx: {
      ficha     — a do herói (moedas, inventario, equipamento, equipados, suprimentos, grupo);
@@ -635,6 +732,25 @@ export function oVereditoDaTroca(frase, ctx) {
     const T = V.tela, F = V.fato, X = V.veto;
     const chave = `${str(c.semente)}|${sem(frase)}|${Number(c.dia) || 0}`;
     const naBolsa = [...arr(ficha.inventario), ...arr(ficha.equipamento), ...Object.values(obj(ficha.equipados) || {})].map(nomeDe).filter(Boolean);
+    const t0 = sem(frase);
+    /* a décima sessão (T15): «ofereço 5 moedas a Kael para ele esquecer» — o Kael
+       que o sistema sabe noutro lugar (quemNaoEstaNaCena) não recebe nem dá nada,
+       e a moeda não sai: negada antes de qualquer dado */
+    const aus = obj(c.ausente) && str(c.ausente.nome).trim() ? c.ausente : null;
+    const wAus = aus ? primeiro(aus.nome) : "";
+    if (wAus.length >= 3 && ["suborno", "deGraca", "tomar", "furto", "dar"].includes(it.tipo) && new RegExp(`\\b${wAus}\\b`).test(t0)) {
+      const Nome = str(aus.nome).split(",")[0].trim();
+      return negada(it.tipo, "ausente", "", tpl(F.ausente, { Nome }), tpl(X.ausente, { Nome }));
+    }
+    /* o suborno a quem está é conversa com dado (desafios.js): o veredito não o decide */
+    if (it.tipo === "suborno") return null;
+    /* a décima sessão (T29, T44): a tentativa que o livro barrou (`dado.repetida`,
+       oDadoDaTrocaSemRolar) não aplica o ganho — nem a Maçã seca, nem a Faca */
+    const d0 = obj(c.dado);
+    if (d0 && d0.repetida && V.dadoDaTroca.comDado.includes(it.tipo)) {
+      const feita = d0.repetida === "jaFeito";
+      return negada(it.tipo, "repetida", feita ? str(T.repetidaFeita[it.tipo]) : "", feita ? F.repetidaFeita : F.repetidaFalhou, X.repetida);
+    }
 
     if (it.tipo === "pegar") {
       const coisa = it.coisa;
@@ -696,28 +812,44 @@ export function oVereditoDaTroca(frase, ctx) {
     if (it.tipo === "fiado") return negada("fiado", "fiado", T.fiado, F.fiado, X.fiado);
 
     if (it.tipo === "dar") {
-      /* a coisa: só da mochila (o que está vestido não se dá numa frase), e a quem: alguém da cena ou do grupo */
-      const inv = arr(ficha.inventario);
+      /* a coisa: da mochila e do equipamento que se carrega (a décima sessão, T55:
+         o Escudo de Placas apanhado do chão mora em `equipamento`, e «dou o escudo
+         à Isolde» saía sem veredito — a prosa entregou); o que está vestido não se
+         dá numa frase. A quem: alguém da cena ou do grupo */
+      const inv = arr(ficha.inventario), eqp = arr(ficha.equipamento);
+      const todos = [...inv, ...eqp];
+      const vestidos = Object.values(obj(ficha.equipados) || {}).map(nomeDe).filter(Boolean);
       /* a nona sessão, T12 e T13: «dou o distintivo ao Torvald» — o nome encurtado casa pela palavra principal */
-      const qualD = oItemDaFrase(frase, inv);
+      const qualD = oItemDaFrase(frase, [...todos.map(nomeDe), ...vestidos]);
       if (qualD && qualD.ambiguos) {
         const Lista = qualD.ambiguos.join(" ou ");
         return negada("dar", "qual", tpl(T.qual, { Lista }), tpl(F.qual, { Lista }), tpl(X.qual, { Lista }));
       }
-      const k = qualD ? { raw: inv[qualD.i], i: qualD.i, n: nomeDe(inv[qualD.i]) } : null;
-      if (!k) return null;
-      const t0 = sem(frase);
+      if (!qualD) return null;
       const grupo = arr(ficha.grupo).filter((g) => obj(g) && nomeDe(g));
       const g = grupo.find((x) => primeiro(nomeDe(x)) && new RegExp(`\\b${primeiro(nomeDe(x))}\\b`).test(t0));
       const quem = g ? nomeDe(g) : arr(c.presentes).map(str).find((p) => primeiro(p).length >= 3 && new RegExp(`\\b${primeiro(p)}\\b`).test(t0)) || "";
       if (!quem) return null;
+      if (qualD.i >= todos.length || vestidos.includes(nomeDe(todos[qualD.i]))) {
+        const Coisa = qualD.nome;
+        return Object.freeze({ ...negada("dar", "emUso", tpl(T.darEmUso, { Coisa }), tpl(F.darEmUso, { Coisa }), tpl(X.dar, { Coisa })), coisa: Coisa });
+      }
+      const doEqp = qualD.i >= inv.length;
+      const k = { raw: todos[qualD.i], i: doEqp ? qualD.i - inv.length : qualD.i, n: nomeDe(todos[qualD.i]) };
       const Quem = quem.split(",")[0];
-      const nova = { ...ficha, inventario: inv.filter((_, i) => i !== k.i), ...(g ? { grupo: arr(ficha.grupo).map((x) => (x === g ? { ...g, inventario: [...arr(g.inventario), k.raw] } : x)) } : {}) };
+      const nova = { ...ficha, ...(doEqp ? { equipamento: eqp.filter((_, i) => i !== k.i) } : { inventario: inv.filter((_, i) => i !== k.i) }), ...(g ? { grupo: arr(ficha.grupo).map((x) => (x === g ? { ...g, inventario: [...arr(g.inventario), k.raw] } : x)) } : {}) };
       return aplicada("dar", nova, [{ coisa: k.n, quantos: 1, de: "heroi", para: Quem }], tpl(T.dar, { Coisa: maiuscula(k.n), Quem }), tpl(F.dar, { Coisa: k.n, Quem }), tpl(X.dar, { Coisa: k.n }));
     }
 
     /* o alvo: o que veio (a régua, o desafio), ou quem a frase aponta */
-    const alvoC = obj(c.alvo) && str(c.alvo.nome).trim() ? c.alvo : str(c.alvo).trim() ? { nome: str(c.alvo) } : quemDaFrase(frase, c.presentes);
+    /* a décima sessão (T60): «furto a bolsa de moedas do mercador da Guarnição»
+       virou furto do guarda Merek — o alvo da régua era quem estava em cena, e a
+       frase dizia outro. Quem a frase diz (o nome ou o papel) ganha do alvo que
+       veio, quando o que veio não é dito na frase nem pelo nome nem pelo papel */
+    const doCtx = obj(c.alvo) && str(c.alvo.nome).trim() ? c.alvo : str(c.alvo).trim() ? { nome: str(c.alvo) } : null;
+    const daFrase = quemDaFrase(frase, c.presentes);
+    const ditoNaFrase = (a) => !!a && ((primeiro(a.nome).length >= 3 && new RegExp(`\\b${primeiro(a.nome)}\\b`).test(t0)) || (sem(a.papel).length >= 3 && t0.includes(sem(a.papel))));
+    const alvoC = doCtx && (ditoNaFrase(doCtx) || !daFrase) ? doCtx : daFrase || doCtx;
     if (it.tipo === "furto") {
       const Alvo = nomeDoAlvo(alvoC);
       const doAlvo = deQuem(str(alvoC && alvoC.nome));
@@ -750,7 +882,9 @@ export function oVereditoDaTroca(frase, ctx) {
       if (!V.tomaveis.includes(sem(it.coisa).split(" ")[0])) return Object.freeze({ ...negada("tomar", "naoHa", tpl(T.tomarNaoHa, { coisa: coisaT, doAlvo }), tpl(F.tomarNaoHa, { coisa: coisaT, doAlvo }), X.tomar), coisa: coisaT });
       const Coisa = maiuscula(coisaT);
       const nova = { ...ficha, inventario: [...arr(ficha.inventario), Coisa] };
-      return aplicada("tomar", nova, [{ coisa: Coisa, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.tomar, { Coisa: coisaT, doAlvo }), tpl(F.tomar, { Coisa, doAlvo }), X.tomar);
+      const art = (t0.match(/\b(?:tomo|arranco|arrebato|puxo|tiro|agarro)\s+(o|a|os|as|um|uma)\s/) || [])[1] || "";
+      const aCoisa = art ? `${art} ${coisaT}` : coisaT;
+      return aplicada("tomar", nova, [{ coisa: Coisa, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.tomar, { aCoisa, doAlvo }), tpl(F.tomar, { Coisa: aCoisa, doAlvo }), X.tomar);
     }
 
     if (it.tipo === "deGraca") {

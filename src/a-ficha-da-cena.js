@@ -165,9 +165,10 @@ export function fichaDaCenaNaPauta(o) {
    que só a prosa pôs) não é afirmado: `protegidos` e o desconhecido
    passam. → { nome, onde, morto } ou null. */
 export const QUEM_NAO_ESTA = Object.freeze({
-  /* uma linha só, em ACABOU DE: o «ninguém responde no lugar» já é o veto (um
-     NÃO PODE ao lado repetia-o e custava ~90 caracteres do teto) */
-  acabou: "Chamei {nome}, que não está aqui{onde}: nem {nome} nem outra pessoa responde no lugar.",
+  /* em ACABOU DE, o fato; 22/11 (a décima sessão): o veto de pô-lo em cena foi
+     para NÃO PODE (abaixo), e esta linha encurtou o que ele já diz — o custo das
+     duas é o da linha de antes (o pior caso cabe em 40% do teto da pauta) */
+  acabou: "Chamei {nome}, que não está aqui{onde}: ninguém responde no lugar.",
   /* 21/11 (§23): «{emOnde}» é o lugar com a preposição contraída
      (emOLugar: «na Forja Velha», «no Malho», «em Vau») — era «está em a
      Forja Velha» */
@@ -176,6 +177,14 @@ export const QUEM_NAO_ESTA = Object.freeze({
   tela: "🧭 {nome} não está aqui{onde}.",
   telaOnde: " — está {emOnde}",
   telaMorto: " — morreu",
+  /* 22/11 (a décima sessão, T13, T28, T38): a linha de ACABOU DE não bastou — o
+     Kael que «não está aqui» chegou e falou. O veto vai em NÃO PODE, curto */
+  naoPode: "{nome} aparecer ou falar",
+  /* a décima sessão (T15, T41): o nome a quem a frase dá, paga, oferece, pede ou
+     de quem toma («ofereço 5 moedas a Kael», «peço de graça a Kael») — o
+     recorte da régua (nomeAusenteNaFrase) só lê os verbos da fala e o chamado.
+     Só um nome que o sistema conhece (ausentes, conhecidos) passa daqui. */
+  troca: /(?:^|[^\p{L}])(?:dou|damos|ofereço|ofereco|oferecemos|entrego|pago|passo|peço|peco|pedimos|tomo|arranco|furto|roubo|vendo|empresto|devolvo)\b[^.!?;:]{0,60}?\b(?:a|ao|à|para|pra|pro|de|do|da|das|dos)\s+([A-ZÀ-Ý][a-zà-ÿ]{2,})(?![\p{L}])/u,
 });
 const primeiro = (n) => limpo(n).split(/[\s,()]+/).filter(Boolean)[0] || "";
 /* ---------------- A PREPOSIÇÃO DO LUGAR (21/11/2026, §23) ----------------
@@ -189,10 +198,19 @@ export function emOLugar(nome) {
   const m = n.match(/^(o|a|os|as)\s+(\S.*)$/i);
   return m ? `${CONTRACAO_DO_EM[m[1].toLowerCase()]} ${m[2]}` : `em ${n}`;
 }
+/* o nome da troca que ninguém da cena tem → o nome, ou "" */
+function nomeDaTrocaAusente(frase, cena) {
+  if (typeof frase !== "string") return "";
+  const m = frase.match(QUEM_NAO_ESTA.troca);
+  if (!m) return "";
+  const p = primeiro(m[1]);
+  const pessoas = arr(lerCena(cena) ? lerCena(cena).pessoas : obj(cena) ? cena.pessoas : null);
+  return pessoas.some((x) => obj(x) && txt(x.nome).split(/[\s,()]+/).some((w) => primeiro(w) === p)) ? "" : m[1];
+}
 export function quemNaoEstaNaCena(frase, cena, ctx) {
   try {
     const c = obj(ctx) ? ctx : {};
-    const nome = nomeAusenteNaFrase(frase, cena);
+    const nome = nomeAusenteNaFrase(frase, cena) || nomeDaTrocaAusente(frase, cena);
     if (!nome) return null;
     const p = primeiro(nome);
     if (arr(c.protegidos).some((x) => primeiro(x) === p)) return null;
@@ -210,7 +228,8 @@ export function pautaDeQuemNaoEsta(a) {
   const onde = a.morto ? Q.morto : txt(a.onde) ? Q.onde.replace("{emOnde}", emOLugar(a.onde)) : "";
   return Object.freeze({
     acabou: [Q.acabou.replaceAll("{nome}", txt(a.nome)).replace("{onde}", onde)],
-    naoPode: [],
+    /* o primeiro nome só: o veto é curto, e o pior caso da ficha cabe em 40% do teto da pauta */
+    naoPode: [Q.naoPode.replace("{nome}", txt(a.nome).split(/[\s,()]+/).filter(Boolean)[0] || txt(a.nome))],
   });
 }
 export function falaDeQuemNaoEsta(a) {

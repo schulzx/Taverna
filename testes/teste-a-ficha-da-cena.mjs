@@ -104,7 +104,7 @@ sec("4. quem não está");
      com o artigo do lugar (emOLugar). A intenção é a mesma: a linha diz onde. */
   t("a linha na tela diz onde", falaDeQuemNaoEsta(d) === "🧭 Doran Pé-de-Ferro não está aqui — está na Forja Velha.", falaDeQuemNaoEsta(d));
   const pd = pautaDeQuemNaoEsta(d);
-  t("a pauta: ACABOU DE diz que não está, e que nem ele nem outro responde no lugar (uma linha só)", pd.acabou[0].includes("não está aqui (está na Forja Velha)") /* MOVIDA em 21/11 (§23): a contração, como acima */ && pd.acabou[0].includes("nem Doran Pé-de-Ferro nem outra pessoa responde") && pd.naoPode.length === 0);
+  t("a pauta: ACABOU DE diz que não está, e que nem ele nem outro responde no lugar (uma linha só)", pd.acabou[0].includes("não está aqui (está na Forja Velha)") /* MOVIDA em 21/11 (§23): a contração, como acima */ && pd.acabou[0].includes("ninguém responde no lugar") /* MOVIDA em 22/11: «nem Doran nem outra pessoa responde» encurtou para pagar o veto de NÃO PODE (a intenção — ninguém responde por quem não está — é a mesma) */ && pd.naoPode.length === 1 && pd.naoPode[0] === "Doran aparecer ou falar" /* MOVIDA em 22/11 (a décima sessão, T13/T28/T38): a linha de ACABOU DE não bastou — o Kael «que não está aqui» chegou e falou; o veto curto vai em NÃO PODE (o primeiro nome só, para o pior caso caber no teto) */);
   /* 21/11 (§23): a preposição contrai com o artigo do lugar, qualquer caixa */
   t("emOLugar: a/o/os/as contraem, sem artigo fica «em»", emOLugar("a Forja Velha") === "na Forja Velha" && emOLugar("O Malho") === "no Malho"
     && emOLugar("os Arcos") === "nos Arcos" && emOLugar("As Termas") === "nas Termas" && emOLugar("Vau") === "em Vau" && emOLugar("") === "" && emOLugar(null) === "");
@@ -119,7 +119,7 @@ sec("4. quem não está");
   t("o protegido (o deus a quem se pede) passa", quemNaoEstaNaCena("Peço a Doran que me proteja", cena, { ausentes: aus, protegidos: ["Doran"] }) === null);
   t("menção não é presença: o nome que é assunto, e não ouvinte, não conta", quemNaoEstaNaCena("Digo à Brisa que o Doran me mandou", cena, { ausentes: aus }) === null);
   const pa = fichaDaCenaNaPauta({ frase: "Pergunto ao Doran", momento: chamadoDoMomento("Pergunto ao Doran", leitura, retrato, {}), bancas: [], ausente: d });
-  t("e vai junto da ficha na pauta", !!pa && pa.acabou.some((l) => l.includes("Doran Pé-de-Ferro")) && pa.acabou.some((l) => l.includes("nem Doran Pé-de-Ferro nem outra pessoa")));
+  t("e vai junto da ficha na pauta", !!pa && pa.acabou.some((l) => l.includes("Doran Pé-de-Ferro")) && pa.acabou.some((l) => l.includes("ninguém responde no lugar")) /* MOVIDA em 22/11: a linha encurtou para pagar o veto que foi a NÃO PODE (a décima sessão); o veto vai junto */ && pa.naoPode.includes("Doran aparecer ou falar"));
 }
 
 sec("5. a compra sem quem venda");

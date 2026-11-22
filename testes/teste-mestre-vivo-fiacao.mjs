@@ -440,7 +440,8 @@ sec("S20. a narração não desmente o veredito, e a tela não fala do mecanismo
   /* a fiação: atrás da chave, em calou, e com a de hoje como volta */
   const app = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "..", "src", "App.jsx"), "utf8");
   t("o App usa as quatro falas da mesa só com a chave, e volta à de hoje", /const falaDaMesaOu = \(fazer, deHoje, nome\) => \{\s*if \(!mestreVivoLigado\(\)\) return deHoje\(\);/.test(app)
-    && ["falaDoCustoNaMesa(custo)", "falaDoBarulhoNaMesa()", "falaDoVeredictoNaMesa(v)", "falaDosBlefesNaMesa(v.social)"].every((x) => app.includes(x)));
+    && ["falaDoCustoNaMesa(custo)", "falaDoBarulhoNaMesa()", "falaDoVeredictoNaMesa(v)", "falaDosBlefesNaMesa(v.social"].every((x) => app.includes(x)));
+  /* MOVIDA em 22/11 (a décima sessão, T16): a fala do blefe ganhou o segundo argumento (o suborno com quantia cala o blefe da moeda) — a intenção, a fala da mesa só com a chave, é a mesma */
   t("o contexto do desafio leva a chave fina do livro só com o Mestre vivo ligado", app.includes("chaveFina: (() => { try { return !!mestreVivoLigado(); }"));
   /* o sem-dado social leva o alvo da régua quando o elenco não achou ninguém */
   const sd = oQueAconteceSemDado({ tipo: "teste", social: { tamanho: "favor" }, dc: 10, pericia: "persuasao" }, { porque: "dispostoCede", alvo: "Perrin" }, { frase: "peço ao Perrin que vigie a rua" });

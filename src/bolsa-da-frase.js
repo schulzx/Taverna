@@ -35,7 +35,7 @@
 import { NUMERO_POR_EXTENSO, nomeDaMoeda } from "./cobranca.js";
 import { MERCADORIAS } from "./mercado.js";
 /* E1 (12/10): o acento que separa mora em economia.js (o círculo com mercado.js) */
-import { semConfusao, nomeiaACoisa } from "./economia.js";
+import { semConfusao, nomeiaACoisa, cabecaDaCoisa } from "./economia.js";
 /* 21/11 (a oitava sessão do Mestre vivo): «dou duas moedas ao vendedor pelos
    sais» é COMPRA — a moeda vai, a coisa vem (o-veredito-da-troca.js) */
 import { aCompraPorMoeda, oFiadoDaFrase } from "./o-veredito-da-troca.js";
@@ -59,6 +59,14 @@ export const MANTIMENTO_NA_FRASE = [
    uma, e três é o "uns dias" de quem compra para a estrada; o teto
    impede que um "vinte mil rações" esvazie a bolsa por um erro de dedo. */
 export const QUANTIDADE_DA_FRASE = { singular: 1, pluralSemNumero: 3, teto: 20, palavrasAntes: 2 };
+
+/* O NOME DO BALCÃO NÃO É MERCADORIA (22/11, a décima sessão, T4). «compro duas
+   tochas do balcão de mantimentos» virou «2 × Tochas, 3 × Rações de viagem ◉ 23»
+   e levou a bolsa inteira: «mantimentos», no nome do lugar, era lido como
+   rações no plural sem número (três). A palavra que vem logo depois de quem ou
+   de onde se vende («balcão de», «banca das», «vendedora de») diz o lugar, e
+   não o que se compra. */
+export const LUGAR_DO_MANTIMENTO = /\b(?:balcao|balcoes|banca|bancas|barraca|barracas|loja|lojas|tenda|tendas|prateleira|prateleiras|vendedor|vendedora|vendedores|mercador|mercadora|carroca|armazem)\s+d[eoa]s?\s*$/;
 
 /* ---------------- OS VERBOS ----------------
    DECLARAR compra (primeira pessoa, presente ou passado imediato). "Levo"
@@ -125,6 +133,7 @@ function mantimentosDa(oracao) {
     const rx = new RegExp(m.rx.source, "g");
     let x, primeira = null, comNumero = null;
     while ((x = rx.exec(oracao))) {
+      if (LUGAR_DO_MANTIMENTO.test(oracao.slice(0, x.index))) continue;
       const q = m.unico ? { n: 1, dito: false } : quantasDe(oracao, x.index, x[0], m.porDia);
       const achada = { id: m.id, palavra: x[0], idx: x.index, quantos: q.n, unico: !!m.unico };
       if (!primeira) primeira = achada;
@@ -256,6 +265,26 @@ export function compraNaFrase(frase, opcoes) {
    `lugar: "banca"` e, em cada item, `mercadorId`, `banca` e `item` (a
    entrada do estoque, inteira, para o App a pôr na mochila).
    ============================================================ */
+/* as coisas que casaram pela mesma palavra: a do nome inteiro fica, ou todas
+   viram a pergunta (`ambiguos`: [{ nome, preco, banca }]) */
+const limpaNome = (s) => ` ${norm(s).replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim()} `;
+function qualDasCoisas(frase, itens) {
+  /* as palavras da frase na mesma raiz da cabeça da coisa (economia.js) */
+  const ws = new Set(norm(frase).split(/[^a-z]+/).filter(Boolean).flatMap((w) => cabecaDaCoisa(w)));
+  const casaPor = (it) => cabecaDaCoisa(it.nome).filter((c) => ws.has(c));
+  const f = limpaNome(frase);
+  const fora = new Set(), ambiguos = [];
+  for (const it of itens) {
+    if (fora.has(it)) continue;
+    const grupo = itens.filter((x) => x === it || casaPor(x).some((c) => casaPor(it).includes(c)));
+    if (grupo.length < 2) continue;
+    const inteiro = grupo.filter((x) => f.includes(limpaNome(x.nome)) && !grupo.some((y) => y !== x && limpaNome(y.nome).includes(limpaNome(x.nome))));
+    if (inteiro.length === 1) { for (const x of grupo) if (x !== inteiro[0]) fora.add(x); continue; }
+    for (const x of grupo) { fora.add(x); if (!ambiguos.some((a) => a.nome === x.nome)) ambiguos.push({ nome: x.nome, preco: x.preco, banca: x.banca }); }
+  }
+  return { itens: itens.filter((x) => !fora.has(x)), ambiguos };
+}
+
 export function compraNaBanca(frase, opcoes) {
   const op = opcoes && typeof opcoes === "object" ? opcoes : {};
   const bancas = (Array.isArray(op.bancas) ? op.bancas : []).filter((b) => b && Array.isArray(b.estoque));
@@ -280,6 +309,16 @@ export function compraNaBanca(frase, opcoes) {
     }
   }
   if (!viu || !itens.length) return null;
+  /* 22/11 (a décima sessão, T5 e T49): «compro a rapieira» casou com a Antiga
+     Rapieira (◉ 22, da Vela Silenciosa) e com a Rapieira (◉ 88, da Bigorna), e a
+     linha somou as duas — «custa ◉ 110». Duas coisas que a frase nomeia pela
+     MESMA palavra são uma pergunta: fica a que a frase diz pelo nome inteiro
+     (e que não é pedaço do nome da outra); senão, o sistema pergunta qual. */
+  const qual = qualDasCoisas(f, itens);
+  if (qual.ambiguos.length) {
+    return { itens: [], ambiguos: qual.ambiguos, total: 0, declarado, jaTem: [], daBanca: [], fecha: false, porque: "qual", bolsa: Math.max(0, Number(op.bolsa) || 0), lugar: "banca" };
+  }
+  itens.splice(0, itens.length, ...qual.itens);
   const total = itens.reduce((s, x) => s + x.custo, 0);
   const moedas = Math.max(0, Number(op.bolsa) || 0);
   let porque = "";
@@ -399,6 +438,14 @@ export function balcaoParaPauta(frase, opcoes) {
 
 const listaDe = (itens) => itens.map((x) => `${x.quantos > 1 ? `${x.quantos}× ` : ""}${x.nome}`).join(", ");
 
+/* a décima sessão (T5, T49): duas coisas com a mesma palavra — a pergunta, com o preço de cada uma */
+export const FALA_DA_COMPRA_AMBIGUA = Object.freeze({
+  tela: "✋ Qual delas: {lista}? Diga o nome inteiro.",
+  item: "{nome} (◉ {preco})",
+  veto: "entregar-me {lista} ou receber moedas por isso: eu ainda não disse qual compro",
+});
+const listaAmbigua = (c) => (Array.isArray(c && c.ambiguos) ? c.ambiguos : []).map((a) => FALA_DA_COMPRA_AMBIGUA.item.replace("{nome}", a.nome).replace("{preco}", String(a.preco))).join(" ou ");
+
 /* a linha do jogador: o recibo, ou o porquê de não ter fechado */
 export function falaDaCompra(c) {
   if (!c) return "";
@@ -406,6 +453,7 @@ export function falaDaCompra(c) {
   if (c.porque === "sem_fundos") return `◉ Não chega: ${listaDe(c.itens)} custa ◉ ${c.total}, e a bolsa tem ◉ ${c.bolsa}.`;
   if (c.porque === "pouco") return `◉ ${listaDe(c.itens)} custa ◉ ${c.total} ${palavrasDe(c).onde} — ◉ ${c.declarado} não paga.`;
   if (c.porque === "ja_tem") return "🎒 A corda já vem no kit que você carrega.";
+  if (c.porque === "qual") return FALA_DA_COMPRA_AMBIGUA.tela.replace("{lista}", listaAmbigua(c));
   /* a nona sessão (T5): «espada compra-se nas bancas» — minúscula, o id e PT-PT; a voz da mesa diz onde */
   const daBanca = c.daBanca.join(", ");
   return `🛒 ${daBanca.charAt(0).toUpperCase() + daBanca.slice(1)} não se vende neste balcão: procure nas bancas, cada uma com o seu preço.`;
@@ -422,6 +470,7 @@ export function envelopeDaCompra(c) {
 /* o veto (secção `naoPode` da pauta), quando NÃO fechou */
 export function vetoDaCompra(c) {
   if (!c || c.fecha) return [];
+  if (c.porque === "qual") return [FALA_DA_COMPRA_AMBIGUA.veto.replace("{lista}", (c.ambiguos || []).map((a) => a.nome).join(" ou "))];
   const o = c.itens.length ? listaDe(c.itens) : c.daBanca.length ? c.daBanca.join(", ") : "a corda";
   const pq = c.porque === "sem_fundos" ? `custa ◉ ${c.total} e eu tenho ◉ ${c.bolsa}`
     : c.porque === "pouco" ? `o preço é ◉ ${c.total}, e eu disse ◉ ${c.declarado}`

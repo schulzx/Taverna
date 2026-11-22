@@ -1090,7 +1090,12 @@ export const DESAFIOS = [
        tentou vencer o peso aqui»). Uma tentativa é ação+alvo: a pedra que
        não cedeu não fecha a grade do lado. E a tela, a lona, o tapete, o
        quadro não são peso (o naoSe, acima): afastá-los é procurar atrás. */
-    objetoDaChaveDe: /\b(?:empurro|arrasto|levanto|movo|seguro|entorto|arranco)\s+((?:a|o|as|os|esse|essa|este|esta|aquele|aquela)\s+[^.!?;:,]{2,40})/,
+    /* 22/11 (a décima sessão do Mestre vivo, T34 e T44): «tomo o odre vazio da mão
+       de Rhogar» falhou, e dez turnos depois «tomo a faca da mão da mulher de
+       avental» ouviu «↺ você já tentou aqui» — o tomar (o veredito da troca o
+       lê como força, desafios.js abaixo) não tinha objeto na chave, e a chave
+       era a da feira inteira. A coisa e a mão de quem a segura vão na chave. */
+    objetoDaChaveDe: /\b(?:empurro|arrasto|levanto|movo|seguro|entorto|arranco|tomo|arrebato|puxo|agarro)\s+((?:a|o|as|os|esse|essa|este|esta|aquele|aquela)\s+[^.!?;:,]{2,40})/,
     pericia: "atletismo", alvo: "peso", minutos: 5, barulho: true,
     rotulo: "vencer o peso", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -2363,8 +2368,21 @@ export function lerAcao(texto, ctx = {}) {
   const conta = d.social ? dificuldadeSocial({ texto: cru, pessoa, pers: personagem, pericia: d.pericia, fama: ctx.fama, pedido: segredo ? pedidoDoSegredo(segredo) : null }) : null;
 
   const reg = garantirTentativas(tentativas);
+  /* 22/11 (a décima sessão do Mestre vivo, T28 e T29): «peço emprestado a Rhogar
+     um odre» falhou, e «peço de graça a Rhogar uma amostra das ervas» — outro
+     pedido — ouviu «↺ você já tentou aqui»: a chave social era «esta pessoa,
+     este tamanho», e os dois pedidos têm o mesmo tamanho. No pedido de uma
+     coisa (o de graça e o emprestado do veredito da troca), a coisa vai na
+     chave. Só com a chave fina (o Mestre vivo). */
+  let coisaDoPedidoNaChave = "";
+  if (conta && chaveFina) {
+    try {
+      const itP = aIntencaoDaTroca(cru, { grupo: (personagem && Array.isArray(personagem.grupo)) ? personagem.grupo : [] });
+      if (itP && itP.tipo === "deGraca" && itP.coisa) coisaDoPedidoNaChave = `|${palavrasDaChave(itP.coisa)}`;
+    } catch { coisaDoPedidoNaChave = ""; }
+  }
   const chave = chaveDaTentativa(lugar, conta
-    ? `${d.alvo}|${(pessoa && pessoa.nome) || (chaveFina && ((quemDescrito && palavrasDaChave(quemDescrito)) || ouvinteDaChave(cru))) || "quem quer que seja"}|${conta.tamanho}`
+    ? `${d.alvo}|${(pessoa && pessoa.nome) || (chaveFina && ((quemDescrito && palavrasDaChave(quemDescrito)) || ouvinteDaChave(cru))) || "quem quer que seja"}|${conta.tamanho}${coisaDoPedidoNaChave}`
     : quemCuidado ? `${d.alvo}|${palavrasDaChave(quemCuidado)}`
       : doObjeto ? `${d.alvo}|${palavrasDaChave(doObjeto)}` : d.alvo);
   const feito = reg[chave] || null;

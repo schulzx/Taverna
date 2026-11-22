@@ -276,6 +276,35 @@ export function pautaDoMomento(m) {
   }
 }
 
+/* ---------------- QUEM NÃO ESTÁ NÃO RESPONDE (22/11/2026) ----------------
+   A décima sessão (T13, T15, T38, T41): a frase falava, pagava ou pedia a
+   Kael, que o sistema sabia noutro lugar (quemNaoEstaNaCena), e a régua julgava
+   a conversa como se ele ouvisse — «ofereço 5 moedas a Kael para ele esquecer»
+   passou sem dado, com «um risco enfrentado, e vencido», e a prosa pôs Kael a
+   aceitar; «chamo Kael… venha cá!» o fez chegar e falar. Quem não está não
+   ouve: não há dado, não há o sim da conversa, e o momento leva quem não está
+   (`ausente`) para a troca e para a pauta. O veredito vira o «livre» sem chave
+   (o catálogo não o fecha no livro de tentativas: não houve tentativa).
+   `qn`: { nome, onde, morto } de quemNaoEstaNaCena; sem ele, o momento como veio. */
+export const QUEM_NAO_ESTA_NO_MOMENTO = Object.freeze({
+  porque: "ausente",
+  diz: "quem a frase chama não está aqui",
+});
+export function oMomentoSemOAusente(m, qn) {
+  try {
+    if (!obj(m) || !m.cena || !obj(qn) || !txt(qn.nome)) return m;
+    const Q = QUEM_NAO_ESTA_NO_MOMENTO;
+    /* sem `alvo`: «eu falei com Kael, e é essa pessoa quem reage» desdiria a ficha */
+    const { alvo, ...resto } = m;
+    return Object.freeze({
+      ...resto, rola: false, chamado: null, destino: null, resposta: null, porque: Q.porque, diz: Q.diz,
+      veredito: Object.freeze({ tipo: "livre", porque: Q.diz }), ausente: qn,
+    });
+  } catch {
+    return m;
+  }
+}
+
 /* ---------------- O DADO DO DESTINO NA MESA ----------------
    O d6 cai na bandeja com a cor da sorte; o envelope diz ao Narrador só o
    resultado em palavras (o `diz`), como um envelope de sistema. */
@@ -583,12 +612,26 @@ export function falaDoVeredictoNaMesa(v) {
   }
 }
 /* o desfecho da margem (desafios.js#desfechoDaMargem) → só o que aconteceu */
+/* a décima sessão (T20, T22, T60): «↯ Alguém na rua vê a minha mão onde ela não
+   devia estar» — o preço da cena (O_PRECO_NA_CENA) é escrito na voz do herói,
+   porque vai ao envelope; na tela, a mesa fala com «você» */
+export const DA_VOZ_DO_HEROI_PARA_VOCE = Object.freeze([
+  Object.freeze([/\ba minha m[aã]o\b/g, "a sua mão"]),
+  Object.freeze([/\bme vê(?=[\s.,;!?]|$)/g, "vê você"]),
+  Object.freeze([/\beu\b/g, "você"]),
+  Object.freeze([/\bde mim\b/g, "de você"]),
+  Object.freeze([/\bmeu\b/g, "seu"]),
+  Object.freeze([/\bminha\b/g, "sua"]),
+  Object.freeze([/\bmeus\b/g, "seus"]),
+  Object.freeze([/\bminhas\b/g, "suas"]),
+]);
 export function falaDoCustoNaMesa(des) {
   try {
     if (!obj(des) || !txt(des.diz)) return null;
     const F = A_FALA_DA_MESA;
     const glifo = des.porPouco || des.meiaVerdade ? F.glifoDoCusto.porPouco : F.glifoDoCusto.falha;
-    return F.custo.replace("{glifo}", glifo).replace("{diz}", maiuscula(txt(des.diz).replace(/[.\s]+$/, "")));
+    const diz = DA_VOZ_DO_HEROI_PARA_VOCE.reduce((s, [rx, por]) => s.replace(rx, por), txt(des.diz));
+    return F.custo.replace("{glifo}", glifo).replace("{diz}", maiuscula(diz.replace(/[.\s]+$/, "")));
   } catch {
     return null;
   }
@@ -597,9 +640,15 @@ export function falaDoBarulhoNaMesa() {
   return A_FALA_DA_MESA.barulho;
 }
 /* os blefes que a conta social não aceitou (social.js#falaDosBlefes) → o fato */
-export function falaDosBlefesNaMesa(conta) {
+/* a décima sessão (T14, T16, T58): «🗣 O que você pôs na mesa não paga o que está
+   pedindo» saía também no suborno que passou — a moeda do suborno com quantia
+   não é blefe: o sistema a cobra no sim (o-veredito-da-troca.js#oSubornoDaFrase).
+   `o.subornoComQuantia`: a frase põe a quantia na mesa; aí o blefe da moeda cala. */
+export const BLEFE_QUE_O_SUBORNO_PAGA = "moeda";
+export function falaDosBlefesNaMesa(conta, o) {
   try {
-    const bs = obj(conta) ? arr(conta.blefes).filter(obj) : [];
+    const pago = obj(o) && o.subornoComQuantia === true;
+    const bs = (obj(conta) ? arr(conta.blefes).filter(obj) : []).filter((b) => !(pago && b.id === BLEFE_QUE_O_SUBORNO_PAGA));
     if (!bs.length) return null;
     const porque = bs.map((b) => txt(b.porque)).filter(Boolean);
     if (!porque.length) return null;
