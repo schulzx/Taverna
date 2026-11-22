@@ -1831,37 +1831,6 @@ reproduzido com uma carta sintética.
 
 ## 30. O conserto depois da décima sessão (22/11/2026)
 
-A décima sessão (v9.668; 54 de 57 no dado, dado indevido 0) levou a concordância entre linha, ficha e
-prosa nas trocas de 20 de 39 para **30 de 41**, e a prosa contra a ficha de 20 para 10. Confirmou
-jogando a compra (4 de 4, uma cobrança só), o furto (7 de 7), o fiado, o suborno (3 de 4), o nome
-encurtado e o companheiro (8 de 8 na linha e na ficha). O caso exato da cobrança em dobro continua sem
-prova jogada: nenhuma carta de quest abriu. O conserto (`42cc301` a `1f923d3`):
-
-- **«Já tentou aqui» aplicava o ganho (turnos 29 e 44).** A régua respondia «acontece» por cima do
-  «já tentou» do catálogo, e o veredito lia isso como sim. O livro de tentativas manda antes: repetida
-  é negada, nada entra. A chave da tentativa era larga demais (a feira inteira; a pessoa e o tamanho) e
-  barrava uma primeira tentativa diferente; leva agora a coisa e a mão de quem a segura.
-- **«Balcão de mantimentos» (turno 4)** era lido como três rações. A palavra depois de «balcão de»,
-  «banca de», «vendedora de» diz o lugar, não a mercadoria. Para todos.
-- **Dois itens na mesma palavra (5, 49):** o mercado pergunta qual, com os dois preços. Para todos.
-- **Sem veredito:** dar o que está vestido («tire antes de dar») e a troca com quem não está (negada,
-  nenhuma moeda sai). Varredura da sessão 10: 44 de 44.
-- **O alvo do furto** é quem a frase diz, pelo nome ou pelo papel.
-- **O ausente conhecido** não ouve nem responde, e o veto vai em `naoPode`. Sobra o ausente que a
-  prosa traz sem ninguém chamar.
-- **O conferente** conta a linha de troca do sistema (inclusive a do cartão) como troca aplicada.
-- **PT-PT (28 de 57 turnos).** Nenhum texto da rodada anterior estava em «tu». A causa provável, por
-  dedução e não por medida, é o gancho da quest, que entra no pedido da abertura: 24 ganchos falavam
-  com «tu». Passaram a «você», com a quest inteira daquela sessão. O resto da prosa das quests continua
-  em PT-PT, sob a catraca `check-pt-br`.
-
-**Investigado sem mudança:** a carta da quest que não abriu não é defeito (a pessoa dela estava
-ausente); a narração dupla na chegada não teve a causa isolada.
-
-**Não verificado até a décima primeira sessão:** nada disso foi jogado.
-
-## 30. O conserto depois da décima sessão (22/11/2026)
-
 A décima sessão (v9.668; 54 de 57 no dado, dado indevido 0) mediu **30 de 41** turnos de troca com
 linha, ficha e prosa de acordo. O conserto ficou de novo do lado do sistema; a poda só entrou como rede,
 e só onde a troca já estava aplicada.
