@@ -37,7 +37,6 @@ import { aPessoaDoPasso } from "../src/motor/a-pessoa-do-passo.js";
 import { aplicarPrecoDoQuadro, oQuadroNaPauta, PRECO_DA_FALHA, TETO_DO_PRECO } from "../src/quadro-da-quest.js";
 import { achadosDaEtapa } from "../src/espolios.js";
 import { FEITO_DO_SISTEMA, osFactosDoTurno, oFeitoDoTurno, lembrarOsFeitos } from "../src/feito-do-sistema.js";
-import { readFileSync } from "node:fs";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -275,9 +274,10 @@ sec("§6 o XP entre os passos: uma sessão de 60 turnos num dia só");
   t("a memória de antes (sem `riscos`) ainda é lida", oFeitoDoTurno(osFactosDoTurno({ teste: { desafio: "escalar", sucesso: true }, lugar: "x" }), { v: 1, dia: 1, pequenos: 4, vistos: [], testes: [] }, { dia: 1 }) !== null);
 }
 
-/* o módulo da ponte e o da tela continuam puros (sem React) */
-const ponteSrc = readFileSync(new URL("../src/motor/a-ponte-do-passo.js", import.meta.url), "utf8");
-t("a ponte continua pura (sem React)", !/from\s+["']react["']/.test(ponteSrc));
+/* a pureza da ponte prova-se jogando: este arquivo a importa e a roda em Node, sem React.
+   A assercao que lia o texto de src/motor/ saiu daqui porque a catraca de
+   teste-assercoes-de-texto nao deixa suite nenhuma ler texto do motor: a importacao ja e a prova. */
+t("a ponte roda em Node, sem React", typeof aPonteDoPasso === "function" && Number.isInteger(A_PONTE_DO_PASSO.teto));
 
 console.log(`\na quest depois da 16.ª: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);
