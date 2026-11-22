@@ -279,7 +279,11 @@ export const QUESTS_DO_TURNO = Object.freeze({
   relogioDoFio: 1,
   premissas: 24,
   fora: 24,
-  passo: Object.freeze({ cabeca: "O PASSO: ", teto: 220, falta: " — falta {falta}", coracao: "; e, no coração, {etapa}" }),
+  /* 22/11 (a décima quinta sessão, QC1): `algumIr` — numa etapa de «algum»,
+     o caminho que é IR a um lugar (o predicado) é o que a tela já mostra no
+     botão «Ir até…» (oRumoDaBusca, propostas-da-abertura.js); só esse vai à
+     linha, e as outras soluções continuam fora (§7) */
+  passo: Object.freeze({ cabeca: "O PASSO: ", teto: 220, falta: " — falta {falta}", coracao: "; e, no coração, {etapa}", algumIr: Object.freeze(["esteve"]) }),
   veto: "que {quem} saia da história fora de cena — por morte, prisão ou fuga — enquanto este caminho estiver aberto",
   /* 22/11 (a décima segunda sessão): a fera abatida na luta voltou «viva» na prosa (o carroceiro, Merek) — o morto da quest aberta vai em NÃO PODE */
   mortoNaLuta: "{quem} aparecer, agir ou ser tratado como vivo: morreu na luta",
@@ -1052,11 +1056,21 @@ export function aMesaDasQuests(estado, opcoes) {
       .find((v) => v && v.estado === "aberta" && v.visivel && v.acesa && v.etapaTexto) || null;
 
     /* O PASSO: a etapa e UMA coisa que falta — a de um «algum» seriam as
-       soluções todas, e o Narrador não as vê (§7) */
+       soluções todas, e o Narrador não as vê (§7).
+       22/11 (a décima quinta sessão, QC1): mas a tela vê uma — o botão «Ir
+       até A Capela do Afogado» esteve à vista nos 56 turnos, e a pauta calava
+       «falta ir à Capela» por ser um «algum». O Narrador nunca sabe menos do
+       que a tela mostra: do «algum», vai o caminho de ir ao lugar
+       (`algumIr`), e só ele. */
     let passo = "";
     const um = v1 && v1.estado === "aberta" && v1.etapaTexto ? v1 : null;
     if (um || v2) {
-      const f = um ? arr(um.falta).find((x) => x && x.texto && x.predicado !== "algum") : null;
+      const doAlgum = (fs) => {
+        const a = arr(fs).find((x) => x && x.predicado === "algum");
+        const c = a ? arr(a.caminhos).find((k) => k && k.texto && arr(k.predicados).some((p) => T.passo.algumIr.includes(p))) : null;
+        return c ? { texto: c.texto } : null;
+      };
+      const f = um ? (arr(um.falta).find((x) => x && x.texto && x.predicado !== "algum") || doAlgum(um.falta)) : null;
       passo = cabe([
         T.passo.cabeca + (um ? um.etapaTexto : v2.etapaTexto),
         f ? encher(T.passo.falta, { falta: f.texto }) : "",

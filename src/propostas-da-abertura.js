@@ -136,12 +136,16 @@ export function asPropostasDaAbertura(entrada) {
      3. quem o passo pede frente a frente, na casa dela;
    e em todas: o sítio de outra cidade é «Partir para <cidade>», nunca «Ir
    até» (o botão que mente); o sítio onde já se está, nada. */
+/* 22/11 (a décima quinta sessão, QC1): a porta diz também o que mostra — o
+   `nome` do destino, a `cidade` dele e a `acao` («ir», «partir», «levar») —
+   para a ponte do passo (motor/a-ponte-do-passo.js) dizer ao Narrador
+   EXATAMENTE o destino do botão. A tela só lê `verbo` e `frase`. */
 const oDestino = (P, nome, cidade, e) => {
   const aqui = chave(e.aqui);
   const cid = txt(cidade);
-  if (cid && txt(e.cidade) && chave(cid) !== chave(e.cidade) && cabe(cid)) return Object.freeze({ id: `rumo|partir|${chave(cid)}`, tipo: "rumo", verbo: encher(P.partir.verbo, cid), frase: encher(P.partir.frase, cid) });
+  if (cid && txt(e.cidade) && chave(cid) !== chave(e.cidade) && cabe(cid)) return Object.freeze({ id: `rumo|partir|${chave(cid)}`, tipo: "rumo", verbo: encher(P.partir.verbo, cid), frase: encher(P.partir.frase, cid), acao: "partir", nome: cid, cidade: cid });
   if ((aqui && chave(nome) === aqui) || chave(nome) === chave(e.cidade)) return null;
-  return Object.freeze({ id: `rumo|${chave(nome)}`, tipo: "rumo", verbo: encher(P.passo.verbo, nome), frase: encher(P.passo.frase, nome) });
+  return Object.freeze({ id: `rumo|${chave(nome)}`, tipo: "rumo", verbo: encher(P.passo.verbo, nome), frase: encher(P.passo.frase, nome), acao: "ir", nome: txt(nome), cidade: cid || txt(e.cidade) });
 };
 export function oRumoDaBusca(entrada) {
   try {
@@ -157,7 +161,7 @@ export function oRumoDaBusca(entrada) {
       if (!c) continue;
       const longe = txt(c.cidade) && txt(e.cidade) && chave(c.cidade) !== chave(e.cidade);
       if (longe || (txt(c.onde) && chave(c.onde) !== aqui)) { const r = oDestino(P, txt(c.onde) || txt(c.cidade), c.cidade, e); if (r) return r; }
-      return Object.freeze({ id: `rumo|levar|${chave(c.nome)}`, tipo: "rumo", verbo: encher(P.levar.verbo, txt(c.nome)), frase: encher(P.levar.frase, txt(c.nome)) });
+      return Object.freeze({ id: `rumo|levar|${chave(c.nome)}`, tipo: "rumo", verbo: encher(P.levar.verbo, txt(c.nome)), frase: encher(P.levar.frase, txt(c.nome)), acao: "levar", nome: txt(c.nome), cidade: txt(e.cidade) });
     }
     /* 2. o covil, depois os lugares */
     for (const p0 of arr(e.passos)) {

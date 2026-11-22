@@ -101,6 +101,7 @@ import { aMesaDasQuests } from "./quests-do-turno.js";
 import { osPassosDasQuests } from "../a-quest-manda.js";
 import { garantirQuadro, osQuadrosDoEstado, oQuadroNaPauta } from "../quadro-da-quest.js";
 import { aPessoaDoPasso } from "./a-pessoa-do-passo.js";
+import { aPonteDoPasso, quemSabeDoCaso } from "./a-ponte-do-passo.js";
 import { oCativeiroNaPauta } from "../cativeiro.js";
 import { oSocorroNaPauta } from "../socorro.js";
 import { oEnvelopeDaGente, oEnvelopeDoFio } from "./envelopes-do-turno.js";
@@ -1380,10 +1381,25 @@ export function aPautaDoTurno(estado, entrada, portas) {
        está em nenhuma lista de `SECOES_QUE_CEDEM`. */
     try {
       if (!$ref.combate && $ref.modo !== "rapida") {
+        const estadoDosPassos = { espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() };
+        const passosDoRumo = (() => { try { return osPassosDasQuests(estadoDosPassos, { mundo: mundoDaBase() }); } catch (e2) { calou("os passos no rumo", e2); return []; } })();
+        /* QC1 (22/11, a décima quinta sessão): A PONTE DO PASSO — num mundo de
+           quests as missões não existem e proximoPasso vem vazio; a ponte é então
+           o destino do botão «Ir até…» (o mesmo oRumoDaBusca da tela, com as
+           mesmas entradas) e quem em cena sabe o caminho. O Narrador nunca sabe
+           menos do que a tela mostra. Sem passos (a campanha antiga), "". */
+        let ponte = "";
+        try {
+          const grupoP = ((fichaViva() || {}).grupo) || [];
+          let sabem = [];
+          try { sabem = quemSabeDoCaso(osQuadrosDoEstado({ ...estadoDosPassos, quadro: $ref.quadro }, { mundo: mundoDaBase() })); } catch (e3) { calou("quem sabe do caso", e3); sabem = []; }
+          ponte = aPonteDoPasso({ passos: passosDoRumo, aqui: ($ref.lugar && $ref.lugar.nome) || "", cidade: $ref.cidadeAtual || "", grupo: grupoP, emLuta: !!$ref.combate, naEstrada: !!$ref.jornada,
+            presentes: ((quem ? quemAgeAqui(quem) : aqui) || []).map((x) => x && x.nome).filter(Boolean), sabem });
+        } catch (e2) { calou("a ponte do passo", e2); ponte = ""; }
         const rumo = linhaDoRumo({
           pedido: lerOPedido(acaoDoTurno),
           degrau: degrauDaEscuta(garantirEscuta($ref.escuta).semAvanco),
-          passo: proximoPasso({ abertura: $ref.abertura, missoes: $ref.missoes, registro: $ref.registro }),
+          passo: proximoPasso({ abertura: $ref.abertura, missoes: $ref.missoes, registro: $ref.registro }) || ponte,
           semente: $ref.dia,
           /* MM19 (v9.394, o backend): o mundo que o degrau do encalhe precisa
              para virar cena com nome e lugar — onde estou, o fio aberto, a
@@ -1398,7 +1414,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
                       descobrir vem antes do marco da espinha — o RUMO aponta
                       onde a busca acha (achadoDoPasso), e os dois não se
                       desmentem. Os mesmos passos do facto do sucesso. */
-                   passos: (() => { try { return osPassosDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() }, { mundo: mundoDaBase() }); } catch (e2) { calou("os passos no rumo", e2); return []; } })() },
+                   passos: passosDoRumo },
         });
         /* as peças, fase B: com a cena fechada, o rumo (a ponte para o próximo
            passo) sai — o caminho é do sistema, não da prosa */

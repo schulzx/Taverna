@@ -64,6 +64,7 @@ import { tiposPedidos } from "../lugar.js";
 import { rngDe } from "../geografia.js";
 import { COMO_FALA } from "../nucleo.js";
 import { mercadoresDaCidade, ITENS_POR_RESPOSTA, MERCADORIAS } from "../mercado.js";
+import { nomePessoa } from "../nomes.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -265,4 +266,158 @@ export function oFigurante(estado, opcoes) {
   const vozes = COMO_FALA.filter((f) => ehObj(f) && f.o && !O_FIGURANTE.vozFora[f.id]);
   const voz = vozes.length ? vozes[Math.floor(rnd() * vozes.length)] : null;
   return { papel: S[genero], genero, agora: S.agora, tique: voz ? voz.o : "", registo: S.registo || null, tipo };
+}
+
+/* ============================================================
+   O FIGURANTE COM NOME E O ELENCO FECHADO (QC1, 22/11/2026 — a décima
+   quinta sessão do Mestre vivo, mente/lancamento/mestre-vivo-sessao-15.md)
+
+   Em 56 turnos a prosa pôs em cena um Corvo com nove falas, uma filha
+   flautista, Thomasine, Prudence e Charity Mordaunt; no fim, «npcs» tinha
+   só Lavinia, Mercy e Cornelius. Por que passaram, à letra:
+     · o herói andou por sítios SEM FUNÇÃO (o beco atrás das bancas, o
+       quarto, o túnel): o posto não põe ninguém, o elenco do lugar
+       (elenco-do-lugar.js, quemAtende) só escala gente em sítio com
+       expediente, e o figurante desta peça (oFigurante) é sem nome por
+       desenho — onde ninguém tinha nome, a cena precisava de gente e a prosa
+       pô-la, com nome;
+     · a memória do inventado (memoria-do-inventado.js, NOME_RX) só morde
+       nome com epíteto («Ursa Sombravinda») e só no turno SEGUINTE: um nome
+       só («Corvo», «Prudence») nunca casa, e o veto chega depois do batismo;
+     · a pauta não dizia, ANTES, quem pode ter nome: o único veto de gente
+       era o do ausente (quem está noutro sítio);
+     · o livro de fatos só resolve o registo, o grupo, o núcleo e o cânone
+       (livro-do-turno.js, elencoDoLivro): nem o inventado nem o figurante
+       que o elenco do lugar escala entram nele — nada do vivido virou fato.
+
+   O CONSERTO, atrás da chave do Mestre vivo (muda a narração):
+     · oFiguranteDaCena — antes do Narrador, o sistema põe gente: o que o
+       elenco do lugar já escalou e o registo não tem; ou, sem ninguém com
+       nome em cena, um figurante pela semente do mundo, da cidade e do
+       sítio (sempre o mesmo naquele sítio), com o ofício de
+       FIGURANTE_DO_SITIO, um nome de tabela (nomes.js) e um traço de fala
+       (COMO_FALA). Quem chama regista-o (criarNPC, como o batismo): fica em
+       cena pela conta única de quem-esta-aqui.js, e o livro de fatos e a
+       procura reconhecem-no pelo registo. O sítio sem função da cidade (o
+       beco) é a rua; fora dos muros, a ruína, a mina, a estrada: ninguém;
+     · oElencoFechado — a linha do NÃO PODE: nome só para quem o sistema pôs
+       em cena, e a cena fica no sítio que o sistema conhece.
+   Campo de save nenhum muda: o registo ganha uma entrada (como no batismo).
+
+     oFiguranteDaCena(estado, { comNome, atende, usados })
+       → null | { nome, papel, genero, local, tique, tipo, ficha }
+     oElencoFechado({ nomes, lugar }) → string ("" sem lugar)
+   ============================================================ */
+export const O_FIGURANTE_DA_CENA = Object.freeze({
+  tentativas: 24,
+  relacao: "desconhecido",
+  /* o sítio da cidade que nenhum tipo diz (o beco, o pátio): a rua; fora dos
+     muros («arredores», «perto»: lugar.js, DISTANCIAS) não há rua, e dentro
+     de um prédio («dentro», ou com 'dentroDe': o quarto) também não */
+  semTipo: "rua",
+  foraDosMuros: Object.freeze(["arredores", "perto", "dentro"]),
+  notas: "gente do lugar, posta em cena pelo sistema · fala: {tique}",
+});
+
+/* os nomes que o sistema já deu a alguém e o figurante não pode repetir: o
+   registo, o grupo, o herói, a pista e o alvo da abertura, a gente das
+   quests (os papéis) — na décima quinta, sem isto, o passante da rua saía
+   «Zipporah», o alvo da abertura */
+function nomesDoSistema(e) {
+  const out = [...Object.keys(ehObj(e.npcs) ? e.npcs : {})];
+  const p = ehObj(e.personagem) ? e.personagem : {};
+  if (limpo(p.nome)) out.push(p.nome);
+  for (const g of arr(p.grupo)) if (ehObj(g) && limpo(g.nome)) out.push(g.nome);
+  const a = ehObj(e.abertura) ? e.abertura : {};
+  if (ehObj(a.alvo) && limpo(a.alvo.quem)) out.push(a.alvo.quem);
+  if (ehObj(a.pista) && limpo(a.pista.nome)) out.push(a.pista.nome);
+  const qs = ehObj(e.espinha) && ehObj(e.espinha.quests) ? arr(e.espinha.quests.registos) : [];
+  for (const r of qs) for (const pp of Object.values(ehObj(r && r.papeis) ? r.papeis : {})) if (ehObj(pp) && pp.tipo === "pessoa" && limpo(pp.nome)) out.push(pp.nome);
+  return out;
+}
+
+/* o ofício sem o artigo («um moço de turno ao balcão» → «moço de turno ao balcão») */
+const semArtigoDeUm = (x) => limpo(x).replace(/^(um|uma)\s+/i, "");
+
+export function oFiguranteDaCena(estado, opcoes) {
+  try {
+    const e = ehObj(estado) ? estado : {};
+    const o = ehObj(opcoes) ? opcoes : {};
+    const T = O_FIGURANTE_DA_CENA;
+    if (e.combate || ehObj(e.masmorra) || e.acampado) return null;
+    if (ehObj(e.jornada) && !(ehObj(e.lugar) && limpo(e.lugar.nome))) return null;
+    const cidade = limpo(e.cidadeAtual);
+    const L = ehObj(e.lugar) ? limpo(e.lugar.nome) : "";
+    const local = L || cidade;
+    if (!local) return null;
+    const W = oMundo(e);
+    const sitio = L ? semArtigo(L) : "rua";
+    const rnd = rngDe(W.semente + "|figurante-da-cena|" + sem(cidade) + "|" + sitio);
+    const vozes = COMO_FALA.filter((f) => ehObj(f) && f.o && !O_FIGURANTE.vozFora[f.id]);
+    const usados = [...arr(o.usados), ...nomesDoSistema(e)].map((u) => sem(ehObj(u) ? u.nome : u).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim()).filter(Boolean);
+    const dia = Number(e.dia);
+    const ficha = (nome, papel, genero, tique) => ({ nome, papel, genero, local, relacao: T.relacao, status: "vivo",
+      notas: T.notas.replace("{tique}", tique), ...(Number.isFinite(dia) ? { conhecidoEm: dia } : {}) });
+    /* 1. quem o elenco do lugar já escalou para atender o sítio, e o registo não tem */
+    const at = ehObj(o.atende) ? o.atende : null;
+    if (at && limpo(at.nome)) {
+      if (usados.includes(sem(at.nome))) return null;
+      const voz = vozes.length ? vozes[Math.floor(rnd() * vozes.length)] : null;
+      const genero = limpo(at.genero) === "mulher" ? "mulher" : "homem";
+      const tique = voz ? voz.o : "";
+      return { nome: limpo(at.nome), papel: limpo(at.rotulo), genero, local, tique, tipo: limpo(at.tipo), ficha: ficha(limpo(at.nome), limpo(at.rotulo), genero, tique) };
+    }
+    /* 2. ninguém com nome em cena: o sistema põe um, pelo tipo do sítio */
+    if (Number(o.comNome) >= O_FIGURANTE.basta) return null;
+    let tipo = oTipoDoSitio(e, W);
+    if (!FIGURANTE_DO_SITIO[tipo] && cidade && L && !limpo(e.lugar.dentroDe) && !T.foraDosMuros.includes(limpo(e.lugar.distancia))) {
+      let t = [];
+      try { t = tiposPedidos(L); } catch { t = []; }
+      if (!t.length) tipo = T.semTipo;
+    }
+    const S = FIGURANTE_DO_SITIO[tipo];
+    if (!S) return null;
+    const mulher = rnd() < 0.5;
+    const voz = vozes.length ? vozes[Math.floor(rnd() * vozes.length)] : null;
+    /* nenhuma palavra do nome repete a de quem já tem nome (Eunice Sallow ao
+       lado de Lavinia Sallow faria o livro de fatos hesitar entre as duas) */
+    const ja = new Set(usados.flatMap((u) => u.split(" ")).filter((w) => w.length >= 3));
+    for (let i = 0; i < T.tentativas; i++) {
+      let nome = "";
+      try { nome = nomePessoa(W.genero || undefined, mulher ? "fem" : "masc", rnd, W.lex); } catch { nome = ""; }
+      const ps = sem(nome).split(" ").filter(Boolean);
+      if (!ps.length || ps.some((w) => ja.has(w))) continue;
+      const papel = semArtigoDeUm(S[mulher ? "ela" : "ele"]);
+      const genero = mulher ? "mulher" : "homem";
+      const tique = voz ? voz.o : "";
+      return { nome, papel, genero, local, tique, tipo, ficha: ficha(nome, papel, genero, tique) };
+    }
+    return null;
+  } catch { return null; }
+}
+
+/* A LINHA DO ELENCO FECHADO (o NÃO PODE, no infinitivo como as outras):
+   os nomes que o sistema pôs em cena (o grupo, quem está aqui, o
+   figurante), no máximo «max»; e o sítio de onde a cena não sai sem o
+   sistema. «vazio»: ninguém com nome em cena. */
+export const O_ELENCO_FECHADO = Object.freeze({
+  max: 6,
+  linha: "dar nome a quem não é {nomes} (quem mais aparecer fica sem nome), ou mudar a cena de sítio sem o sistema",
+  vazio: "dar nome a quem aparecer (aqui ninguém tem nome, e quem passar fica sem nome), ou mudar a cena de sítio sem o sistema",
+  junta: ", ",
+  ultimo: " ou ",
+});
+export function oElencoFechado(entrada) {
+  try {
+    const e = ehObj(entrada) ? entrada : {};
+    const lugar = limpo(e.lugar);
+    if (!lugar) return "";
+    const E = O_ELENCO_FECHADO;
+    const nomes = [];
+    for (const n0 of arr(e.nomes)) { const n = limpo(ehObj(n0) ? n0.nome : n0); if (n && !nomes.some((x) => sem(x) === sem(n))) nomes.push(n); }
+    const ns = nomes.slice(0, E.max);
+    if (!ns.length) return E.vazio.replace("{lugar}", lugar);
+    const lista = ns.length === 1 ? ns[0] : ns.slice(0, -1).join(E.junta) + E.ultimo + ns[ns.length - 1];
+    return E.linha.replace("{nomes}", lista).replace("{lugar}", lugar);
+  } catch { return ""; }
 }

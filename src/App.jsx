@@ -292,6 +292,7 @@ import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestr
 import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ausente.js";
 import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oChamadoDaPeca, ausentesDaPeca, foraDaCenaNaProsa, semAChegadaDaPeca } from "./pecas/no-jogo.js";
 import { oBatismo } from "./motor/o-batismo.js";
+import { oFiguranteDaCena, oElencoFechado } from "./motor/o-figurante.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase, aQuantiaDita } from "./motor/o-pagamento-da-frase.js";
 import { aVendaDaBolsa } from "./a-venda-da-bolsa.js";
@@ -14887,6 +14888,38 @@ export default function Taverna() {
         }
       }
     } catch (e) { calou("S7b · o batismo", e); }
+    /* QC1 (22/11, a décima quinta sessão do Mestre vivo): O ELENCO FECHADO.
+       Em 56 turnos a prosa pôs um Corvo, uma filha flautista e mais quatro
+       nomes que o sistema nunca soube (motor/o-figurante.js, o porquê à letra).
+       Com a chave ligada, antes do Narrador: sem ninguém com nome em cena, o
+       sistema põe um figurante do sítio (e regista o que o elenco do lugar já
+       escalou), que entra no registo como o do batismo — fica em cena, e o livro
+       de fatos e a procura reconhecem-no —; e o NÃO PODE diz quem pode ter nome.
+       Fora da luta, da masmorra e da estrada: lá a gente é do tabuleiro. */
+    if (mestreVivoLigado()) {
+      try {
+        if (!acao.startsWith("/") && !combateRef.current && !(masmorraRef.current && !masmorraRef.current.encerrada) && !jornadaRef.current) {
+          const pE = fichaViva() || personagem || {};
+          const grupoE = (pE.grupo || []).map((g) => g && g.nome).filter(Boolean);
+          const doGrupoE = new Set(grupoE.map((n) => String(n).toLowerCase()));
+          const qE = quemAgora() || {};
+          const aquiE = quemAgeAqui(qE).map((x) => x && x.nome).filter((n) => n && !doGrupoE.has(String(n).toLowerCase()));
+          const regE = npcsRef.current || {};
+          const atendeE = (qE.doSitio || []).find((x) => x && x.deOnde === "figurante" && x.nome && !regE[x.nome]) || null;
+          const figE = oFiguranteDaCena({
+            lugar: lugarRef.current, cidadeAtual: cidadeAtualRef.current || "", dia: diaRef.current, mapa: mapaRef.current, baseMundo: baseMundoRef.current,
+            mundo: mundoAtual(), nomeCampanha: nomeCampanhaRef.current || "", combate: combateRef.current, masmorra: masmorraRef.current, jornada: jornadaRef.current,
+            acampado: acampadoRef.current, abertura: aberturaMundoRef.current, espinha: espinhaRef.current, npcs: regE, personagem: pE,
+          }, { comNome: aquiE.length, atende: atendeE });
+          if (figE) {
+            npcsRef.current = { ...(npcsRef.current || {}), [figE.nome]: criarNPC(figE.nome, figE.ficha) };
+            setNpcs(npcsRef.current);
+          }
+          const ef = oElencoFechado({ nomes: [...grupoE, ...aquiE, ...(figE ? [figE.nome] : [])], lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "" });
+          if (ef) porNaPautaDoTurno({ naoPode: [ef] });
+        }
+      } catch (e) { calou("QC1 · o elenco fechado", e); }
+    }
     /* O MESTRE VIVO (19/11, o-mestre-vivo.md §16): com a chave ligada, o
        momento da frase lê-se antes das portas — o veredito que a régua julgou
        é o de veredictoDaAcao neste turno (a escuta abre a porta do desafio),
