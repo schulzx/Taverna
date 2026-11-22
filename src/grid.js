@@ -359,13 +359,17 @@ export const PLANTA_DO_LUGAR = {
   porSitio: [
     { planta: "taverna", rx: /\b(taverna|estalagem|salao|tasca|bar|hospedaria|pousada|cervejaria|adega)\b/ },
     { planta: "navio", rx: /\b(navio|barco|conves|galera|cais|doca|docas|porto)\b/ },
-    { planta: "caverna", rx: /\b(caverna|gruta|toca|mina|esgoto|esgotos)\b/ },
+    { planta: "caverna", rx: /\b(caverna|gruta|toca|mina|esgoto|esgotos|furna|lapa|covil|antro)\b/ },
     { planta: "ruina", rx: /\b(ruina|ruinas|cripta|catacumba|catacumbas|mausoleu)\b/ },
     { planta: "floresta", rx: /\b(floresta|bosque|mata|selva|clareira|arvoredo)\b/ },
     { planta: "cidade", rx: /\b(praca|mercado|rua|beco|feira|largo|ponte|portao|muralha|viela|cidade|vila)\b/ },
   ],
   dentro: "taverna",
   naCidade: "cidade",
+  /* 22/11 (a décima segunda sessão): a luta com a besta da quest no covil dela
+     (a toca, a furna) abria no salão da taverna — o Molhe Velho não tem palavra
+     da tabela, e o sítio fechado caía no «dentro». O covil é caverna. */
+  covil: "caverna",
   porque: "a luta abre no chão onde o herói pisa: a estrada só com a jornada aberta, e na cidade o sítio dela, nunca o nome da cidade",
 };
 
@@ -376,8 +380,16 @@ export function cenarioDe(ctx) {
   const T = PLANTA_DA_ESTRADA;
   const de = (tab, k) => (Object.prototype.hasOwnProperty.call(tab, k) ? tab[k] : "");
   if (c.emViagem === true || (c.emViagem !== false && T.marca.test(N(local)))) {
-    return de(T.porChao, N(c.chao)) || de(T.porBioma, N(bioma)) || T.padrao;
+    const pc = de(T.porChao, N(c.chao));
+    if (pc) return pc;
+    /* 22/11 (a décima segunda sessão): a viagem por terra numa costa de enseada
+       abria a luta no convés — com o chão da rota dito e não marítimo, o bioma
+       do mar não põe navio debaixo dos pés */
+    const pb = de(T.porBioma, N(bioma));
+    if (pb === "navio" && N(c.chao)) return T.padrao;
+    return pb || T.padrao;
   }
+  if (c.covil === true) return PLANTA_DO_LUGAR.covil;
   /* PLANTA_DO_LUGAR: o sítio e a cidade, ditos às claras */
   const L = PLANTA_DO_LUGAR;
   const lg = c.lugar && typeof c.lugar === "object" && !Array.isArray(c.lugar) ? c.lugar : null;

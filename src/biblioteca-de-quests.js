@@ -1344,12 +1344,14 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
         efeitos: [{ tipo: "afeicao", papel: "pastora", n: 1 }],
       },
       coleira: {
-        texto: "levar {fera} viva, de coleira, até à praça",
+        precisaVivo: "fera",
+        texto: "levar {fera} viva, de coleira, até a praça",
         ganha: "A marca cosida na coleira passa de mão em mão, e quem soltava a besta deixa de ser conversa de taberna: passa a ser um nome que se procura.",
         custa: "Uma fera viva acorrentada no meio da praça, e {pastora} cuspindo aos seus pés. Quem a soltava fica sabendo que você roubou o bicho dele, e vai querer de volta o bicho ou a mão que o leva.",
         efeitos: [{ tipo: "afeicao", papel: "pastora", n: -1 }, { tipo: "relogio_do_fio", n: -1 }, { tipo: "avisa_vilao" }],
       },
       monte: {
+        precisaVivo: "fera",
         texto: "levar {fera} para o alto do monte, e soltar a besta lá em cima",
         ganha: "Nem sangue nem corrente: volta para o lugar de onde a tiraram, sem dono, e não desce mais ao toque do sino.",
         custa: "{pastora} queria a cabeça, e vai contar para todo mundo que você a deixou ir. E quem soltava a besta fica com a coleira vazia na mão, esperando outra que lhe sirva.",
@@ -3011,6 +3013,26 @@ function ramoDaOpcao(etapa, chave, op) {
    preço — a tela mostra-os ANTES de o jogador escolher (a lei da casa).
    null quando a escolha não está aberta agora.
    ============================================================ */
+/* o papel caiu na luta e não foi poupado (o livro: derrotou sem poupou) */
+export function morreuNaLuta(papel, ctx) {
+  try {
+    if (!papel || !ctx) return false;
+    return !!avaliarCondicao(["derrotou", `papel:${papel}`], ctx) && !avaliarCondicao(["poupou", `papel:${papel}`], ctx);
+  } catch { return false; }
+}
+/* os papéis desta quest que a luta abateu (o nome com que a quest os diz):
+   o fato que vai à pauta enquanto a quest está aberta. → [{ papel, nome }] */
+export function osMortosDaLuta(ficha, registo, contexto) {
+  try {
+    const F = fichaDe(ficha);
+    if (!F) return [];
+    const R = garantirRegisto(registo, F);
+    if (!R) return [];
+    const k = obj(contexto) || {};
+    const ctx = contextoDe(F, R, obj(k.estado) || {}, obj(k.mundo));
+    return Object.keys(obj(F.papeis) || {}).filter((p) => morreuNaLuta(p, ctx)).map((p) => ({ papel: p, nome: String(ctx.nomes[p] || "").trim() })).filter((x) => x.nome);
+  } catch { return []; }
+}
 export function vereditoDaEscolha(ficha, registo, chave, contexto) {
   const F = fichaDe(ficha);
   if (!F || !validarQuest(F).ok) return null;
@@ -3030,7 +3052,10 @@ export function vereditoDaEscolha(ficha, registo, chave, contexto) {
   const G = GRAVIDADE_DA_ESCOLHA.ordem;
   return {
     chave, etapa: e.etapa, contexto: oQueEstaEmJogo,
-    opcoes: Object.entries(e.opcoes).map(([id, o]) => {
+    /* 22/11 (a décima segunda sessão): a carta oferecia levar «viva, de coleira»
+       e «soltar a besta» depois de a luta a abater. O que morreu na luta é fato
+       do sistema: a opção que precisa do papel vivo (`precisaVivo`) sai da carta */
+    opcoes: Object.entries(e.opcoes).filter(([, o]) => !(o.precisaVivo && morreuNaLuta(o.precisaVivo, ctx))).map(([id, o]) => {
       const custo = custoDe(o.efeitos);
       /* o mundo com esta opção escolhida: o que ela fecha e quem ela arrisca */
       const ctx2 = contextoDe(F, { ...R, escolhas: { ...R.escolhas, [chave]: { opcao: id, dia } } }, E, obj(k.mundo));

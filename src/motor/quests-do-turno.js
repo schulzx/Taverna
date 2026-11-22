@@ -154,7 +154,7 @@
        tinha dado; a tela mostra-a por revelacaoDoEspolio, TE10)
    ============================================================ */
 import { garantirEsqueleto, questsDoAto, reservaDoCoracao } from "../esqueleto.js";
-import { questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha, escolherNaQuest, missaoDaQuest, EFEITOS_DA_QUEST, PRESSUPOSTOS, PAPEIS_DA_QUEST } from "../biblioteca-de-quests.js";
+import { questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha, escolherNaQuest, osMortosDaLuta, missaoDaQuest, EFEITOS_DA_QUEST, PRESSUPOSTOS, PAPEIS_DA_QUEST } from "../biblioteca-de-quests.js";
 import { fichaDoVilao, relogioDoPlano, camadaDoVilao, reagirAoHeroi, desfechoDoVilao, oVilaoNaPauta, oVilaoNoDiario, garantirRegistroDoVilao } from "../plano-do-vilao.js";
 import { garantirHistoria, marcoDaQuest, virarEtapa, envelopeDeVirada, PESO_DA_QUEST } from "../historia.js";
 import { chegouAteEle } from "../antagonista.js";
@@ -281,6 +281,8 @@ export const QUESTS_DO_TURNO = Object.freeze({
   fora: 24,
   passo: Object.freeze({ cabeca: "O PASSO: ", teto: 220, falta: " — falta {falta}", coracao: "; e, no coração, {etapa}" }),
   veto: "que {quem} saia da história fora de cena — por morte, prisão ou fuga — enquanto este caminho estiver aberto",
+  /* 22/11 (a décima segunda sessão): a fera abatida na luta voltou «viva» na prosa (o carroceiro, Merek) — o morto da quest aberta vai em NÃO PODE */
+  mortoNaLuta: "{quem} aparecer, agir ou ser tratado como vivo: morreu na luta",
   notas: Object.freeze({
     max: 2, doVilao: 1, teto: 360,
     facto: "[É FACTO, decidido pelo sistema — entra nesta resposta] ",
@@ -1091,6 +1093,9 @@ export function aMesaDasQuests(estado, opcoes) {
     } catch { favor = ""; }
     /* TE9: O QUE O HERÓI LEVA — só no turno a seguir ao espólio (o anúncio
        que o fim desse turno apaga), com o veto ao lado */
+    try {
+      for (const R of Q.registos.filter((r) => r.estado === "aberta")) for (const m of osMortosDaLuta(R.id, R, ctx)) { const l = encher(T.mortoNaLuta, { quem: m.nome }); if (!naoPode.includes(l)) naoPode.push(l); }
+    } catch { /* o morto que não se lê não apaga a mesa */ }
     const espolio = Q.anuncio ? [...Q.anuncio.linhas] : [];
     if (espolio.length) naoPode.push(LINHA_DO_ESPOLIO.naoPode);
     return { comQuest, passo, mao, naoPode, favor, espolio };

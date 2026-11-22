@@ -983,7 +983,14 @@ export function alvoDaAgressao(texto, opcoes) {
     if (daCena.armado) return { nome: daCena.nome, ameaca: ameacaDoPapel(daCena.cabeca).ameaca, pessoa: true, armadoNaProsa: true, doGrupo: false, deOnde: "cena" };
     return { ...forma({ nome: daCena.nome, papel: daCena.papel }, { deOnde: "cena" }), ...(daCena.cabeca ? { cabeca: daCena.cabeca } : {}) };
   }
-  if (citados.length) return forma(citados[0], {});
+  /* 22/11 (a décima segunda sessão, T27 e T28): «ataco o que desce ao anoitecer
+     com a rapieira, e peço que Hilda lance um feitiço nele» virou «romper com a
+     Hilda» — o nome dela vinha da outra oração (o pedido), e a frase sumiu sem
+     turno. Quem anda com o herói e é citado só fora das orações do golpe não é
+     o alvo («Doran ri. Avanço para socá-lo.» continua a ser o Doran) */
+  const doGolpeT = norm(oracoesDoGolpe(texto).join(" . "));
+  const citadosNoGolpe = doGolpeT ? citados.filter((n) => doGolpeT.includes(norm(n.nome)) || (!doGrupo.has(norm(n.nome)) && !ehComigo(n.nome))) : citados;
+  if (citadosNoGolpe.length) return forma(citadosNoGolpe[0], {});
   if (comigoDito) return forma({ nome: comigoDito }, {});
   /* sem nome: só o pronome abre a segunda pergunta */
   let porPronome = false;
@@ -1132,9 +1139,14 @@ export function falaDaAgressao(a) {
   return `⚔ Você parte para cima de ${a.nome} — o combate está aberto.`;
 }
 
+export const A_RECUSA_DO_COMPANHEIRO = Object.freeze({
+  linha: "✋ {nome} viaja com você, e a sua lâmina não se volta contra quem está do seu lado por uma frase solta. Se é para romper, diga com todas as letras o que quer fazer.",
+});
 export function falaDoCompanheiro(a) {
   if (!a || a.tipo !== "companheiro") return "";
-  return `✋ ${a.nome} viaja com você. Se é para romper com quem está do seu lado, diga com todas as letras o que quer fazer — o sistema não abre essa luta por engano.`;
+  /* 22/11 (a décima segunda sessão): a linha falava do sistema («o sistema não
+     abre essa luta por engano») — o sistema não fala de si mesmo */
+  return A_RECUSA_DO_COMPANHEIRO.linha.replace("{nome}", a.nome);
 }
 
 export function envelopeDaAgressao(a) {

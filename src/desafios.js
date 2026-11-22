@@ -778,6 +778,8 @@ export const DESAFIOS = [
       /\balivi\w* (a|o) (bolsa|carteira|algibeira|bolso|cinto)\b/.source,
       /\bcorto a bolsa|\bempalm\w*|\bescamote\w*|\bescondo (o|a) \w+ na manga|\broubo (a|o) \w+ d[oa]\b|\bafan\w*/.source,
       /* M3 (18/11, o exame do Mestre, metade A): «afano», o verbo do jogador para a mão leve */
+      /* 22/11 (a décima segunda sessão, T38): «pego a bolsa de moedas de Merek às escondidas» — sem dado, e a prosa furtou. Pegar a bolsa de alguém às escondidas é a mão leve (a mesma lista do veredito da troca: O_VEREDITO_DA_TROCA.furtoEscondido) */
+      /\b(tiro|pego|surrupio|levo|apanho|puxo)\s+(a|o|as|os)\s+(bolsa|bolsinha|carteira|algibeira|moedas?|bolso)\b[^.!?]{0,60}\b(as escondidas|escondid[oa]|de fininho|discretamente|na surdina|sorrateiramente|furtivamente|sem ser vist[oa])\b/.source,
     ].join("|")),
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
     rotulo: "mão leve", dcPadrao: DC("incomum"),

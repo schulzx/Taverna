@@ -46,6 +46,7 @@
    ============================================================ */
 import { NUMERO_POR_EXTENSO } from "./cobranca.js";
 import { aQuem } from "./a-venda-da-bolsa.js";
+import { oNomeDito, quemONomeDiz } from "./quem-esta-aqui.js";
 
 const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 const obj = (x) => (x != null && typeof x === "object" && !Array.isArray(x) ? x : null);
@@ -134,6 +135,9 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   /* o furto (a leitura; quem decide se houve dado é o desafio «bater_carteira») — «furtivo» e «furtividade» não são furto */
   furto: /\b(furto|furtar|furtei|furtamos|roubo|roubar|roubei|afano|afanar|surrupio|surrupiar|bato a carteira|bater a carteira|corto a bolsa|empalmo|punguei|alivio (?:a|o) (?:bolsa|carteira|algibeira))\b/,
   coisaDoFurto: /\b(?:furto|furtar|roubo|roubar|afano|afanar|surrupio|surrupiar|alivio|empalmo)\s+(?:(?:a|o|as|os|um|uma)\s+)?([a-z]+)/,
+  /* a décima segunda sessão (T38): «pego a bolsa de moedas de Merek às escondidas»
+     é furto — a mesma forma que o catálogo lê como mão leve (desafios.js, bater_carteira) */
+  furtoEscondido: /\b(?:tiro|pego|surrupio|levo|apanho|puxo)\s+(?:a|o|as|os)\s+(bolsa|bolsinha|carteira|algibeira|moedas?|bolso)\b[^.!?]{0,60}\b(?:as escondidas|escondid[oa]|de fininho|discretamente|na surdina|sorrateiramente|furtivamente|sem ser vist[oa])\b/,
   dinheiroDoBolso: /\b(bolsa|bolsinha|carteira|algibeira|moedas?|dinheiro|bolso|cinto)\b/,
   bugigangas: Object.freeze(["Dado de osso", "Anel de latão", "Lenço bordado", "Pente de chifre", "Botão de osso"]),
   /* O DE GRAÇA: o pedido sem moeda a quem não é do grupo */
@@ -179,6 +183,8 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     }),
     tomarFalhou: "✋ {Alvo} segura firme: a mão volta vazia.",
     tomarNaoHa: "✋ Não há {coisa} na mão {doAlvo} que se tome.",
+    /* a décima segunda sessão (T37): o que não se segura não se toma */
+    tomarNaoSeSegura: "✋ {Coisa} {doAlvo} não é coisa que se pegue com a mão.",
     deGracaNaoTem: "🎁 {Alvo} não tem {coisa} para dar.",
     dar: "🤝 {Coisa} agora é de {Quem}.",
     fiado: "⛔ Fiado não: aqui se paga na hora.",
@@ -207,9 +213,12 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     deGracaNao: "{Alvo} não me deu nada de graça: nada mudou de mão.",
     deGracaCaro: "Pedi {Coisa} de graça, e não me deram: custa ◉ {P}, e continua na banca. Nada mudou de mão.",
     qual: "Eu disse uma coisa que pode ser mais de uma ({Lista}); nada mudou de mão até eu dizer qual.",
+    /* a décima segunda sessão (o homônimo): o nome dito é de duas pessoas que estão aqui */
+    qualQuem: "Eu disse um nome que é de mais de uma pessoa aqui ({Lista}); nada aconteceu até eu dizer qual.",
     tomar: "Arranquei {Coisa} da mão {doAlvo}; já está comigo. Use exatamente isto.",
     tomarFalhou: "Tentei tomar «{coisa}» da mão {doAlvo} e não consegui: {Alvo} segurou firme. Nada mudou de mão.",
     tomarNaoHa: "Quis tomar «{coisa}» da mão {doAlvo}, mas não há tal coisa ali: nada mudou de mão.",
+    tomarNaoSeSegura: "Quis tomar «{coisa}» {doAlvo}, e isso não é coisa que se pegue com a mão: não houve gesto, não houve dado, e nada mudou de mão.",
     deGracaNaoTem: "Pedi {coisa} de graça, e {Alvo} não tem isso para me dar: nada mudou de mão.",
     darEmUso: "Quis dar {Coisa}, mas estou usando: não dei, e nada mudou de mão.",
     /* a décima sessão (T29, T44): a tentativa repetida que o livro barrou não aplica o ganho */
@@ -226,6 +235,7 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     furto: "dar-me do furto outra coisa ou outra quantia além do que está dito",
     deGraca: "pôr nas minhas mãos outra coisa dada de graça além do que está dito",
     qual: "entregar, vender ou tirar da bolsa {Lista} nesta resposta",
+    qualQuem: "escolher por mim qual de {Lista} foi, ou fazer a troca acontecer com qualquer um",
     tomar: "pôr nas minhas mãos outra coisa tomada além do que está dito",
     repetida: "fazer dar certo agora o que já foi tentado e negado, ou dar de novo o que já foi dado",
     ausente: "pôr {Nome} nesta cena para receber, dar, aceitar ou recusar qualquer coisa",
@@ -272,6 +282,13 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
      o dado é do catálogo («vencer o peso», desafios.js#forcar); passou, a coisa
      dita vem, se for coisa que cabe numa mão (a tabela); falhou, nada */
   tomar: /\b(?:tomo|arranco|arrebato|puxo|tiro|agarro)\s+(?:(?:o|a|os|as|um|uma)\s+)?([a-z][a-z-]*(?:\s+(?:de\s+)?[a-z][a-z-]*){0,3}?)\s+d[aeo]s?\s+maos?\s+d[aeo]s?\s+/,
+  /* A OUTRA PORTA DO TOMAR (a décima segunda sessão, T37): «tomo a coragem de
+     Joric e guardo no bolso» — sem «da mão», a regra da décima primeira não a
+     via, e o catálogo leu mão leve (Prestidigitação, falhou, «Joric vê a sua
+     mão»). Tomar, pegar, roubar ou furtar de alguém o que não é coisa que se
+     segure é negado antes do dado. */
+  tomarAbstrato: /\b(?:tomo|arranco|arrebato|pego|roubo|furto|surrupio)\s+(?:(?:o|a|os|as|um|uma|toda a|todo o)\s+)?([a-z]+)\s+d(?:e|o|a|os|as)\s+[a-z]/,
+  naoSeSegura: Object.freeze(["coragem", "medo", "alma", "honra", "confianca", "paciencia", "esperanca", "fe", "sorte", "voz", "folego", "raiva", "atencao", "orgulho", "calma", "furia", "vontade", "memoria", "juizo", "razao", "sono", "tristeza", "alegria", "dor", "culpa", "fama", "lealdade", "respeito", "amor", "odio"]),
   tomaveis: Object.freeze(["faca", "punhal", "adaga", "faquinha", "chave", "chaves", "carta", "bilhete", "papel", "mapa", "bolsa", "bolsinha", "anel", "colar", "amuleto", "moeda", "cajado", "bastao", "porrete", "pedra", "frasco", "garrafa", "caneca", "copo", "livro", "pergaminho", "lenco", "corda", "tocha", "vela", "lanterna", "cachimbo", "dado", "dados", "pena", "espeto", "anzol", "remo", "martelo", "machadinha"]),
   /* O DE GRAÇA QUE NOMEIA A COISA (a nona sessão, T22: pediu um odre, entrou uma
      Maçã seca da tabela): a coisa dita é a que vem, ou não vem — a amostra da
@@ -309,6 +326,8 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   vendaSemComprador: "{Dito} não está aqui para comprar, e o mercado fica longe daqui",
   /* o lugar onde as bancas atendem (o tipo do lugar, lugar.js) */
   tiposDoMercado: Object.freeze(["mercado", "feira", "praca"]),
+  /* o tipo de sítio que o sistema não conhece (a décima segunda sessão, T44) */
+  tipoDesconhecido: Object.freeze(["?"]),
 });
 const V = O_VEREDITO_DA_TROCA;
 
@@ -597,10 +616,14 @@ export function aIntencaoDaTroca(frase, ctx) {
     if (V.dar.test(t) && !aCompraPorMoeda(frase, c.moeda) && !oSubornoDaFrase(frase, c.moeda) && quantiaNa(t, c.moeda) === 0 && !Object.keys(V.usos).some((u) => new RegExp(`\\b${u}\\b`).test(t))) {
       return { tipo: "dar" };
     }
+    const mAb = t.match(V.tomarAbstrato);
+    if (mAb && V.naoSeSegura.includes(mAb[1])) return { tipo: "tomar", coisa: mAb[1], abstrato: true };
     if (V.furto.test(t)) {
       const m = t.match(V.coisaDoFurto);
       return { tipo: "furto", coisa: m ? m[1] : "" };
     }
+    const mE = t.match(V.furtoEscondido);
+    if (mE) return { tipo: "furto", coisa: mE[1] };
     /* a nona sessão, T28: «tomo a faca de peixe da mão do estivador» — força
        contra quem segura, com dado (antes caía em «pegar» e era negado sem dado) */
     const mT = t.match(V.tomar);
@@ -716,9 +739,20 @@ export function quemDaFrase(frase, presentes) {
   try {
     const t = sem(frase);
     if (!t) return null;
-    for (const p of arr(presentes).map(nomeDe).filter(Boolean)) {
+    const ps = arr(presentes).map(nomeDe).filter(Boolean);
+    for (const p of ps) {
       const w = primeiro(p);
-      if (w.length >= 3 && new RegExp(`\\b${w}\\b`).test(t)) return { nome: p };
+      if (w.length < 3 || !new RegExp(`\\b${w}\\b`).test(t)) continue;
+      /* a décima segunda sessão (o homônimo): dois que estão com o mesmo primeiro
+         nome — o nome dito inteiro decide (quemONomeDiz); sem como decidir, `qual` */
+      const iguais = ps.filter((x) => primeiro(x) === w);
+      if (iguais.length < 2) return { nome: p };
+      /* o pedaço da frase pode chegar sem caixa (doOriginal): o nome inteiro, lido nela */
+      const inteiros = iguais.filter((x) => t.includes(sem(x).split(",")[0].trim()));
+      if (inteiros.length === 1) return { nome: inteiros[0] };
+      const r = quemONomeDiz(oNomeDito(frase, w) || w, { aqui: iguais });
+      if (r.estado === "aqui") return { nome: r.nome };
+      return { nome: p, qual: r.opcoes };
     }
     const orig = str(frase).normalize("NFC");
     for (const m of t.matchAll(V.papelNaFrase)) {
@@ -762,7 +796,7 @@ export function oCompradorDaFrase(frase, pessoas) {
 
 /* o objeto do furto: da palavra do furto até onde começa a outra oração (sem acento) */
 function objetoDoFurto(t) {
-  const m = t.match(V.furto);
+  const m = t.match(V.furto) || t.match(V.furtoEscondido);
   if (!m) return t;
   const resto = t.slice(m.index);
   const k = resto.search(V.fimDoObjetoDoFurto);
@@ -806,7 +840,12 @@ export function aVendaSemComprador(frase, ctx) {
     if (!dito) return null;
     if (oCompradorDaFrase(frase, c.pessoas)) return null;
     const tipo = sem(obj(c.lugar) ? c.lugar.tipo : "");
-    if (!tipo || V.tiposDoMercado.includes(tipo)) return null;
+    /* a décima segunda sessão (T44): «vendo a bússola ao mercador do Martelo de
+       Ferro» no Pátio das Trocas, com o painel do mercado aberto, foi negado — o
+       sítio não estava na lista dos lugares conhecidos e o tipo chegava «?». O
+       sistema só nega a venda onde SABE que não há mercado: tipo desconhecido
+       não nega (V.tipoDesconhecido) */
+    if (!tipo || V.tiposDoMercado.includes(tipo) || V.tipoDesconhecido.includes(tipo)) return null;
     const Dito = /^[A-ZÀ-Ý]/.test(dito) ? dito : `o ${dito}`;
     return Object.freeze({ dito, motivo: tpl(V.vendaSemComprador, { Dito: maiuscula(Dito) }) });
   } catch { return null; }
@@ -877,7 +916,10 @@ export function oVereditoDaTroca(frase, ctx) {
        que o sistema sabe noutro lugar (quemNaoEstaNaCena) não recebe nem dá nada,
        e a moeda não sai: negada antes de qualquer dado */
     const aus = obj(c.ausente) && str(c.ausente.nome).trim() ? c.ausente : null;
-    const wAus = aus ? primeiro(aus.nome) : "";
+    /* a décima segunda sessão (T4, T9): «Ulric Coração-de-Ferro» não é o Ulric
+       Olho-de-Corvo ausente — com o nome dito inteiro, só o mesmo nome conta */
+    const wAus0 = aus ? primeiro(aus.nome) : "";
+    const wAus = wAus0 && quemONomeDiz(oNomeDito(frase, wAus0) || wAus0, { longe: [aus] }).estado === "longe" ? wAus0 : "";
     /* a décima primeira sessão (T18, T20): o pagamento a quem não está também não sai da bolsa */
     if (wAus.length >= 3 && ["suborno", "deGraca", "tomar", "furto", "dar", "pagamento"].includes(it.tipo) && new RegExp(`\\b${wAus}\\b`).test(t0)) {
       const Nome = str(aus.nome).split(",")[0].trim();
@@ -999,7 +1041,13 @@ export function oVereditoDaTroca(frase, ctx) {
     const ditoNaFrase = (a) => !!a && ((primeiro(a.nome).length >= 3 && new RegExp(`\\b${primeiro(a.nome)}\\b`).test(seg)) || (sem(a.papel).length >= 3 && seg.includes(sem(a.papel))));
     const ehDoGrupo = (a) => !!a && arr(ficha.grupo).some((g) => primeiro(nomeDe(g)).length >= 3 && primeiro(nomeDe(g)) === primeiro(a.nome));
     const doCtx = it.tipo === "furto" && ehDoGrupo(doCtx0) && !ditoNaFrase(doCtx0) ? null : doCtx0;
-    const alvoC = doCtx && (ditoNaFrase(doCtx) || !daFrase) ? doCtx : daFrase || doCtx;
+    const qualQuem = daFrase && arr(daFrase.qual).length > 1 ? daFrase.qual : null;
+    const alvoC = qualQuem ? daFrase : doCtx && (ditoNaFrase(doCtx) || !daFrase) ? doCtx : daFrase || doCtx;
+    /* a décima segunda sessão: o nome é de dois que estão — a mesa pergunta qual, sem dado */
+    if (qualQuem && ["furto", "tomar", "deGraca"].includes(it.tipo)) {
+      const Lista = qualQuem.join(" ou ");
+      return negada(it.tipo, "qual", tpl(T.qual, { Lista }), tpl(F.qualQuem, { Lista }), tpl(X.qualQuem, { Lista }));
+    }
     if (it.tipo === "furto") {
       const Alvo = nomeDoAlvo(alvoC);
       const doAlvo = deQuem(str(alvoC && alvoC.nome));
@@ -1028,6 +1076,7 @@ export function oVereditoDaTroca(frase, ctx) {
       /* a décima primeira sessão (T44): «tomo a colher da mão de Cornelius» rolou,
          passou, e só depois a linha disse que não havia colher. O que não é coisa
          de se ter na mão é negado ANTES do dado — sem dado, e o momento não rola */
+      if (it.abstrato) return Object.freeze({ ...negada("tomar", "naoHa", tpl(T.tomarNaoSeSegura, { Coisa: maiuscula("a " + coisaT), doAlvo }), tpl(F.tomarNaoSeSegura, { coisa: coisaT, doAlvo }), X.tomar), coisa: coisaT });
       if (!V.tomaveis.includes(sem(it.coisa).split(" ")[0])) return Object.freeze({ ...negada("tomar", "naoHa", tpl(T.tomarNaoHa, { coisa: coisaT, doAlvo }), tpl(F.tomarNaoHa, { coisa: coisaT, doAlvo }), X.tomar), coisa: coisaT });
       const d = obj(c.dado);
       if (!d) return Object.freeze({ tipo: "tomar", estado: "pendente", ficha: null, mudou: Object.freeze([]), linha: "", fato: "", veto: [] });

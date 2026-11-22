@@ -2203,7 +2203,7 @@ export const ENCRUZILHADA = {
   textos: {
     cabeca: "Uma escolha", ganhas: "Você ganha", custa: "Custa", escolhida: "Sua escolha",
     virada: { titulo: "Há outras maneiras.", linha: "Faça do seu jeito: escreva o que você faz." },
-    rodape: { mesa: "Ou escreve o que você faz — o campo continua aberto, e a sua frase pode ser uma destas cartas.", telefone: "Ou escreve o que você faz no campo, aqui em baixo." },
+    rodape: { mesa: "Ou escreva o que você faz — o campo continua aberto, e a sua frase pode ser uma destas cartas.", telefone: "Ou escreva o que você faz no campo, aqui embaixo." },
   },
 };
 export const GRAVIDADE_DA_ESCOLHA = {

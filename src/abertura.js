@@ -162,7 +162,8 @@ export const OBJETO_DO_FEITIO = {
 /* O TÍTULO da principal — o que o diário mostra. Sem "missão", sem
    "principal": o nome de uma história, não de um mecanismo. */
 export const TITULO_DO_FEITIO = {
-  procurar: "O rasto de {quem}",
+  /* 22/11 (a décima segunda sessão): PT-BR — «rastro», não «rasto» */
+  procurar: "O rastro de {quem}",
   descobrir: "O que {onde} guarda",
   enfrentar: "A sombra de {alvo}",
 };
@@ -179,7 +180,7 @@ export { OFICIO_NO_GENERO, oficioNoGenero } from "./nomes.js";
    nome que se tinha) ou é quem, nesta cidade, sabe mais do marco. */
 export const O_QUE_SE_SABE = {
   propria: "é o único nome que traz, e trabalha {local}",
-  informante: "é quem, nesta cidade, sabe mais de {objeto}; encontra-se {local}",
+  informante: "é quem, nesta cidade, sabe mais de {objeto}; está {local}",
 };
 
 /* ONDE SE PROCURA UM INFORMANTE: os lugares de conversa, pelo tipo do
@@ -192,9 +193,10 @@ export const LUGARES_DE_CONVERSA = ["taverna", "descanso", "mercado", "feira", "
    a pista fica a um passo de distância e não debaixo do nariz. */
 export const CHEGADAS = {
   sobremundo: "à porta de {cidade}, com a poeira da estrada ainda na roupa",
-  torre: "ao patamar de {cidade}, acabado de subir a escada",
-  arquipelago: "ao cais de {cidade}, acabado de desembarcar",
-  estelar: "à comporta de {cidade}, acabada de pressurizar",
+  /* 22/11 (a décima segunda sessão): PT-BR — «acabado de desembarcar» era PT-PT */
+  torre: "ao patamar de {cidade}, mal terminada a subida da escada",
+  arquipelago: "ao cais de {cidade}, recém-desembarcado",
+  estelar: "à comporta de {cidade}, recém-pressurizada",
 };
 
 /* A PEQUENA HISTÓRIA DO LUGAR: do que a cidade vive e o que o povo conta
@@ -208,9 +210,10 @@ export const HISTORIA_DO_LUGAR = {
      perto da base), com a ida da ficha — a abertura manda à base e de lá
      a ele, e a hora dita é a que a viagem cobra */
   comLugarDaRegiao: "{cidade} {vive}; a {horas} de marcha dela, {rumo}, fica {masmorra}, e {rumor}",
-  comChefe: "{cidade} {vive}; e fala-se baixo de {chefe}, que tem covil nestas bandas",
-  soVocacao: "{cidade} {vive}, e toda a gente daqui sabe disso",
-  semVocacao: "{cidade} é pequena e desconfiada, e conhece-se de cara quem vem de fora",
+  comChefe: "{cidade} {vive}; e falam baixo de {chefe}, que tem covil nestas bandas",
+  /* 22/11 (a décima segunda sessão): PT-BR — «toda a gente» era PT-PT */
+  soVocacao: "{cidade} {vive}, e todo mundo daqui sabe disso",
+  semVocacao: "{cidade} é pequena e desconfiada, e reconhece de cara quem vem de fora",
 };
 
 /* O SINO — a escalada. Tudo em turnos de jogo:
@@ -681,6 +684,35 @@ export const ABERTURA_COM_QUEST = Object.freeze({
      deixava «e Isolde deixou-os lá para que.» no pedido (medido vivo) */
   teto: Object.freeze({ gancho: 360, passo: 160 }),
 });
+/* ---------------- A PESSOA E O TÍTULO DA ABERTURA SÃO OS DA QUEST (22/11/2026) ----------------
+   A décima segunda sessão: a tela nomeava «Ulric», o save guardava
+   «Ivarr Barba-Ruiva… encontra-se em Sereia Rouca» e o título «O rasto de
+   Joric», enquanto a quest de abertura era «O Que Desce ao Anoitecer» (Quorin
+   Barba-Ruiva, Joric, Morgane Barba-Ruiva). Dois sistemas sorteavam gente: a
+   abertura (o marco antigo da espinha) e a quest desenhada. Com quest no ato
+   0, a abertura passa a ter a pessoa e o título DELA. Só na criação de uma
+   campanha nova (quem chama é o App, no turno 0); o save antigo fica como
+   está. `quest`: { titulo, pessoa: { nome, papel, local } }. */
+export const A_ABERTURA_DA_QUEST = Object.freeze({
+  sabe: "{nome}{papel} é quem mais sabe do que está acontecendo; está {local}",
+  semLocal: "{nome}{papel} é quem mais sabe do que está acontecendo",
+});
+export function aAberturaDaQuest(abertura, quest) {
+  try {
+    const a = garantirAbertura(abertura);
+    if (a.legado) return a;
+    const q = obj(quest);
+    const p = obj(q.pessoa);
+    const nome = txt(p.nome, 60);
+    const titulo = txt(q.titulo, 70);
+    if (!nome && !titulo) return a;
+    const papel = txt(p.papel, 60);
+    const local = txt(p.local, 80);
+    const sabe = nome ? contrair(encher(local ? A_ABERTURA_DA_QUEST.sabe : A_ABERTURA_DA_QUEST.semLocal, { nome, papel: papel ? `, ${papel},` : "", local: local ? comEm(local) : "" })) : a.sabe;
+    return garantirAbertura({ ...a, titulo: titulo || a.titulo, sabe, ...(nome ? { pista: { nome, papel, local } } : {}) });
+  } catch { return garantirAbertura(abertura); }
+}
+
 /* as frases inteiras que cabem no teto; a primeira, se sozinha passa, corta
    na última palavra que cabe */
 function frasesAte(texto, teto) {
