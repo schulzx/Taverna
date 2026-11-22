@@ -374,10 +374,10 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     darObjeto: /\b(?:dou|damos|entrego|entregamos|devolvo|empresto|presenteio)\s+(?:(?:o|a|os|as|um|uma|meu|minha|meus|minhas)\s+)?([a-z]+)/,
     troca: /\btroc(?:o|amos|ar)\b/,
     tela: Object.freeze({
-      generica: "🤝 Diga o que você dá ou pede, e a quem — por exemplo: «dou a corda a Hakon» ou «peço uma tocha a Hakon».",
+      generica: "🤝 Diga o que você dá ou pede, e a quem: a coisa, e o nome de quem está com você.",
       darSemQuem: "🤝 A quem você dá {Coisa}? Diga o nome de quem recebe.",
       darNaoTem: "🎒 {Coisa} não está com você: não há o que dar.",
-      troca: "🤝 Coisa por coisa não se fecha numa frase: venda uma e compre a outra («vendo a faca a Hakon», depois «compro uma tocha»).",
+      troca: "🤝 Coisa por coisa não se fecha numa frase: venda uma e compre a outra («vendo a faca», depois «compro uma tocha»).",
       furtoSemNada: "🤲 A mão volta do bolso {doAlvo}: nada que valha levar.",
     }),
     fato: Object.freeze({

@@ -133,7 +133,7 @@ export function viaPorId(id) { return VIAS_DE_TRANCA.find((v) => v.id === id) ||
 /* O que o herói carrega, lido da ficha. Não pergunta ao Mestre e não
    acredita na ficção: se a gazua não está na bolsa, não existe. */
 function temItem(pers, rx) {
-  const inv = [...((pers && pers.inventario) || []), ...Object.values((pers && pers.equipado) || {})];
+  const inv = [...((pers && pers.inventario) || []), ...Object.values((pers && pers.equipados) || {})];
   return inv.some((it) => rx.test(norm(typeof it === "string" ? it : (it && it.nome) || "")));
 }
 function temMagia(pers, rx) {

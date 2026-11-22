@@ -622,7 +622,7 @@ export function aBolsaAgora(personagem) {
   for (const u of USOS) if (Number.isFinite(Number(sup[u]))) usos[u] = Number(sup[u]);
   return Object.freeze({
     moedas: Number.isFinite(Number(p.moedas)) ? Number(p.moedas) : null,
-    itens: Object.freeze([...arr(p.inventario), ...Object.values(obj(p.equipado) || {})].map(nomeDe).filter(Boolean)),
+    itens: Object.freeze([...arr(p.inventario), ...Object.values(obj(p.equipados) || {})].map(nomeDe).filter(Boolean)),
     usos: Object.freeze(usos),
   });
 }

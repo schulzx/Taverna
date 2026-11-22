@@ -11588,7 +11588,7 @@ export default function Taverna() {
               /* 21/11 (a nona sessão, T47): com quem o herói falava no turno anterior não fala «fora da vez» */
               fraseAnterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "",
               negados: semFolgaDoTurnoRef.current || [], teste: testeDoTurnoRef.current,
-              posses: [...(Array.isArray(pC.inventario) ? pC.inventario : []), ...Object.values(pC.equipado || {})],
+              posses: [...(Array.isArray(pC.inventario) ? pC.inventario : []), ...Object.values(pC.equipados || {})],
               estado: { ...retratoDoLivro(), personagem: pC, missoes: missoesRef.current, quests: questsRef.current, abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo, baseMundo: baseMundoRef.current },
               lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "", mundo: mundoDoLivro(),
               pagou: Number.isFinite(antesC) && Number.isFinite(moedasC) ? moedasC < antesC : null,
@@ -18925,7 +18925,7 @@ export default function Taverna() {
            e o livro de tentativas — a cena escreve neles as marcas de UMA
            coisa (do herói, comum, a que já cedeu), lidas só pela frase que a
            nomeia */
-        inventario: vale("o inventário", () => [...(Array.isArray(p0.inventario) ? p0.inventario : []), ...Object.values(p0.equipado || {})], []),
+        inventario: vale("o inventário", () => [...(Array.isArray(p0.inventario) ? p0.inventario : []), ...Object.values(p0.equipados || {})], []),
         chao: vale("o chão", () => chaoRef.current, null),
         tentativas: vale("o livro de tentativas", () => tentativasRef.current, {}),
         /* 21/11 (o-mestre-vivo.md §23): a semente, o dia e o que já se achou —

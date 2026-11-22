@@ -191,7 +191,7 @@ export function sanearResposta(obj) {
   const sugestoes = Array.isArray(obj.sugestoes) ? obj.sugestoes.filter((s) => typeof s === "string") : [];
   /* aviso discreto se a narrativa parece cortada (sem pontuação final) */
   const fim = narrativa.trim().slice(-1);
-  if (narrativa.length > 40 && !".!?\"'»)…".includes(fim)) {
+  if (narrativa.length > 40 && !".!?\"'»)…”’".includes(fim)) {
     narrativa = narrativa.trim() + " […]";
   }
   return { narrativa: narrativa || "…", perigo, rolagem: null, mudancas, sugestoes };
