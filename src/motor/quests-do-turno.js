@@ -1248,6 +1248,13 @@ export function aEscolhaDaFrase(frase, escolhas) {
       if (!ps.length) continue;
       /* o verbo da carta é o da frase (uma das primeiras palavras), ou a carta não é esta frase */
       if (!ws.slice(0, QUESTS_DO_TURNO.frase.cabeca).some((w) => casam(w, ps[0]))) continue;
+      /* a décima terceira sessão (T37, T38): «Dagon, me devolve o elixir que eu te
+         dei» casou com «devolver o livro a Thalia» pelo verbo só, e a frase foi
+         engolida duas vezes. O OBJETO da frase (a primeira palavra com corpo
+         depois do verbo) tem de ser o da carta; senão a frase segue o fluxo */
+      const kV = ws.findIndex((w, i) => i < QUESTS_DO_TURNO.frase.cabeca && casam(w, ps[0]));
+      const objeto = ws[kV + 1];
+      if (!objeto || !ps.slice(1).some((p) => casam(objeto, p))) continue;
       let pontos = 0;
       ps.forEach((p, i) => { if (ws.some((w) => casam(w, p))) pontos += i === 0 ? QUESTS_DO_TURNO.frase.verbo : 1; });
       if (pontos > 0) cand.push({ quest: e.quest, chave: e.chave, opcao: o.id, pontos });

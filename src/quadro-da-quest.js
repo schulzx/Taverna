@@ -72,6 +72,8 @@ import { noLugarDoPasso } from "./a-quest-manda.js";
 import { desafioPorPericia, desafioPorId } from "./desafios.js";
 /* 21/11 (a nona sessão, T57): a moeda que a frase dá pela coisa é da compra — uma porta cobra */
 import { aPortaDaMoeda, quemDaFrase } from "./o-veredito-da-troca.js";
+/* a décima terceira sessão (T19): a quem a frase paga e o sistema sabe noutro lugar não se paga */
+import { oNomeDito, quemONomeDiz } from "./quem-esta-aqui.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -1058,6 +1060,21 @@ export function aCartaDoGesto(quadros, gesto, onde) {
     /* a nona sessão: «dou 10 moedas à vendedora» virava a carta do Kael, que estava em cena —
        a quem a frase dá a moeda é quem a frase diz (quemDaFrase), não quem calhou estar ali */
     const quemDito = semArtigo(G.quem) || (() => { const q = quemDaFrase(G.frase, o.emCena); return q ? semArtigo(q.nome) : ""; })();
+    /* a décima terceira sessão (T19): «dou 3 moedas a Gareth Sombravinda pelo que ele
+       viu» no Balcão, com Gareth em Arco Pálido — o gesto virou a carta «pagar a quem
+       sabe», cobrou ◉ 10 sem linha, e a prosa pôs Gareth ali a pegar as moedas. A mão
+       que paga não paga a quem não está: o nome dito que o sistema sabe noutro lugar
+       (`onde.ausentes`, osAusentes) e não está aqui fecha o gesto antes da carta */
+    const ausentes = arr(o.ausentes).map((a) => (obj(a) ? a : { nome: String(a || "") })).filter((a) => a && String(a.nome || "").trim());
+    if (ausentes.length) {
+      const aqui = arr(o.emCena).map((p) => (obj(p) ? p.nome : p)).filter((n) => typeof n === "string" && n.trim());
+      const longe = ausentes.find((a) => {
+        const p0 = String(a.nome).split(/[\s,]+/)[0];
+        const p = semArtigo(p0);
+        return p.length >= 3 && new RegExp(`\\b${p}\\b`).test(frase) && quemONomeDiz(oNomeDito(G.frase, p0) || p0, { aqui, longe: [a] }).estado === "longe";
+      });
+      if (longe) return null;
+    }
     const ctx = { onde: o, cena: aCena(o.emCena), quem: quemDito, texto: G.frase };
     const cands = [];
     for (const x of asViraveis(quadros)) {

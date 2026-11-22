@@ -370,6 +370,10 @@ export const PLANTA_DO_LUGAR = {
      (a toca, a furna) abria no salão da taverna — o Molhe Velho não tem palavra
      da tabela, e o sítio fechado caía no «dentro». O covil é caverna. */
   covil: "caverna",
+  /* 22/11 (a décima terceira sessão): o tipo do sítio quando o nome não diz nada
+     (os tipos dos moldes, moldes.js: o portal da Torre é pedra a céu aberto) */
+  porTipo: Object.freeze({ portal: "cidade", "feira do andar": "cidade", "mercado de espolios": "cidade", concourse: "cidade", mercado: "cidade",
+    praca: "cidade", cais: "navio", "doca de atracacao": "navio", "taverna do porto": "taverna", descanso: "taverna", taverna: "taverna" }),
   porque: "a luta abre no chão onde o herói pisa: a estrada só com a jornada aberta, e na cidade o sítio dela, nunca o nome da cidade",
 };
 
@@ -389,14 +393,22 @@ export function cenarioDe(ctx) {
     if (pb === "navio" && N(c.chao)) return T.padrao;
     return pb || T.padrao;
   }
-  if (c.covil === true) return PLANTA_DO_LUGAR.covil;
   /* PLANTA_DO_LUGAR: o sítio e a cidade, ditos às claras */
   const L = PLANTA_DO_LUGAR;
   const lg = c.lugar && typeof c.lugar === "object" && !Array.isArray(c.lugar) ? c.lugar : null;
   const nomeDoSitio = lg ? N(`${lg.nome || ""} ${lg.dentroDe || ""}`).trim() : "";
+  /* 22/11 (a décima terceira sessão do Mestre vivo): «o covil é caverna» era largo
+     demais — a luta com Kolvar no Arco Pálido (um portal de pedra clara) abriu «na
+     boca da caverna… atrás das estalagmites». O terreno é o do lugar onde a luta
+     acontece: o nome ou o tipo do sítio (`porTipo`) mandam; a caverna do covil só
+     vale para o sítio fechado que nada diz */
+  const pelo = lg ? L.porSitio.find((x) => x.rx.test(nomeDoSitio)) || null : null;
+  const doTipo = lg ? de(L.porTipo, N(lg.tipoDoLocal)) : "";
+  if (c.covil === true && !pelo && !doTipo) return PLANTA_DO_LUGAR.covil;
   if (nomeDoSitio) {
-    const casa = L.porSitio.find((x) => x.rx.test(nomeDoSitio));
+    const casa = pelo;
     if (casa) return casa.planta;
+    if (doTipo) return doTipo;
     if (N(lg.distancia) === "dentro") return L.dentro;
     return de(T.porBioma, N(bioma)) || T.padrao;
   }

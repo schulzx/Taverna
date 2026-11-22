@@ -88,6 +88,10 @@ export const A_MAO_DA_FRASE = Object.freeze({
   suprimentos: Object.freeze(["racao", "racoes", "agua", "aguas", "tocha", "tochas", "flecha", "flechas", "virote", "virotes",
     "kit", "corda", "comida", "mantimentos", "suprimentos"]),
   palavraMinima: 4,
+  /* a décima terceira sessão (T40): o que pode vir logo depois do pronome da coisa («pego-o e guardo», «apanho ele do chão») */
+  depoisDoPronome: Object.freeze(["e", "para", "pra", "no", "na", "nos", "nas", "com", "ao", "em", "do", "da", "de", "que", "logo", "agora", "depressa", "tambem", "dali", "daqui"]),
+  /* a décima terceira sessão (T9): o complemento de «entrego» que é gente, não coisa */
+  gente: Object.freeze(["voce", "voces", "te", "vos"]),
   recusa: Object.freeze({
     vender: "🎒 {item} não está na sua bolsa — não há o que vender.",
     dar: "🎒 {item} não está com você — não há o que entregar.",
@@ -170,7 +174,9 @@ export function aMaoDaFrase(frase, contexto) {
       const nomeadas = coisasNomeadas(resto, chao.map((x) => x.nome));
       if (M.tudo.some((t) => tem(resto, t))) out.pegar = chao.map((x) => x.id);
       else if (nomeadas.length) out.pegar = chao.filter((x) => nomeadas.includes(x.nome)).map((x) => x.id);
-      else if (chao.length === 1 && M.pronome.includes(palavras[iP + 1])) out.pegar = [chao[0].id];
+      /* a décima terceira sessão (T40): «tomo a paciência de Aldric e guardo para mim» recolheu o único
+         elixir do chão — o «a» seguido de nome é artigo, não o pronome da coisa sem nome */
+      else if (chao.length === 1 && M.pronome.includes(palavras[iP + 1]) && (palavras[iP + 2] == null || M.depoisDoPronome.includes(palavras[iP + 2]))) out.pegar = [chao[0].id];
     }
     const pegos = new Set(chao.filter((x) => out.pegar.includes(x.id)).map((x) => x.nome));
     const naMao = [...bolsa, ...pegos];
@@ -192,7 +198,11 @@ export function aMaoDaFrase(frase, contexto) {
       && !M.naoEVenda.antes.includes(palavras[iV - 1])
       && !M.naoEVenda.depois.includes(palavras[iV + 1])
       && M.objeto.includes(palavras[iV + 1]);
-    const iD = ehVenda ? -1 : indiceDoVerbo(palavras, M.dar);
+    const iD0 = ehVenda ? -1 : indiceDoVerbo(palavras, M.dar);
+    /* a décima terceira sessão (T9): «ameaço Freya: diga onde… ou eu entrego você
+       ao cobrador» foi lido como entregar o livro, e a frase ficou sem turno.
+       Entregar ALGUÉM (você, te) é denunciar: não é dar coisa, e não se recusa aqui */
+    const iD = iD0 >= 0 && M.gente.includes(palavras[iD0 + 1]) ? -1 : iD0;
     const i = ehVenda ? iV : iD;
     if (i >= 0) {
       const verbo = ehVenda ? "vender" : "dar";

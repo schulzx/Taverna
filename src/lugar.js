@@ -501,6 +501,18 @@ export const PARTE_DO_LUGAR = {
   fica: "ficaAqui",
 };
 const RX_PARTE_DO_LUGAR = new RegExp(`\\b(${PARTE_DO_LUGAR.palavras.join("|")})\\b`, "g");
+/* os pedaços do nome que casaram na frase são todos palavras de parte, e cada um
+   vem na frase seguido de «de/do/da X» com X fora do nome (a parte de outro sítio) */
+function parteDeOutro(alvo, nome) {
+  const t = norm(alvo);
+  const meus = pedacos(nome);
+  const achados = meus.filter((p) => RX_PEDACO(p).test(t));
+  if (!achados.length || !achados.every((p) => PARTE_DO_LUGAR.palavras.includes(p))) return false;
+  return achados.every((p) => {
+    const m = t.match(new RegExp(`\\b${singular(p)}s?\\s+d[aeo]s?\\s+([a-z]{3,})`));
+    return !!m && !meus.includes(m[1]) && !meus.includes(singular(m[1]));
+  });
+}
 const semAsPartes = (t) => String(t || "").replace(RX_PARTE_DO_LUGAR, (m) => " ".repeat(m.length));
 
 /* VOLTAR TAMBÉM É IR (04/11, a 17.ª sessão, defeito 6). «Volto ao templo à
@@ -576,6 +588,11 @@ export function lugarPedido(texto, lugares = []) {
     /* E1: o pedaço que casou está dentro do nome próprio de OUTRO sítio
        ("Posto da Baixa" não é "o posto da estrada") — ver o tipo, abaixo */
     if (!inteiro && pedacoDeOutroNome(texto, l.nome)) continue;
+    /* 22/11 (a décima terceira sessão do Mestre vivo, T13): «vou até o degrau da
+       capela com Thalia» virou «Ir até Balcão do Degrau». O pedaço que casou é
+       palavra de parte (PARTE_DO_LUGAR) e a frase diz de QUEM é a parte («o degrau
+       DA CAPELA»), com uma palavra que o nome não tem: é a parte de outro sítio */
+    if (!inteiro && parteDeOutro(alvo, l.nome)) continue;
     const p = inteiro + pedacos(l.nome).length;
     if (p > pontos) { pontos = p; melhor = l; }
   }

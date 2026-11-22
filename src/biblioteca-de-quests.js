@@ -2371,8 +2371,14 @@ export function validarQuest(ficha) {
       for (const lado of ["texto", "ganha", "custa"]) {
         if (typeof o[lado] !== "string" || !o[lado].trim()) err(`${onde}: falta «${lado}» (o veredito diz os dois lados)`); else textos.push([o[lado], onde]);
       }
+      /* a décima terceira sessão: o texto do lado quando o papel morreu na luta (`seMorto`) */
+      if (o.seMorto !== undefined) {
+        const sm = obj(o.seMorto);
+        if (!sm || !Object.prototype.hasOwnProperty.call(obj(F.papeis) || {}, sm.papel)) err(`${onde}: «seMorto» sem papel da ficha`);
+        else for (const lado of ["ganha", "custa"]) if (sm[lado] !== undefined) { if (typeof sm[lado] !== "string" || !sm[lado].trim()) err(`${onde}: «seMorto.${lado}» vazio`); else textos.push([sm[lado], `${onde}.seMorto`]); }
+      }
       verEfeitos(o.efeitos, `${onde}.efeitos`, false);
-      const usada = todas.some((et) => obj(et) && atomos(et.conclui).some((a) => a.cond[0] === "escolheu" && a.cond[1] === k && a.cond[2] === op));
+      const usada =todas.some((et) => obj(et) && atomos(et.conclui).some((a) => a.cond[0] === "escolheu" && a.cond[1] === k && a.cond[2] === op));
       if (!usada) err(`${onde}: nenhuma etapa a lê`);
     }
   }
@@ -3073,8 +3079,14 @@ export function vereditoDaEscolha(ficha, registo, chave, contexto) {
         risco = { papel, quem: ctx.nomes[papel] || "", certo: ganha === mortal };
       }
       const gravidade = risco ? G[0] : fecha ? G[1] : custo > 0 ? G[2] : G[3];
+      /* a décima terceira sessão (a carta «Decidir o que fica do livro»): depois do
+         «Matar», dois dos três caminhos falavam de Kolvar vivo («já leu o livro todo,
+         e sabe o caminho…», «continua a bater às portas…»). O `precisaVivo` da
+         décima segunda tira o caminho que QUER o papel vivo; não lia o TEXTO que o
+         diz vivo. O que morreu na luta troca o texto pelo `seMorto` da opção */
+      const morto = obj(o.seMorto) && o.seMorto.papel && morreuNaLuta(o.seMorto.papel, ctx) ? o.seMorto : null;
       return {
-        id, texto: maiuscula(encher(o.texto, ctx.nomes)), ganha: frase(o.ganha, ctx.nomes), custa: frase(o.custa, ctx.nomes),
+        id, texto: maiuscula(encher(o.texto, ctx.nomes)), ganha: frase((morto && morto.ganha) || o.ganha, ctx.nomes), custa: frase((morto && morto.custa) || o.custa, ctx.nomes),
         efeitos: arr(o.efeitos).map((x) => ({ ...x })), custo, podeEscolher: custo <= bolsa,
         gravidade, fecha, risco,
       };

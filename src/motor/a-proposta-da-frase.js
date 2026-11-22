@@ -349,7 +349,10 @@ function osEfeitos(l, e) {
     const linhas = [];
     if (Number.isFinite(d) && d > 0) linhas.push(tpl(LN.dias, { X: d === 1 ? "1 dia" : `${d} dias` }));
     if (ehObj(l.viagem.falta) && limpo(l.viagem.falta.diz)) linhas.push(limpo(l.viagem.falta.diz));
-    ef.viagem = { verbo: tpl(V.viagem, { D: limpo(l.viagem.destino) }), confirmar: C.viagem, preco: "", minutos: null, linhas };
+    /* 22/11 (a décima terceira sessão, T52): o cartão oferecia «Partir» e o clique devolvia
+       «⚿ Não há caminho direto…». A trava da forma (lei-da-forma.js) vem antes do clique */
+    if (limpo(l.viagem.impedido)) linhas.push(limpo(l.viagem.impedido));
+    ef.viagem = { verbo: tpl(V.viagem, { D: limpo(l.viagem.destino) }), confirmar: C.viagem, preco: "", minutos: null, linhas, impedido: limpo(l.viagem.impedido) };
   }
   if (ehObj(l.passo) && limpo(l.passo.nome)) {
     const min = Number(l.passo.minutos) || 0;

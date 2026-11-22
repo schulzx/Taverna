@@ -518,7 +518,12 @@ export function marcarDoMomento(v, m) {
   let seca = "";
   try {
     const molde = O_PRECO_NA_CENA[familiaDaAcao(v)];
-    const quem = molde && obj(m) ? quemVeNaCena(m.cena, txt(v.pessoa && v.pessoa.nome) || txt(v.quem)) : "";
+    /* a décima terceira sessão (T60): «pego uma moeda do bolso de Freya às
+       escondidas» — sem pessoa no veredito do catálogo, quem via a mão era a
+       primeira acordada da cena (Thalia). O alvo que a régua leu da frase
+       (`m.alvo`, o complemento do verbo) vem antes do palpite */
+    const doMomento = obj(m) ? (typeof m.alvo === "string" ? m.alvo : txt(obj(m.alvo) ? m.alvo.nome : "")) : "";
+    const quem = molde && obj(m) ? quemVeNaCena(m.cena, txt(v.pessoa && v.pessoa.nome) || txt(v.quem) || txt(doMomento)) : "";
     if (molde && quem) seca = maiuscula(molde.replace("{quem}", quem));
   } catch { seca = ""; }
   return Object.freeze({ ...v, doMomento: true, ...(vantagem ? { vantagemDoMomento: vantagem } : {}), ...(seca ? { secaDoMomento: seca } : {}) });

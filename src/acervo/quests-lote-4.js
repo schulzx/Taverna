@@ -513,11 +513,14 @@ const O_LIVRO_DOS_NOMES = quest({
         texto: "devolver o livro a {escrivao}, inteiro, como estava",
         ganha: "{escrivao} aperta o livro contra o peito, e a terra volta a ter memória: cada um prova o que é seu, e as dívidas antigas continuam a ser só dívidas.",
         custa: "O que se roubou uma vez rouba-se outra. {servo} já leu o livro todo, e sabe o caminho para a casa de {escrivao}.",
+        /* a décima terceira sessão: com {servo} morto na luta, o custo é de quem lhe pagava */
+        seMorto: { papel: "servo", custa: "O que se roubou uma vez se rouba outra. {servo} morreu com o livro lido, mas quem pagava a ele sabe agora que o livro voltou para a casa de {escrivao}." },
         efeitos: [{ tipo: "afeicao", papel: "escrivao", n: 1 }, { tipo: "aliado", papel: "escrivao" }],
       },
       trocar: {
         texto: "pôr no lugar dele uma cópia de {copista}, com os nomes trocados",
         ganha: "{servo} continua a bater às portas — às portas erradas, pelos nomes errados, e quem lhe paga começa a desconfiar da mão que o serve.",
+        seMorto: { papel: "servo", ganha: "Quem pagava a {servo} herda a cópia e passa a bater às portas erradas, pelos nomes errados — e a desconfiar de quem a trouxe." },
         custa: "Três noites de {copista} à luz da vela, e uma letra falsa que, se for descoberta, leva {copista} à forca no seu lugar. E o livro verdadeiro passa a ser seu para guardar.",
         efeitos: [{ tipo: "relogio_do_fio", n: -2 }, { tipo: "dia", n: 3 }],
       },

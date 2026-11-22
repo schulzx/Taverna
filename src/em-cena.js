@@ -136,6 +136,17 @@ export const EM_CENA_MEMORIA = { turnos: 6, aVista: 1 };
      · e a memória (`antes`) só traz o que a prosa mostrou NO MESMO SÍTIO:
        o guarda do portão não entra com o herói na taverna, e a mulher da
        banca do Rossio não volta com ele a Monte Rasa. */
+/* 22/11 (a décima terceira sessão do Mestre vivo): as cabeças de coisa — um nome
+   que abre por uma delas («Chave sem fechadura conhecida», «Elixir de Presença»,
+   «Poção de Cura Pequena») é coisa, e não entra em cena como gente */
+export const EM_CENA_NAO_E_GENTE = Object.freeze(["chave", "chaves", "elixir", "pocao", "pocoes", "frasco", "livro", "mapa", "carta", "pergaminho",
+  "espada", "adaga", "punhal", "faca", "tocha", "racao", "anel", "colar", "amuleto", "bolsa", "moeda", "moedas", "escudo", "elmo", "corda",
+  "odre", "cantil", "lanterna", "vela", "garrafa", "caixa", "bau", "diario", "caderno", "relicario", "idolo", "estatueta", "grimorio",
+  "cajado", "varinha", "tonico", "antidoto", "unguento", "pergaminhos", "joia", "gema"]);
+const ehNomeDeCoisa = (nome) => {
+  const ps = palavras(String(nome || "").split(",")[0]).filter((w) => !["o", "a", "os", "as", "um", "uma"].includes(w));
+  return ps.length > 0 && EM_CENA_NAO_E_GENTE.includes(ps[0]);
+};
 export const EM_CENA_DO_LUGAR = {
   ordemDoNome: { comigo: 0, registo: 1, nucleo: 2 },
   primeiroMinimo: 3,
@@ -490,9 +501,16 @@ export function montarEmCena(ctx) {
   const sabeExtra = (nome) => arr(extra[nome]).map((x) => String(x || "").trim()).filter(Boolean);
 
   const pessoas = new Map();
+  /* 22/11 (a décima terceira sessão do Mestre vivo, T11, T30, T38, T47): «Em cena:
+     Freya, Chave sem fechadura conhecida, Gareth», «Hakon, Poção de Cura Pequena»,
+     e o Kolvar abatido no turno seguinte ao «Matar». Coisa não é gente (o nome que
+     abre por uma cabeça de coisa, EM_CENA_NAO_E_GENTE), e quem morreu na luta
+     desta sessão (`mortos`) não está em cena — nem pelo passo, nem pelo registo */
+  const mortosN = new Set(arr(c.mortos).map((x) => curto(nomeDe(x))).filter(Boolean));
   const porPessoa = (nome, f) => {
     const k = norm(nome);
     if (!k) return;
+    if (ehNomeDeCoisa(nome) || (mortosN.has(curto(nome)) && !comigoN.has(k))) return;
     const ja = pessoas.get(k) || { tipo: "pessoa", nome, papel: "", genero: "", quantos: 1, sabe: [] };
     pessoas.set(k, f(ja));
   };
