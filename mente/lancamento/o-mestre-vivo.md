@@ -1828,3 +1828,45 @@ texto de busca e narração dupla (51), o vendedor nomeado mas ausente na venda 
 
 **Não verificado até a décima sessão:** nada disso foi jogado; o turno 57 foi deduzido pelo código e
 reproduzido com uma carta sintética.
+
+## 30. O conserto depois da décima sessão (22/11/2026)
+
+A décima sessão (v9.668; 54 de 57 no dado, dado indevido 0) mediu **30 de 41** turnos de troca com
+linha, ficha e prosa de acordo. O conserto ficou de novo do lado do sistema; a poda só entrou como rede,
+e só onde a troca já estava aplicada.
+
+**Defeitos do sistema, e o que eram.**
+
+- **O «↺ já tentou aqui» aplicava o ganho (T29, T44).** A régua lia o «jaTentou» do catálogo como
+  «acontece», e o veredito da troca lia «acontece» como sim: a Maçã seca e a Faca entravam ao lado da
+  linha que dizia que não deu. Agora o livro de tentativas manda antes da porta
+  (`oDadoDaTrocaSemRolar`): repetido é negada, nada entra. E a primeira tentativa rola: a chave do
+  tomar leva a coisa e a mão de quem a segura (era «feira|peso», a feira inteira — valia para todos), e
+  a do pedido de uma coisa leva a coisa (só com o Mestre vivo).
+- **A compra lia o nome do balcão (T4).** «do balcão de mantimentos» virava 3 rações. A palavra depois
+  de quem ou de onde se vende diz o lugar (`LUGAR_DO_MANTIMENTO`). Valia para todos.
+- **Duas coisas com a mesma palavra somavam (T5, T49).** A do nome inteiro fica; senão o sistema
+  pergunta qual, com o preço de cada uma. Valia para todos.
+- **O escudo do equipamento não trocava de mão (T55)** e **o suborno a quem não está passava (T15).**
+  O dar olha a mochila e o equipamento (o vestido pede para tirar antes); quem o sistema sabe noutro
+  lugar é lido também na frase de troca («ofereço … a Kael»), não ouve (o momento não rola nem dá o sim
+  da conversa: `oMomentoSemOAusente`) e a troca com ele é negada. Atrás da chave.
+- **O alvo do furto (T60).** Quem a frase diz (nome ou papel) ganha do alvo que veio da régua quando
+  este não é dito na frase.
+- **As linhas:** «cordas» sem «das», «a faca» com artigo, «a sua mão» na tela (o envelope segue na voz
+  do herói), o blefe da moeda cala no suborno com quantia, e a venda diz quem a frase disse que compra.
+
+**A rede.** Com uma linha de troca do sistema no turno (o cartão da venda), o conferente não corta a
+moeda que a prosa conta nem repõe «Nada muda de mão» (T10); com a entrega do companheiro aplicada, a
+recusa dele na prosa sai (T31). O ausente ganhou o veto em NÃO PODE, além da linha de ACABOU DE.
+
+**O PT-PT (28 de 57 turnos).** O gancho da quest entra no pedido da abertura, e 24 ganchos falavam com
+«tu» — o desta sessão dizia «para que vejas com os teus olhos». Os 24 e a quest inteira da sessão
+passaram a PT-BR; o resto da prosa das quests continua na catraca (`check-pt-br.mjs`), que desceu.
+
+**Não é defeito:** `quadro.cartas` vazio é a memória das cartas viradas por dado contra o juiz delas;
+a carta que vira pela verdade do livro não grava memória, e ninguém rolou contra a pessoa da carta
+(Kael, ausente). **Ficou de fora:** a narração dupla da chegada à Guarnição (causa não isolada), e o
+ausente que a prosa traz sem ninguém o chamar (T28).
+
+**Não verificado até a décima primeira sessão:** nada disso foi jogado contra um Narrador real.
