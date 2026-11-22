@@ -269,7 +269,7 @@ export const PORTAO_DA_ABERTURA = Object.freeze({ garante: "abertura", esperaMax
    `arco`: o que o arco cita da quest que o fez virar. */
 export const QUESTS_DO_TURNO = Object.freeze({
   v: 1,
-  aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "laco", "rompe_laco", "aliado", "inimigo", "favor", "quem_e"]),
+  aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "laco", "rompe_laco", "aliado", "inimigo", "favor", "quem_e", "sai_da_bolsa"]),
   /* 14/11 (Fase QQ, Q2b): dos que o motor aplica, os que não precisam do
      registo de uma quest (papel nenhum, ficha nenhuma) — os que outra porta
      pode pedir pela mesma régua: o preço do quadro da quest
@@ -495,6 +495,22 @@ const paraOVilao = (registos) => registos.map((r) => ({ ...r, mao: (questPorId(r
    abaixo) e o preço do quadro da quest também (aplicarEfeitosNoEstado).
    Uma régua, duas portas: o que o vilão fica a saber por uma carta mal
    virada é a mesma linha que por uma consequência de quest. */
+/* 22/11 (a décima sexta sessão do Mestre vivo, §7): a coisa que a escolha
+   entrega ou destrói sai da bolsa — uma unidade, pelo nome (sem artigo nem
+   acento). Não está lá: a ficha como veio */
+const semArtigoDaCoisa = (s) => norm(s).replace(/^(o|a|os|as|um|uma)s+/, "");
+const semACoisa = (p, nome) => {
+  const P = obj(p);
+  const k = semArtigoDaCoisa(nome);
+  if (!P || !k) return p;
+  const inv = arr(P.inventario);
+  const i = inv.findIndex((x) => semArtigoDaCoisa(typeof x === "string" ? x : obj(x) ? x.nome : "") === k);
+  if (i < 0) return p;
+  const x = inv[i];
+  const q = obj(x) && Number.isInteger(x.qtd) && x.qtd > 1 ? x.qtd : 1;
+  const novo = q > 1 ? inv.map((y, j) => (j === i ? { ...y, qtd: q - 1 } : y)) : inv.filter((_, j) => j !== i);
+  return { ...P, inventario: novo };
+};
 const comMoedas = (p, n) => {
   const P = obj(p);
   return P && Number.isInteger(n) ? { ...P, moedas: Math.max(0, (inteiro(P.moedas) || 0) + n) } : p;
@@ -642,6 +658,7 @@ function correr(E0, opcoes, antes) {
     if (t === "moedas") { personagem = comMoedas(personagem, ef.n); return; }
     if (t === "avisa_vilao") { saber = avisarOVilao(saber, E0, dia); return; }
     if (t === "relogio_do_fio") { if (Number.isInteger(ef.n)) adianta += ef.n; return; }
+    if (t === "sai_da_bolsa") { if (alvo && alvo.nome) personagem = semACoisa(personagem, alvo.nome); return; }
     /* 09/11: o favor e o QUEM É vão ao livro de factos, pelo id do papel —
        o que se resolveu quando a quest abriu, ou, se então a pessoa ainda
        não era conhecida, o que a mesma régua dá agora (resolverPapeis, o

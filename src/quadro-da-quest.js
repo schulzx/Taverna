@@ -158,6 +158,14 @@ export const PRECO_DA_FALHA = Object.freeze({
     linha: "Está nas suas mãos, mas não inteiro." }),
 });
 
+/* O TETO DO PREÇO (22/11, a décima sexta sessão do Mestre vivo, §7). Na frase
+   33 a Persuasão falhou (15 contra 18), a carta virou com o preço «cobra» — ◉ 15
+   vezes o peso do mistério, ◉ 30 — e a bolsa de ◉ 18 ficou em zero. O preço da
+   falha é um preço, não a ruína: a moeda que ele tira não passa de
+   `fracaoDaBolsa` do que o herói tem (arredondado para baixo; numa bolsa de
+   ◉ 1, nada). O custo do caminho, dito antes do clique, não entra aqui. */
+export const TETO_DO_PRECO = Object.freeze({ fracaoDaBolsa: 0.5 });
+
 /* Os efeitos do preço que a biblioteca não tem (os outros — avisa_vilao,
    relogio_do_fio, moedas — são de EFEITOS_DA_QUEST e entram pela mesma
    porta que as consequências das quests: QUESTS_DO_TURNO.semQuest,
@@ -304,6 +312,12 @@ export const QUADRO_NA_PAUTA = Object.freeze({
   falta: "ainda por saber {formas}",
   junta: "; ",
   naoPode: "revelar o que ainda está por saber em {titulo} ({formas}): isso só se sabe pelo dado",
+  /* 22/11 (a décima sexta sessão do Mestre vivo, §7): a carta que virou NA FALHA,
+     com preço, diz-se assim — o dado falhou e a coisa veio na mesma, e custou.
+     Na frase 33 a Persuasão falhou, o livro entrou na ficha e a bolsa pagou, e a
+     prosa disse «o livro não se negocia»: o Narrador só sabia da falha */
+  /* curta de propósito: a linha do caso disputa o teto da pauta (teste-quadro-fiacao §8) */
+  comPreco: "{face}, mesmo com a falha — e custou",
   cartas: 3,
   teto: 260,
 });
@@ -846,7 +860,10 @@ export function oQuadroNaPauta(quadros) {
       if (!Q) continue;
       const cs = arr(Q.cartas).filter((c) => obj(c) && !c.futura && !c.sobra);
       const faces = cs.filter((c) => c.estado === "virada" || c.estado === "preco").slice(-N.cartas)
-        .map((c) => (c.preco === "incompleta" ? `${c.face} (pela metade)` : c.face)).filter(Boolean);
+        .map((c) => (c.preco === "incompleta" ? `${c.face} (pela metade)`
+          : c.estado === "preco" && c.face && typeof c.linha === "string" && c.linha.trim()
+            ? encher(N.comPreco, { face: c.face, linha: c.linha.trim().replace(/^./, (x) => x.toLowerCase()).replace(/[.!]+$/, "") })
+            : c.face)).filter(Boolean);
       const formas = cs.filter((c) => c.estado === "costas").map((c) => c.costas);
       const bits = [];
       if (faces.length) bits.push(encher(N.sabe, { titulo: Q.titulo, faces: faces.join(", ") }));
@@ -1232,7 +1249,14 @@ export function aplicarPrecoDoQuadro(estado, preco, contexto) {
     const P = obj(preco);
     const efeitos = (P ? arr(P.efeitos) : typeof preco === "string" ? efeitosDoPreco(preco, arcoDe(c.arco).peso) : []).filter(obj);
     const custo = !c.pago && obj(c.custo) ? inteiro(c.custo.moedas) : null;
-    const doEstado = [...efeitos.filter((e) => QUESTS_DO_TURNO.semQuest.includes(e.tipo)), ...(custo ? [{ tipo: "moedas", n: -custo }] : [])];
+    /* o teto do preço (TETO_DO_PRECO): a moeda que o preço tira, somada, não passa da fração da bolsa */
+    const bolsa = Math.max(0, inteiro(obj(E.personagem) && E.personagem.moedas) || 0);
+    const perda = efeitos.filter((e) => e.tipo === "moedas" && Number.isInteger(e.n) && e.n < 0).reduce((a, e) => a - e.n, 0);
+    const teto = Math.floor(bolsa * TETO_DO_PRECO.fracaoDaBolsa);
+    const doPreco = perda > teto
+      ? [...efeitos.filter((e) => QUESTS_DO_TURNO.semQuest.includes(e.tipo) && !(e.tipo === "moedas" && Number.isInteger(e.n) && e.n < 0)), ...(teto > 0 ? [{ tipo: "moedas", n: -teto }] : [])]
+      : efeitos.filter((e) => QUESTS_DO_TURNO.semQuest.includes(e.tipo));
+    const doEstado = [...doPreco, ...(custo ? [{ tipo: "moedas", n: -custo }] : [])];
     const r = (doEstado.length ? aplicarEfeitosNoEstado(E, doEstado) : null) || { estado: {}, aplicados: [] };
     const out = { estado: r.estado, efeitos: [], notas: [], linhas: [], aplicados: [...r.aplicados] };
     for (const D of Object.values(EFEITOS_DO_PRECO)) out[D.devolve] = D.soma ? 0 : false;

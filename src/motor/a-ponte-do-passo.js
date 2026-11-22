@@ -55,6 +55,14 @@ export const A_PONTE_DO_PASSO = Object.freeze({
   levar: "{nome} ir junto — é quem o caso pede ao lado do herói",
   emCidade: ", em {cidade}",
   quem: "; {quem} sabe o caminho",
+  /* 22/11 (a décima sexta sessão do Mestre vivo): A PESSOA DO DESTINO. «Ouvir
+     Constance Mordaunt» mandava «Partir para Ponto valente», a ponte dizia só a
+     cidade, e a prosa deu corpo a Constance na torre de Rio do Martelo — onde o
+     sistema não a tem — por 26 frases. Quem o passo pede e mora no destino vai
+     dito como de lá, e não daqui. `falar`: a porta 4 de oRumoDaBusca — quem o
+     passo pede está em cena (o Thaddeus, frases 13 a 19) */
+  laEsta: "; {pessoa} está lá, e não aqui",
+  falar: "{nome} está aqui, em cena — é dele ou dela que o caso depende agora",
   teto: 200,
 });
 
@@ -75,13 +83,20 @@ export function quemSabeDoCaso(quadros) {
 export function aPonteDoPasso(entrada) {
   try {
     const e = obj(entrada) || {};
-    const r = oRumoDaBusca({ passos: e.passos, aqui: e.aqui, cidade: e.cidade, grupo: e.grupo, emLuta: e.emLuta, naEstrada: e.naEstrada });
+    const r = oRumoDaBusca({ passos: e.passos, aqui: e.aqui, cidade: e.cidade, grupo: e.grupo, emLuta: e.emLuta, naEstrada: e.naEstrada, presentes: e.presentes });
     if (!r || !r.acao || !txt(r.nome)) return "";
     const P = A_PONTE_DO_PASSO;
     const molde = P[r.acao];
     if (!molde) return "";
+    if (r.acao === "falar") { const f = encher(molde, { nome: txt(r.nome) }); return f.length > P.teto ? f.slice(0, P.teto - 1) + "…" : f; }
     const daqui = r.acao === "ir" && txt(r.cidade) && chave(r.cidade) !== chave(r.nome);
     let s = encher(molde, { nome: txt(r.nome), emCidade: daqui ? encher(P.emCidade, { cidade: txt(r.cidade) }) : "" });
+    /* quem o passo pede e mora no destino: a casa dela (ir) ou a cidade dela (partir) */
+    const noDestino = (x) => (r.acao === "partir" ? chave(x.cidade) === chave(r.cidade) && chave(x.cidade) !== chave(e.cidade)
+      : r.acao === "ir" && chave(x.onde) === chave(r.nome));
+    const dela = arr(e.passos).flatMap((p) => [...arr(obj(p) && obj(p.candidatos) && p.candidatos.pessoa), ...arr(obj(p) && p.quem)])
+      .map(obj).find((x) => x && txt(x.nome) && x.predicado !== "acompanha" && noDestino(x));
+    if (dela) s += encher(P.laEsta, { pessoa: txt(dela.nome) });
     /* quem em cena pode apontar: primeiro quem o caso já fez falar; na
        mesma cidade, quem mais estiver aqui (o sítio é público) */
     const doGrupo = new Set(arr(e.grupo).map((g) => chave(obj(g) ? g.nome : g)).filter(Boolean));

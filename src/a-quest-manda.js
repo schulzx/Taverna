@@ -170,9 +170,26 @@ export function oPassoDaQuest(ficha, registo, contexto) {
     };
     const descobrir = [], lugares = [], vistos = new Set();
     const candidatos = { lugar: [], pessoa: [], item: [] };
+    /* QUEM O PASSO PEDE (22/11, a décima sexta sessão do Mestre vivo, §1): «Tirar
+       o livro das mãos de Thaddeus Crane» pede `derrotou(servo)` ou `tem(livro)`,
+       e nenhum dos dois é pista de pessoa — o Thaddeus estava em cena desde a
+       frase 13 e nem a ponte nem a tela o diziam; 6 turnos perdido. Aqui vai
+       toda pessoa de que o passo depende, por qualquer predicado; a do vilão só
+       depois de o herói a ter visto (a mesma régua do confronto, abaixo) */
+    const quem = [];
+    const viuOPapel = (papel) => arr(v.gente).some((g) => obj(g) && g.papel === papel);
     for (const at of atomos(v.falta)) {
       const a0 = obj(arr(at.args)[0]);
       if (!a0) continue;
+      if (a0.tipo === "pessoa") {
+        const n = String(a0.nome || "").trim();
+        const pp = obj(papeis[a0.papel]) || {};
+        if (n && (!doFio(a0.papel) || viuOPapel(a0.papel)) && !quem.some((x) => semArtigo(x.nome) === semArtigo(n))) {
+          quem.push(Object.freeze({ nome: n, papel: String(a0.papel || ""), predicado: at.predicado,
+            ...(typeof pp.local === "string" && pp.local.trim() ? { onde: pp.local.trim() } : {}),
+            ...(typeof pp.cidade === "string" && pp.cidade.trim() ? { cidade: pp.cidade.trim() } : {}) }));
+        }
+      }
       if (a0.tipo === "lugar") {
         const l = lugarDe(a0);
         if (!l) continue;
@@ -226,6 +243,7 @@ export function oPassoDaQuest(ficha, registo, contexto) {
       descobrir: Object.freeze(descobrir.map((l) => Object.freeze(l))),
       lugares: Object.freeze(lugares.map((l) => Object.freeze(l))),
       candidatos: Object.freeze(candidatos),
+      quem: Object.freeze(quem),
     });
   } catch { return null; }
 }

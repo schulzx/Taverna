@@ -507,7 +507,7 @@ const O_LIVRO_DOS_NOMES = quest({
         texto: "queimar o livro, folha a folha, até não sobrar um nome",
         ganha: "Ninguém volta a bater a uma porta pelo nome que lá estava escrito: nem {servo}, nem quem lhe paga, nem ninguém.",
         custa: "Trinta anos de nascimentos, casamentos e dívidas viram fumo. {escrivao} chora como num enterro, e metade da terra deixa de conseguir provar o que é seu.",
-        efeitos: [{ tipo: "relogio_do_fio", n: -1 }, { tipo: "afeicao", papel: "escrivao", n: -1 }, { tipo: "relogio_regional", n: 1 }],
+        efeitos: [{ tipo: "relogio_do_fio", n: -1 }, { tipo: "afeicao", papel: "escrivao", n: -1 }, { tipo: "relogio_regional", n: 1 }, { tipo: "sai_da_bolsa", papel: "livro" }],
       },
       devolver: {
         texto: "devolver o livro a {escrivao}, inteiro, como estava",
@@ -515,7 +515,7 @@ const O_LIVRO_DOS_NOMES = quest({
         custa: "O que se roubou uma vez rouba-se outra. {servo} já leu o livro todo, e sabe o caminho para a casa de {escrivao}.",
         /* a décima terceira sessão: com {servo} morto na luta, o custo é de quem lhe pagava */
         seMorto: { papel: "servo", custa: "O que se roubou uma vez se rouba outra. {servo} morreu com o livro lido, mas quem pagava a ele sabe agora que o livro voltou para a casa de {escrivao}." },
-        efeitos: [{ tipo: "afeicao", papel: "escrivao", n: 1 }, { tipo: "aliado", papel: "escrivao" }],
+        efeitos: [{ tipo: "afeicao", papel: "escrivao", n: 1 }, { tipo: "aliado", papel: "escrivao" }, { tipo: "sai_da_bolsa", papel: "livro" }],
       },
       trocar: {
         texto: "pôr no lugar dele uma cópia de {copista}, com os nomes trocados",

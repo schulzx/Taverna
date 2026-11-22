@@ -43,7 +43,7 @@ import {
   CARTA_DO_TESTE, ASSUNTO_DA_EXTRA, GESTOS_DA_CARTA, aCartaDoTeste, aCartaDoGesto,
   PAGAR_A_MENOS, SINAL_DO_QUADRO,
   aCartaNaTela, oQuadroNaTela, oSinalDosQuadros, aCartaEmJogo, aplicarPrecoDoQuadro,
-  SOBRE_DA_EXTRA, DIA_DA_CARTA,
+  SOBRE_DA_EXTRA, DIA_DA_CARTA, TETO_DO_PRECO,
 } from "../src/quadro-da-quest.js";
 import { BIBLIOTECA_DE_QUESTS, abrirQuest, PAPEIS_DA_QUEST, EFEITOS_DA_QUEST, TIPOS_DE_QUEST } from "../src/biblioteca-de-quests.js";
 import { CONDICOES, avaliarCondicao } from "../src/condicoes-da-quest.js";
@@ -671,7 +671,10 @@ sec("§13 o preço faz o que diz (Q2b: aplicarPrecoDoQuadro)");
   t("a testemunha cobra: as moedas saem da bolsa (× o peso do arco)", co.estado.personagem.moedas === E.personagem.moedas + PRECO_DA_FALHA.cobra.efeitos[0].n * peso && !co.estado.saber && !co.estado.espinha);
   t("o preço por id, com o arco, cobra o mesmo", J(aplicarPrecoDoQuadro(E, "cobra", { arco: "misterio" }).estado) === J(co.estado));
   const pobre = aplicarPrecoDoQuadro({ ...E, personagem: { ...E.personagem, moedas: 4 } }, comPeso("cobra"));
-  t("a bolsa não fica negativa", pobre.estado.personagem.moedas === 0);
+  /* 22/11 (a décima sexta sessão do Mestre vivo, §7): era «=== 0» — a falha zerava
+     a bolsa. O preço passou a ter teto (TETO_DO_PRECO: no máximo a fração da
+     bolsa), e a intenção desta linha (nunca negativa) continua: agora também nunca zera */
+  t("a bolsa não fica negativa", pobre.estado.personagem.moedas >= 0 && pobre.estado.personagem.moedas === 4 - Math.floor(4 * TETO_DO_PRECO.fracaoDaBolsa));
   const te = aplicarPrecoDoQuadro(E, comPeso("tempo"));
   t("o tempo não mexe no estado: volta à fiação, somado, para o relógio do mundo", J(te.estado) === "{}" && te.minutos === PRECO_DA_FALHA.tempo.efeitos[0].n * peso && te.incompleta === false && te.danificado === false);
   const inc = aplicarPrecoDoQuadro(E, comPeso("incompleta"));

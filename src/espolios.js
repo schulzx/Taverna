@@ -846,7 +846,16 @@ export function achadosDaEtapa(ficha, registo, etapaId, opcoes) {
   const lista = ACHADO_DO_SITIO[sitio].caminho;
   const qual = op.extra === true ? "extra" : "caminho";
   const r = dado(op.semente, F.id, etapaId, qual);
-  const a = lista[Math.floor(r() * lista.length)];
+  /* 22/11 (a décima sexta sessão do Mestre vivo, §9): duas etapas da mesma quest
+     no mesmo sítio sorteavam da mesma lista — «as moedas que os fiéis deixaram»
+     caiu no fim do passo 3 e outra vez no desfecho, e a bolsa recebeu ◉ 19 duas
+     vezes, com a mesma linha. O que outra etapa desta quest já deu não se dá de
+     novo: o seguinte da lista; sem nenhum por dar, nada */
+  const dados = new Set(arr(obj(R.espolio) && R.espolio.achados).filter((x) => typeof x === "string" && x.startsWith(`${F.id}:`) && !x.startsWith(`${F.id}:${etapaId}:`))
+    .map((x) => x.split(":")[2]));
+  const i0 = Math.floor(r() * lista.length);
+  const a = [...lista.slice(i0), ...lista.slice(0, i0)].find((x) => !dados.has(x.id));
+  if (!a) return [];
   return [{ id: `${F.id}:${etapaId}:${a.id}${qual === "extra" ? ":extra" : ""}`, quest: F.id, etapa: etapaId, sitio, diz: a.diz, ...darAchado(a, op.nivel) }].slice(0, ORCAMENTO_DO_ESPOLIO.achadosPorEtapa);
 }
 

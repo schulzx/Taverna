@@ -96,6 +96,17 @@ export const FEITO_DO_SISTEMA = Object.freeze({
     conversa: Object.freeze({ grau: "pequeno", de: "livro", porque: "uma conversa que ficou" }),
   }),
   pequenosPorDia: 4,
+  /* O RISCO VENCIDO TEM TETO PRÓPRIO (22/11, a décima sexta sessão do Mestre
+     vivo, §7). Na sessão 16 os quatro do dia foram-se nas frases 3 a 7 (duas
+     conversas, dois sítios novos) e a sessão inteira coube num dia: o Espreitar
+     diante da lenda, a subida da torre e a Enganação que passaram depois não
+     renderam nada — 26 frases sem um ponto antes do fecho e 26 depois. Um mestre
+     de mesa paga o risco vencido e não paga a conversa fiada: o teste que passou
+     com algo em jogo (o desafio fora de `olhar`) conta noutro teto,
+     `riscosPorDia`; olhar à volta, ler, lembrar e escutar continuam no teto das
+     miudezas — moer Percepção de quarto em quarto não sobe ninguém. */
+  riscosPorDia: 4,
+  olhar: Object.freeze(["buscar", "investigar", "escutar", "lembrar", "fraqueza", "mentira", "rastrear", "arcano", "orientar", "diagnosticar", "heraldica"]),
   memoria: Object.freeze({ vistos: 300, testes: 120 }),
 });
 
@@ -158,6 +169,7 @@ export function osFactosDoTurno(entrada) {
     const sitio = semAc(l ? (l.nome || l.dentroDe) : e.lugar);
     const de = f && obj(f.de) ? Object.keys(f.de).sort().map((k) => `${k}=${semAc(String(f.de[k]))}`).join(",") : "";
     por("teste", `teste|${semAc(t.desafio)}|${semAc(e.cidade)}|${sitio}|${semAc(t.quem)}|${de}`);
+    if (!FEITO_DO_SISTEMA.olhar.includes(semAc(t.desafio)) && out.length) out[out.length - 1] = Object.freeze({ ...out[out.length - 1], risco: true });
   }
 
   /* o livro: os lugares (a terra, o sítio, o segredo) e a conversa */
@@ -200,6 +212,8 @@ function garantirMemoriaDosFeitos(x) {
     v: FEITO_DO_SISTEMA.v,
     dia: Number.isFinite(m.dia) ? m.dia : null,
     pequenos: Number.isInteger(m.pequenos) && m.pequenos > 0 ? m.pequenos : 0,
+    /* 22/11: os riscos vencidos pagos hoje (campo novo e aditivo da memória) */
+    riscos: Number.isInteger(m.riscos) && m.riscos > 0 ? m.riscos : 0,
     vistos: lista(m.vistos, M.vistos),
     testes: lista(m.testes, M.testes),
   };
@@ -208,6 +222,7 @@ function garantirMemoriaDosFeitos(x) {
 const jaVisto = (mem, f) => !!mem && mem[listaDe(f.fonte)].includes(impressao(f.chave));
 /* as miudezas pagas HOJE: noutro dia o contador recomeça */
 const pequenosDeHoje = (mem, dia) => (!mem ? 0 : Number.isFinite(dia) && mem.dia !== dia ? 0 : mem.pequenos);
+const riscosDeHoje = (mem, dia) => (!mem ? 0 : Number.isFinite(dia) && mem.dia !== dia ? 0 : mem.riscos || 0);
 
 /* ---------------- O FEITO DO TURNO ----------------
    oFeitoDoTurno(factos, memoria, { dia }) → { grau, porque, chave, fonte } | null
@@ -219,6 +234,7 @@ export function oFeitoDoTurno(factos, memoria, opcoes) {
   const o = obj(opcoes) || {};
   const dia = Number.isFinite(o.dia) ? o.dia : null;
   const tetoDoDia = pequenosDeHoje(mem, dia) >= FEITO_DO_SISTEMA.pequenosPorDia;
+  const tetoDosRiscos = riscosDeHoje(mem, dia) >= FEITO_DO_SISTEMA.riscosPorDia;
   let melhor = null;
   for (const f0 of arr(factos)) {
     const f = obj(f0);
@@ -226,11 +242,12 @@ export function oFeitoDoTurno(factos, memoria, opcoes) {
     const linha = F[f.fonte];
     if (!mem && linha.de !== "teste") continue;
     if (jaVisto(mem, f)) continue;
-    if (linha.grau === "pequeno" && tetoDoDia) continue;
+    /* o risco vencido conta no teto dele; esgotado, ainda cabe no das miudezas */
+    if (linha.grau === "pequeno" && tetoDoDia && !(f.risco === true && !tetoDosRiscos)) continue;
     const ganha = !melhor
       || pesoDoGrau(linha.grau) > pesoDoGrau(melhor.grau)
       || (pesoDoGrau(linha.grau) === pesoDoGrau(melhor.grau) && ORDEM.indexOf(f.fonte) < ORDEM.indexOf(melhor.fonte));
-    if (ganha) melhor = { grau: linha.grau, porque: linha.porque, chave: f.chave, fonte: f.fonte };
+    if (ganha) melhor = { grau: linha.grau, porque: linha.porque, chave: f.chave, fonte: f.fonte, ...(f.risco === true && linha.grau === "pequeno" && !tetoDosRiscos ? { risco: true } : {}) };
   }
   return melhor ? Object.freeze(melhor) : null;
 }
@@ -241,7 +258,7 @@ export function oFeitoDoTurno(factos, memoria, opcoes) {
    pagou neste turno (null se nenhum, ou se foi o do Narrador) — conta a
    miudez no dia. A memória recebida não é tocada. */
 export function lembrarOsFeitos(memoria, factos, pago, opcoes) {
-  const mem = garantirMemoriaDosFeitos(memoria) || { v: FEITO_DO_SISTEMA.v, dia: null, pequenos: 0, vistos: [], testes: [] };
+  const mem = garantirMemoriaDosFeitos(memoria) || { v: FEITO_DO_SISTEMA.v, dia: null, pequenos: 0, riscos: 0, vistos: [], testes: [] };
   const o = obj(opcoes) || {};
   const dia = Number.isFinite(o.dia) ? o.dia : mem.dia;
   const listas = { vistos: [...mem.vistos], testes: [...mem.testes] };
@@ -253,10 +270,13 @@ export function lembrarOsFeitos(memoria, factos, pago, opcoes) {
     if (!l.includes(h)) l.push(h);
   }
   const p = obj(pago);
-  const pequenos = pequenosDeHoje(mem, dia) + (p && p.grau === "pequeno" ? 1 : 0);
+  /* o risco vencido pago conta no teto dele; a miudez, no das miudezas */
+  const ehRisco = !!(p && p.grau === "pequeno" && p.risco === true);
+  const pequenos = pequenosDeHoje(mem, dia) + (p && p.grau === "pequeno" && !ehRisco ? 1 : 0);
+  const riscos = riscosDeHoje(mem, dia) + (ehRisco ? 1 : 0);
   const M = FEITO_DO_SISTEMA.memoria;
   return {
-    v: FEITO_DO_SISTEMA.v, dia, pequenos,
+    v: FEITO_DO_SISTEMA.v, dia, pequenos, ...(riscos ? { riscos } : {}),
     vistos: listas.vistos.slice(-M.vistos),
     testes: listas.testes.slice(-M.testes),
   };

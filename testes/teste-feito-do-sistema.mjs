@@ -278,7 +278,13 @@ sec("§9 a catraca de ritmo: uma sessão típica fora da luta");
      espada; acima, a sessão sem luta sobe mais do que a luta e a quest juntas */
   t("depois, a sessão fica entre 1/7 e 1/3 de nível", fracao >= 1 / 7 && fracao <= 1 / 3 && depois.nivel === 5, `${(fracao * 100).toFixed(1)}%`);
   t("os feitos da sessão são os do roteiro: a cidade e os dois passos", depois.pagos.filter((p) => p.grau === "feito").length === 3, J(depois.pagos));
-  t("e as miudezas param no teto de cada dia", depois.pagos.filter((p) => p.grau === "pequeno").length <= 2 * T.pequenosPorDia);
+  /* 22/11 (a décima sexta sessão do Mestre vivo, §7): o risco vencido ganhou teto
+     próprio (`riscosPorDia`) — a asserção era «≤ 2 × pequenosPorDia», e passa a
+     somar os dois tetos: a intenção (as miudezas param num teto por dia) é a
+     mesma; o que mudou é que o teste que passou com algo em jogo não disputa mais
+     o teto com a conversa e o sítio novo. A faixa de 1/7 a 1/3, acima, guarda o
+     ritmo. */
+  t("e as miudezas param no teto de cada dia", depois.pagos.filter((p) => p.grau === "pequeno").length <= 2 * (T.pequenosPorDia + T.riscosPorDia));
 
   /* moer Percepção: cem buscas, de quarto em quarto, num só dia */
   let E = { ...E0, personagem: { ...HEROI, grupo: [] } };

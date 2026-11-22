@@ -247,6 +247,11 @@ export const EFEITOS_DA_QUEST = Object.freeze({
   favor: Object.freeze({ campos: Object.freeze({ papel: "lugar" }), diz: "um lugar fica a dever um favor ao herói" }),
   quem_e: Object.freeze({ campos: Object.freeze({ papel: "pessoa", linha: "linha" }), diz: "uma linha nova no QUEM É de alguém, até ao fim da campanha" }),
   morte: Object.freeze({ campos: Object.freeze({ papel: "pessoa" }), so: "desfecho", diz: "alguém do grupo morre — irreversível, e só como desfecho" }),
+  /* 22/11 (a décima sexta sessão do Mestre vivo, §7): «devolver o livro a Mercy»
+     fechou a quest, e o livro ficou na bolsa por mais 20 frases — a carta dizia
+     que ele mudava de mão, e a ficha não sabia. O que a escolha entrega ou
+     destrói sai da bolsa do herói (se lá estiver; senão, nada) */
+  sai_da_bolsa: Object.freeze({ campos: Object.freeze({ papel: "item" }), diz: "a coisa sai da bolsa do herói: entregue, devolvida ou destruída" }),
 });
 
 /* As reviravoltas mudam a própria quest (§2): `troca_papel` (quem ocupa
@@ -418,7 +423,7 @@ const AS_CINZAS_DE_ONTEM = quest({
         texto: "levar {prova} à guarda",
         ganha: "{suspeito} sai da corda pela porta da lei, e {lugar} fica devendo a você um favor que não esquece.",
         custa: "A guarda faz perguntas, guarda as respostas — e {mandante} fica a saber que jogas pelas regras.",
-        efeitos: [{ tipo: "favor", papel: "lugar" }, { tipo: "avisa_vilao" }],
+        efeitos: [{ tipo: "favor", papel: "lugar" }, { tipo: "avisa_vilao" }, { tipo: "sai_da_bolsa", papel: "prova" }],
       },
       praca: {
         texto: "limpar o nome de {suspeito} na praça, à frente de todos",
@@ -508,12 +513,13 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
         texto: "devolver a carta fechada",
         ganha: "{quem} percebe que há respeito nisto: não lhe arrancas o que não quer dar.",
         custa: "A carta continua a pesar no bolso {quem:dele|dela}, e o que diz continua a ser só de {ferido}.",
+        efeitos: [{ tipo: "sai_da_bolsa", papel: "carta" }],
       },
       queimar: {
         texto: "queimar a carta",
         ganha: "{quem} dorme esta noite, pela primeira vez em anos, a noite inteira.",
         custa: "Ninguém vai saber o que estava ali. Nem {quem}, nem você — e, se um dia for preciso, já não existe.",
-        efeitos: [{ tipo: "vinculo", papel: "quem", n: 5 }],
+        efeitos: [{ tipo: "vinculo", papel: "quem", n: 5 }, { tipo: "sai_da_bolsa", papel: "carta" }],
       },
     } },
     frente: { etapa: "frente", opcoes: {
