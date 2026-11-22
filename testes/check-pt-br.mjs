@@ -135,7 +135,7 @@ const TETO = {
   "src/acampamento.js": 8,
   "src/encontro-na-estrada.js": 8,
   "src/motor/envelopes-do-turno.js": 8,
-  "src/abertura.js": 7,
+  "src/abertura.js": 4, /* 22/11 (a décima segunda sessão): as tabelas da abertura em PT-BR */
   "src/boatos.js": 7,
   "src/motor/quests-do-turno.js": 7,
   "src/cidade-por-dentro.js": 6,

@@ -184,7 +184,7 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
 {
   /* Gravados ANTES de qualquer linha desta etapa (06/10), com este laço,
      sobre a árvore de HEAD v9.356 (git archive). */
-  const HEAD = { espinha: "b90ee9113d4f68da", daqui: "3afa3ec98b995b21", existe: "3c382cb16bc77d3c", ofertas: "b73629381ed9e267", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  const HEAD = { espinha: "b90ee9113d4f68da", daqui: "3afa3ec98b995b21", existe: "3c382cb16bc77d3c", ofertas: "b73629381ed9e267", abertura: "8e820e8b7a2e7ca4", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
   /* 12/10 (9.ª sessão de prova · a taverneira que o Mestre fez homem):
      `daqui` mudou de 95cd7e6d96a3b3c4 para 3afa3ec98b995b21 por uma razão
      só: a lista da gente (`resumoDaqui`) diz o ofício no género de quem o
@@ -235,6 +235,11 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
      é por onde a busca entrega o objeto (ofertas.js#objetoDoCartaz). Medido
      com o mesmo laço: tirando o `onde` das etapas `achar`, o hash volta a
      fa1541a849421fc2, byte a byte. */
+  /* 22/11 (a décima segunda sessão): `abertura` mudou de ee05f6caf3c539b3 para
+     8e820e8b7a2e7ca4 por uma razão só: as tabelas de texto da abertura passaram a
+     PT-BR (abertura.js: TITULO_DO_FEITIO «O rastro de», O_QUE_SE_SABE «está»,
+     CHEGADAS «recém-desembarcado», HISTORIA_DO_LUGAR «todo mundo», «falam baixo»,
+     «reconhece de cara»). Nenhuma pessoa, lugar ou passo muda — só as palavras. */
   const hs = {};
   const h = (k, v) => { (hs[k] ||= createHash("sha256")).update(J(v) ?? "u"); };
   for (const molde of ["sobremundo", "torre"]) for (let i = 0; i < 200; i++) {
