@@ -1870,3 +1870,35 @@ a carta que vira pela verdade do livro não grava memória, e ninguém rolou con
 ausente que a prosa traz sem ninguém o chamar (T28).
 
 **Não verificado até a décima primeira sessão:** nada disso foi jogado contra um Narrador real.
+
+## 31. O conserto depois da décima primeira sessão (22/11/2026)
+
+A décima primeira sessão (v9.669; 53 de 55 no dado, nenhum erro firme de dado, 2 discutíveis) foi a
+primeira a cumprir a parte do dado do critério de ligar. Nas trocas, linha, ficha e prosa concordaram
+em 22 de 33, e a natureza do erro mudou: **a prosa não inventou nenhuma entrega, pagamento ou butim**;
+o que sobrou foi a prosa negando o que o sistema aplicou (3 turnos), um ausente falando e detalhes
+trocados. O «tu» dirigido ao herói caiu de 28 turnos para 1. O conserto (`0a41901`, `f0cbe8c`,
+`d259366`):
+
+- **O furto roubava a companheira (turnos 13 a 15).** O alvo vinha de quem a frase nomeava. É agora o
+  objeto do verbo de furtar; quem aparece depois de «enquanto» não é alvo.
+- **A moeda posta na mesa («dou 3 moedas a…») não era intenção de troca**, e cobrava de quem não
+  estava. Virou a intenção «pagamento»: com quem recebe ausente, negada, nada sai.
+- **A venda a quem não está**, fora de um lugar de mercado, fica impedida; quando acontece, o fato diz
+  a quem de fato se vendeu.
+- **A carta da quest engolia frases** em que «pago» aparecia no meio. O verbo da carta tem de abrir a
+  frase. Para todos.
+- **A prosa negava a troca aplicada** porque a compra e a venda pelo cartão não viravam FATO DESTE
+  TURNO (só o veredito virava). Viram agora, com o veto de desfazer; a rede corta a negação.
+- **O ausente:** quem o sistema sabe em outro lugar vai em `naoPode` em todo turno (até dois nomes), e
+  a rede corta a fala dele. Não pega a fala por pronome (turno 45).
+- **A tentativa repetida com outras palavras**, o tomar do que não é coisa de mão (negado antes do
+  dado), o preço perguntado (vai como fato).
+- **PT-BR:** 199 textos de carta e de passo, nas 52 quests, passaram a «você». Para todos.
+
+**Investigado sem conserto:** a pessoa da abertura e a da quest são sorteadas por dois sistemas
+(Vivienne e Yolanda); o passo de quest cujo texto não bate com a condição que o fecha é desenho da
+quest; o nome do herói é sorteado de novo ao trocar o gênero do mundo (causa provável, não vista na
+tela).
+
+**Não verificado até a décima segunda sessão:** nada disso foi jogado contra um Narrador real.
