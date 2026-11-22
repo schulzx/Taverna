@@ -489,6 +489,16 @@ sec("1. NENHUM MÓDULO MUDO");
        e `src/o-mestre-vivo-no-jogo.js` também (FORMA_DO_RETRATO, o dado do
        mundo). A entrada SAIU — a catraca volta a vigiá-lo como a qualquer
        módulo ligado (o-mestre-vivo.md §16). */
+    /* 22/11 (o ouvido, passo um, backend): `o-ouvido.js` (o leitor único da
+       frase livre: liga a frase à cena e decide família, subtipo, quem, coisa
+       e quantia) e `a-regra-do-improviso.js` (a resposta do Mestre a toda
+       troca e todo uso — sim, sim com preço, dado, pergunta ou não, nunca o
+       silêncio) nascem como módulo puro e régua. `o-ouvido.js` já é lido pela
+       regra; a regra espera a fiação no App.jsx (no lugar das leituras de
+       troca de hoje). Credor: o `oficial`, na etapa seguinte do ouvido. A
+       entrada sai quando o App a importar. `teste-o-ouvido.mjs` é o primeiro
+       leitor. */
+    "a-regra-do-improviso.js": "o oficial, na fiação do ouvido no App.jsx (a etapa seguinte)",
   };
   const mudos = [];
   for (const f of arqs) {

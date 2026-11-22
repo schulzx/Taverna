@@ -1,0 +1,6600 @@
+{
+ "nome": "o corpus do ouvido",
+ "data": "2026-11-22",
+ "origem": "Frases escritas pelo construtor do ouvido, como um jogador brasileiro digita num chat de RPG, sobre as cenas do treino aberto (cena_de aponta o item do treino de onde vem a cena). Nenhuma frase de transcrição de terceiros. O gabarito segue as convenções do exame.",
+ "regra": "Aberto: é a régua de generalização do ouvido — verbos e estruturas que o treino não tem.",
+ "itens": [
+  {
+   "id": "C-001",
+   "lote": 1,
+   "frase": "arremato o escudo da Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hilda Voss",
+    "coisa": "escudo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-002",
+   "lote": 1,
+   "frase": "levo duas ervas da Sibila Rand",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Sibila Rand",
+    "coisa": "erva",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-003",
+   "lote": 1,
+   "frase": "quero o colar",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "colar",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-004",
+   "lote": 1,
+   "frase": "pago trinta pela espada da Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hilda Voss",
+    "coisa": "espada",
+    "quantia": 30,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-005",
+   "lote": 1,
+   "frase": "entrego a corda ao Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Cado Ferraz",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-006",
+   "lote": 1,
+   "frase": "deslizo três moedas pro Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Cado Ferraz",
+    "coisa": "moeda",
+    "quantia": 3,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-007",
+   "lote": 1,
+   "frase": "dou o anel de cobre pra Sibila Cruz",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Sibila Cruz",
+    "coisa": "anel de cobre",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-008",
+   "lote": 1,
+   "frase": "vendo a tocha pra Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Hilda Voss",
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-009",
+   "lote": 1,
+   "frase": "ofereço minha corda pro Cado por dez moedas",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Cado Ferraz",
+    "coisa": "corda",
+    "quantia": 10,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-010",
+   "lote": 1,
+   "frase": "roubo a bússola do Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Cado Ferraz",
+    "coisa": "bússola",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-011",
+   "lote": 1,
+   "frase": "afano uma erva da banca da Sibila Rand",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Sibila Rand",
+    "coisa": "erva",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-012",
+   "lote": 1,
+   "frase": "peço um mapa de graça pro Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Cado Ferraz",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-013",
+   "lote": 1,
+   "frase": "cobro do Bruno o que ele me deve",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Bruno Falk",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-014",
+   "lote": 1,
+   "frase": "devolvo a gazua pra Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Hilda Voss",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-015",
+   "lote": 1,
+   "frase": "troco a corda pela erva da Sibila Rand",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Sibila Rand",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-016",
+   "lote": 1,
+   "frase": "pergunto à Hilda pela espada",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-017",
+   "lote": 1,
+   "frase": "quanto a Sibila Cruz pede pelo anel?",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Sibila Cruz",
+    "coisa": "anel",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-018",
+   "lote": 1,
+   "frase": "examino o colar de perto",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "colar",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-019",
+   "lote": 1,
+   "frase": "pego a balança",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "balança",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-020",
+   "lote": 1,
+   "frase": "dou um tapa no Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Cado Ferraz",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-021",
+   "lote": 1,
+   "frase": "vou até a barraca da Sibila Rand",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": "Sibila Rand",
+    "coisa": "barraca",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-022",
+   "lote": 1,
+   "frase": "uso a corda pra amarrar o caixote",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-023",
+   "lote": 1,
+   "frase": "dou uma moeda pro Edrik",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Edrik Sorn",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-024",
+   "lote": 1,
+   "frase": "não vou comprar nada hoje",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-025",
+   "lote": 1,
+   "frase": "compro uma poção",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-026",
+   "lote": 1,
+   "frase": "compro três colares",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "colar",
+    "quantia": 3,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-027",
+   "lote": 1,
+   "frase": "furto o colar da Sibila",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": null,
+    "coisa": "colar",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-028",
+   "lote": 1,
+   "frase": "me vê uma cerveja, Marta",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Marta Quint",
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-029",
+   "lote": 1,
+   "frase": "manda um ensopado aí, Marta",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Marta Quint",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-030",
+   "lote": 1,
+   "frase": "racho o quarto com o Tomás Veiga",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Tomás Veiga",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-031",
+   "lote": 1,
+   "frase": "compro a pele de lobo do Tomás Veiga",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Tomás Veiga",
+    "coisa": "pele de lobo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-032",
+   "lote": 1,
+   "frase": "compro a pele do Tomás",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "pele de lobo",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-033",
+   "lote": 1,
+   "frase": "jogo duas moedas pro bardo",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Tomás Reis",
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-034",
+   "lote": 1,
+   "frase": "dou minha ração pro Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Gil",
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-035",
+   "lote": 1,
+   "frase": "empresto a adaga pro Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Gil",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-036",
+   "lote": 1,
+   "frase": "cobro do Gil as três moedas",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Gil",
+    "coisa": "moeda",
+    "quantia": 3,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-037",
+   "lote": 1,
+   "frase": "surrupio a bolsa do Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Gil",
+    "coisa": "bolsa",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-038",
+   "lote": 1,
+   "frase": "pago dez pelo quarto",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "quarto",
+    "quantia": 10,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-039",
+   "lote": 1,
+   "frase": "pago a cerveja",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-040",
+   "lote": 1,
+   "frase": "suborno o Gil com duas moedas pra ele falar",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Gil",
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-041",
+   "lote": 1,
+   "frase": "bato um papo com o Tomás Reis",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Tomás Reis",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-042",
+   "lote": 1,
+   "frase": "quanto custa o quarto, Marta?",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Marta Quint",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-043",
+   "lote": 1,
+   "frase": "Marta, tem quarto vago?",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Marta Quint",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-044",
+   "lote": 1,
+   "frase": "dou a ração pro Orlan",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Orlan Brisa",
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-045",
+   "lote": 1,
+   "frase": "dou uma gorjeta pra Marta",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Marta Quint",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-046",
+   "lote": 1,
+   "frase": "compro dois pães do Osk",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Osk",
+    "coisa": "pão",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-047",
+   "lote": 1,
+   "frase": "encho o cantil na poça",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "cantil",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-048",
+   "lote": 1,
+   "frase": "dou minha faca pro Ledo",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Ledo",
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-049",
+   "lote": 1,
+   "frase": "presenteio o Ledo com a corda",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Ledo",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-050",
+   "lote": 1,
+   "frase": "saqueio o Varge",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Varge",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-051",
+   "lote": 1,
+   "frase": "pago o Prior Matias",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Prior Matias",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-052",
+   "lote": 1,
+   "frase": "furto a água do Osk",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Osk",
+    "coisa": "água",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-053",
+   "lote": 1,
+   "frase": "puxo a alavanca",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "alavanca",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-054",
+   "lote": 1,
+   "frase": "uso a gazua na grade",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-055",
+   "lote": 1,
+   "frase": "bebo a poção",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-056",
+   "lote": 1,
+   "frase": "dou a espada pro Fenn",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Fenn",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-057",
+   "lote": 1,
+   "frase": "roubo a chave do Kragg",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Kragg",
+    "coisa": "chave",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-058",
+   "lote": 1,
+   "frase": "ofereço três moedas ao Kragg pra abrir a cela",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Kragg",
+    "coisa": "moeda",
+    "quantia": 3,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-059",
+   "lote": 1,
+   "frase": "revisto o corpo da Thessa",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Thessa",
+    "coisa": "corpo",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-060",
+   "lote": 1,
+   "frase": "pego a espada do Aldric",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Aldric",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-061",
+   "lote": 1,
+   "frase": "ataco o Kragg com a espada",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-062",
+   "lote": 1,
+   "frase": "falo com o Lorde Vael",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Lorde Vael",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-063",
+   "lote": 1,
+   "frase": "abro o baú",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "baú",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-064",
+   "lote": 1,
+   "frase": "compro a chave",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "chave",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-065",
+   "lote": 1,
+   "frase": "empresto a corda pro Fenn",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Fenn",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-066",
+   "lote": 1,
+   "frase": "compro uma informação do Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Rato",
+    "coisa": "informação",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-067",
+   "lote": 1,
+   "frase": "vendo a adaga pro Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Rato",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-068",
+   "lote": 1,
+   "frase": "vendo a adaga pro Rato por quinze",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Rato",
+    "coisa": "adaga",
+    "quantia": 15,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-069",
+   "lote": 1,
+   "frase": "pulo a janela",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "janela",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-070",
+   "lote": 1,
+   "frase": "me escondo na lixeira",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "lixeira",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-071",
+   "lote": 1,
+   "frase": "pago o Rato pela informação",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Rato",
+    "coisa": "informação",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-072",
+   "lote": 1,
+   "frase": "dou cinco moedas pra Nina",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Nina Cobra",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-073",
+   "lote": 1,
+   "frase": "furto a gazua do Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-074",
+   "lote": 1,
+   "frase": "pego a adaga do Dedo Longo",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Dedo Longo",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-075",
+   "lote": 1,
+   "frase": "intimido a Nina",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Nina Cobra",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-076",
+   "lote": 1,
+   "frase": "sigo a Nina pelo beco",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": "Nina Cobra",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-077",
+   "lote": 1,
+   "frase": "entrego a carta lacrada ao Ferran",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Ferran",
+    "coisa": "carta lacrada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-078",
+   "lote": 1,
+   "frase": "entrego a carta ao barão",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Barão Veltrin",
+    "coisa": "carta lacrada",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-079",
+   "lote": 1,
+   "frase": "suborno a guarda com dez moedas",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Dessa",
+    "coisa": "moeda",
+    "quantia": 10,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-080",
+   "lote": 1,
+   "frase": "sento no banco e espero",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-081",
+   "lote": 1,
+   "frase": "olho o lustre",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "lustre",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-082",
+   "lote": 1,
+   "frase": "compro a passagem sem registro do Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Pavio",
+    "coisa": "passagem sem registro",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-083",
+   "lote": 1,
+   "frase": "compro uma poção do Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Pavio",
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-084",
+   "lote": 1,
+   "frase": "compro duas poções do Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Pavio",
+    "coisa": "poção",
+    "quantia": 2,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-085",
+   "lote": 1,
+   "frase": "molho a mão do guarda com cinco moedas",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Rurik",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-086",
+   "lote": 1,
+   "frase": "suborno o Teodoro",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Teodoro Fox",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-087",
+   "lote": 1,
+   "frase": "corro pro portão",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "portão",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-088",
+   "lote": 1,
+   "frase": "dou a tocha pro Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Pavio",
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-089",
+   "lote": 1,
+   "frase": "compro um biscoito da Dona Neca",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Dona Neca",
+    "coisa": "biscoito",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-090",
+   "lote": 1,
+   "frase": "pago a passagem ao capitão",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Aurelio Duarte",
+    "coisa": "passagem",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-091",
+   "lote": 1,
+   "frase": "dou meu rum pro Pio",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Pio",
+    "coisa": "rum",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-092",
+   "lote": 1,
+   "frase": "subo no mastro",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "mastro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-093",
+   "lote": 1,
+   "frase": "vendo a bússola quebrada pro capitão",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Aurelio Duarte",
+    "coisa": "bússola quebrada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-094",
+   "lote": 1,
+   "frase": "furto um biscoito da cozinheira",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Dona Neca",
+    "coisa": "biscoito",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-095",
+   "lote": 1,
+   "frase": "cobro o Brás",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Brás Tamm",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-096",
+   "lote": 1,
+   "frase": "troco a faca por dois biscoitos da Dona Neca",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Dona Neca",
+    "coisa": "faca",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-097",
+   "lote": 1,
+   "frase": "pergunto ao capitão quanto falta",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Aurelio Duarte",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-098",
+   "lote": 1,
+   "frase": "compro cinco flechas da Tarsa",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Tarsa",
+    "coisa": "flecha",
+    "quantia": 5,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-099",
+   "lote": 1,
+   "frase": "pago o ensopado pro Dunga",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Dunga",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-100",
+   "lote": 1,
+   "frase": "dou a faca pro Velho Hurt",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Velho Hurt",
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-101",
+   "lote": 1,
+   "frase": "pego o arco do Velho Hurt",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Velho Hurt",
+    "coisa": "arco",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-102",
+   "lote": 1,
+   "frase": "afio a faca",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-103",
+   "lote": 1,
+   "frase": "durmo na tenda",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "tenda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-104",
+   "lote": 1,
+   "frase": "compro tinta do Anselmo",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Anselmo Pires",
+    "coisa": "tinta",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-105",
+   "lote": 1,
+   "frase": "escrevo uma carta com a pena",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "pena",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-106",
+   "lote": 1,
+   "frase": "empresto a pena pra Nara",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Nara",
+    "coisa": "pena",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-107",
+   "lote": 1,
+   "frase": "abro a porta com a chave de bronze",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "chave de bronze",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-108",
+   "lote": 1,
+   "frase": "leio o livro grande",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "livro grande",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-109",
+   "lote": 1,
+   "frase": "pego o lampião",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "lampião",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-110",
+   "lote": 1,
+   "frase": "furto o pergaminho do Anselmo",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Anselmo Pires",
+    "coisa": "pergaminho",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-111",
+   "lote": 1,
+   "frase": "devolvo o pergaminho ao Quirino",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Quirino Alves",
+    "coisa": "pergaminho",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-112",
+   "lote": 1,
+   "frase": "devolvo o livro emprestado pra Zelfa",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Zelfa Montes",
+    "coisa": "livro emprestado",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-113",
+   "lote": 1,
+   "frase": "devolvo o livro pra dona Zelfa",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Zelfa Montes",
+    "coisa": "livro emprestado",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-114",
+   "lote": 1,
+   "frase": "abro a gaveta",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "gaveta",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-115",
+   "lote": 1,
+   "frase": "dou duas moedas pro Juca",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Juca",
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-116",
+   "lote": 1,
+   "frase": "pego o bule",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "bule",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-117",
+   "lote": 1,
+   "frase": "converso com o Juca sobre o avô",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Juca",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-118",
+   "lote": 1,
+   "frase": "deslizo duas moedas pra Dorva",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-119",
+   "lote": 1,
+   "frase": "compro uma maçã do Bento",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Bento Carvalho",
+    "coisa": "maçã",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-120",
+   "lote": 1,
+   "frase": "passo três pratas pro Ivarr",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Ivarr Tolmen",
+    "coisa": "moeda",
+    "quantia": 3,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-121",
+   "lote": 1,
+   "frase": "dou uma flor pra Dorva",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "flor",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-122",
+   "lote": 1,
+   "frase": "compro um figo e dou pra Dorva",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "figo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-123",
+   "lote": 1,
+   "frase": "atiro uma moeda pra mendiga",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-124",
+   "lote": 1,
+   "frase": "jogo uma moeda no chafariz",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-125",
+   "lote": 1,
+   "frase": "roubo uma maçã da banca do Bento",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Bento Carvalho",
+    "coisa": "maçã",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-126",
+   "lote": 1,
+   "frase": "pergunto pro Bento se ele viu o Ivarr",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Bento Carvalho",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-127",
+   "lote": 1,
+   "frase": "vou cobrar o Ivarr",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Ivarr Tolmen",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-128",
+   "lote": 1,
+   "frase": "compro flores da Irene",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Irene Carvalho",
+    "coisa": "flor",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-129",
+   "lote": 1,
+   "frase": "pago o reparo pro Bóris",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Bóris Kern",
+    "coisa": "reparo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-130",
+   "lote": 1,
+   "frase": "vendo a espada quebrada pro ferreiro",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Bóris Kern",
+    "coisa": "espada quebrada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-131",
+   "lote": 1,
+   "frase": "dou o escudo pra Lia",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Lia Kern",
+    "coisa": "escudo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-132",
+   "lote": 1,
+   "frase": "compro três ferraduras",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "ferradura",
+    "quantia": 3,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-133",
+   "lote": 1,
+   "frase": "compro a espada do Bóris",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Bóris Kern",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-134",
+   "lote": 1,
+   "frase": "compro duas espadas",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "espada",
+    "quantia": 2,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-135",
+   "lote": 1,
+   "frase": "malho o ferro na bigorna",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "bigorna",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-136",
+   "lote": 1,
+   "frase": "empresto a gazua pra Lia",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Lia Kern",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-137",
+   "lote": 1,
+   "frase": "me aproximo do Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-138",
+   "lote": 1,
+   "frase": "fico de olho no Tomás Veiga",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Tomás Veiga",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-139",
+   "lote": 1,
+   "frase": "acampo perto da pedra",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "pedra",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-140",
+   "lote": 1,
+   "frase": "sigo o rastro",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "rastro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-141",
+   "lote": 1,
+   "frase": "o que tem no horizonte?",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-142",
+   "lote": 1,
+   "frase": "quanto tempo até escurecer?",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-143",
+   "lote": 1,
+   "frase": "examino os ossos",
+   "cena_de": "T-004",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "ossos",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-144",
+   "lote": 1,
+   "frase": "saio da caverna correndo",
+   "cena_de": "T-004",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-145",
+   "lote": 1,
+   "frase": "falo com o Garrik Moura sobre a lenha",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Garrik Moura",
+    "coisa": "lenha",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-146",
+   "lote": 1,
+   "frase": "compro lenha do Garrik Moura",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Garrik Moura",
+    "coisa": "lenha",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-147",
+   "lote": 1,
+   "frase": "compro um bolo da Olga",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Olga",
+    "coisa": "bolo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-148",
+   "lote": 1,
+   "frase": "compro um bolo do Garrik",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "bolo",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-149",
+   "lote": 1,
+   "frase": "ataco o Garrik Moura",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Garrik Moura",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-150",
+   "lote": 1,
+   "frase": "convenço o Garrik Salles a me ajudar",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Garrik Salles",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-151",
+   "lote": 1,
+   "frase": "reservo um quarto com o Hugo Pires",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hugo Pires",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-152",
+   "lote": 1,
+   "frase": "alugo o estábulo",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "estábulo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-153",
+   "lote": 1,
+   "frase": "pago a ceia",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": "ceia",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-154",
+   "lote": 1,
+   "frase": "chamo a Dona Ruth pra conversar",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Dona Ruth",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-155",
+   "lote": 1,
+   "frase": "pego a chave pendurada",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "chave pendurada",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-156",
+   "lote": 1,
+   "frase": "acendo uma vela no altar",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "vela",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-157",
+   "lote": 1,
+   "frase": "rezo no altar",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "altar",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-158",
+   "lote": 1,
+   "frase": "compro uma bênção da Irmã Cora",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Irmã Cora",
+    "coisa": "bênção",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-159",
+   "lote": 1,
+   "frase": "peço a bênção pra Irmã Cora",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Irmã Cora",
+    "coisa": "bênção",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-160",
+   "lote": 1,
+   "frase": "dou a adaga pro Frei Odo",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Frei Odo",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-161",
+   "lote": 1,
+   "frase": "furto o cofre de esmolas",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": null,
+    "coisa": "cofre de esmolas",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-162",
+   "lote": 1,
+   "frase": "converso com o Abade Lucan",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Abade Lucan",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-163",
+   "lote": 1,
+   "frase": "finjo ser um mensageiro pra Sabra",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Sabra Lopes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-164",
+   "lote": 1,
+   "frase": "pechincho o escudo com a Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hilda Voss",
+    "coisa": "escudo",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-165",
+   "lote": 1,
+   "frase": "regateio o preço do mapa com o Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Cado Ferraz",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-166",
+   "lote": 1,
+   "frase": "Bento, me dá duas maçãs",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Bento Carvalho",
+    "coisa": "maçã",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-167",
+   "lote": 1,
+   "frase": "Marta, mais uma cerveja",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Marta Quint",
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-168",
+   "lote": 1,
+   "frase": "uma cerveja, por favor",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-169",
+   "lote": 1,
+   "frase": "Rato, quanto pela informação?",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": "informação",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-170",
+   "lote": 1,
+   "frase": "tem gazua aí, Rato?",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-171",
+   "lote": 1,
+   "frase": "não vendo meu mapa pra ninguém",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-172",
+   "lote": 1,
+   "frase": "se o Pio vender o rum barato eu compro",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Pio",
+    "coisa": "rum",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-173",
+   "lote": 1,
+   "frase": "— Osk, me vende um pão?",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Osk",
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-174",
+   "lote": 1,
+   "frase": "pergunto à Irene quanto custa a flor",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Irene Carvalho",
+    "coisa": "flor",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-175",
+   "lote": 1,
+   "frase": "olho as espadas da Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-176",
+   "lote": 1,
+   "frase": "vasculho a lixeira",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "lixeira",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-177",
+   "lote": 1,
+   "frase": "espero a chuva passar",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-178",
+   "lote": 1,
+   "frase": "atravesso a porta dupla",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "porta dupla",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-179",
+   "lote": 1,
+   "frase": "grito por socorro",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-180",
+   "lote": 1,
+   "frase": "troco o machado por pão com a Olga",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Olga",
+    "coisa": "machado",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-181",
+   "lote": 1,
+   "frase": "troco a corda por lenha",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-182",
+   "lote": 1,
+   "frase": "peço um chá pra Zelfa",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Zelfa Montes",
+    "coisa": "chá",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-183",
+   "lote": 1,
+   "frase": "devolvo isso pra Zelfa",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Zelfa Montes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_o_que"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-184",
+   "lote": 1,
+   "frase": "dou isso pra Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Hilda Voss",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_o_que"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-185",
+   "lote": 1,
+   "frase": "compro algo da Sibila Rand",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Sibila Rand",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_o_que"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-186",
+   "lote": 1,
+   "frase": "pago o que devo pro Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-187",
+   "lote": 1,
+   "frase": "dou a corda",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_quem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-188",
+   "lote": 1,
+   "frase": "empresto a corda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_quem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-189",
+   "lote": 1,
+   "frase": "suborno o Capitão Dray",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Capitão Dray",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-190",
+   "lote": 1,
+   "frase": "pago o Dedo Longo",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Dedo Longo",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-191",
+   "lote": 1,
+   "frase": "vendo a espada pro Kragg",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Kragg",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-192",
+   "lote": 1,
+   "frase": "peço ao Kragg que solte o Fenn",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-193",
+   "lote": 1,
+   "frase": "imploro ao Kragg pela vida do Fenn",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-194",
+   "lote": 1,
+   "frase": "chuto o Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-195",
+   "lote": 1,
+   "frase": "derrubo o Tomás Veiga",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Tomás Veiga",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-196",
+   "lote": 1,
+   "frase": "flecho o Dunga",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Dunga",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-197",
+   "lote": 1,
+   "frase": "cumprimento a Dona Ruth",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Dona Ruth",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-198",
+   "lote": 1,
+   "frase": "puxo papo com a Olga",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Olga",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-199",
+   "lote": 1,
+   "frase": "dou uma olhada no celeiro",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "celeiro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-200",
+   "lote": 1,
+   "frase": "dou uma volta pela aldeia",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-201",
+   "lote": 1,
+   "frase": "passo a mão na gazua do Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-202",
+   "lote": 1,
+   "frase": "roubo o pão do Osk e corro",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Osk",
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-203",
+   "lote": 1,
+   "frase": "dou um figo pra Dorva",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "figo",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-204",
+   "lote": 1,
+   "frase": "empresto o mapa pro capitão",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Aurelio Duarte",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-205",
+   "lote": 1,
+   "frase": "cobro o Pio",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Pio",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-206",
+   "lote": 1,
+   "frase": "pago o Pio",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Pio",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-207",
+   "lote": 1,
+   "frase": "descanso perto da fogueira",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "fogueira",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-208",
+   "lote": 1,
+   "frase": "deito no banco e cochilo",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-209",
+   "lote": 1,
+   "frase": "mergulho na poça",
+   "cena_de": "T-004",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "poça",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-210",
+   "lote": 1,
+   "frase": "apanho uma pedra",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "pedra",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-211",
+   "lote": 1,
+   "frase": "junto os gravetos do chão",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "graveto",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-212",
+   "lote": 1,
+   "frase": "encaro o Rurik",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Rurik",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-213",
+   "lote": 1,
+   "frase": "ouço a conversa dos guardas",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-214",
+   "lote": 1,
+   "frase": "quem é o dono da carroça?",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "carroça",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-215",
+   "lote": 1,
+   "frase": "que horas são?",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-216",
+   "lote": 1,
+   "frase": "onde fica o templo?",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-217",
+   "lote": 1,
+   "frase": "tenho quantas moedas?",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-218",
+   "lote": 1,
+   "frase": "Pavio, vende poção?",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Pavio",
+    "coisa": "poção",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-219",
+   "lote": 1,
+   "frase": "não quero briga, Kragg",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-220",
+   "lote": 1,
+   "frase": "nem pensar em pagar isso, Pio",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Pio",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-221",
+   "lote": 1,
+   "frase": "se eu atacar o Kragg agora, consigo?",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-222",
+   "lote": 1,
+   "frase": "Sabra, se eu te der cinco moedas, você me deixa passar?",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Sabra Lopes",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-223",
+   "lote": 2,
+   "frase": "faço um rolo: minha corda pela bússola do Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Cado Ferraz",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-224",
+   "lote": 2,
+   "frase": "boto dez moedas na mão do Cado pra ele esquecer o que viu",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Cado Ferraz",
+    "coisa": "moeda",
+    "quantia": 10,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-225",
+   "lote": 2,
+   "frase": "arrumo uma adaga com a Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hilda Voss",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-226",
+   "lote": 2,
+   "frase": "quanto sai o escudo?",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "escudo",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-227",
+   "lote": 2,
+   "frase": "se o Cado tiver um mapa novo, eu compro",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Cado Ferraz",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-228",
+   "lote": 2,
+   "frase": "nao compro nada da Sibila Cruz",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Sibila Cruz",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-229",
+   "lote": 2,
+   "frase": "dou a tocha pro Bruno",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Bruno Falk",
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-230",
+   "lote": 2,
+   "frase": "entrego o mapa rasgado pra Sibila",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "mapa rasgado",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-231",
+   "lote": 2,
+   "frase": "compro a bussola do cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Cado Ferraz",
+    "coisa": "bússola",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-232",
+   "lote": 2,
+   "frase": "compro um escudo e saio",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "escudo",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-233",
+   "lote": 2,
+   "frase": "pego a tocha do Edrik",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Edrik Sorn",
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-234",
+   "lote": 2,
+   "frase": "cheiro as ervas da Sibila Rand",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Sibila Rand",
+    "coisa": "erva",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-235",
+   "lote": 2,
+   "frase": "acerto a conta com a Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Hilda Voss",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-236",
+   "lote": 2,
+   "frase": "tento vender a corda pra Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Hilda Voss",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-237",
+   "lote": 2,
+   "frase": "vou pagar o Cado",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Cado Ferraz",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-238",
+   "lote": 2,
+   "frase": "ofereço vinte moedas pelo colar",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "colar",
+    "quantia": 20,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-239",
+   "lote": 2,
+   "frase": "chamo a Marta e peço o ensopado",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Marta Quint",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-240",
+   "lote": 2,
+   "frase": "pago duas cervejas pra Marta",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Marta Quint",
+    "coisa": "cerveja",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-241",
+   "lote": 2,
+   "frase": "empresto cinco pratas pro Tomás Reis",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Tomás Reis",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-242",
+   "lote": 2,
+   "frase": "empresto cinco pratas pro Tomás",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-243",
+   "lote": 2,
+   "frase": "empresto vinte moedas pro Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Gil",
+    "coisa": "moeda",
+    "quantia": 20,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-244",
+   "lote": 2,
+   "frase": "tomo a caneca do Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Gil",
+    "coisa": "caneca",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-245",
+   "lote": 2,
+   "frase": "afano a carteira do Tomás Veiga",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Tomás Veiga",
+    "coisa": "carteira",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-246",
+   "lote": 2,
+   "frase": "dou uma cerveja pro Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Gil",
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-247",
+   "lote": 2,
+   "frase": "brindo com o Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-248",
+   "lote": 2,
+   "frase": "deixo a gorjeta no balcão",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-249",
+   "lote": 2,
+   "frase": "Marta, me empresta uma vela?",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Marta Quint",
+    "coisa": "vela",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-250",
+   "lote": 2,
+   "frase": "durmo no quarto que paguei",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-251",
+   "lote": 2,
+   "frase": "vou embora da taverna",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-252",
+   "lote": 2,
+   "frase": "subo as escadas pro quarto",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-253",
+   "lote": 2,
+   "frase": "ajudo o Osk a consertar a carroça",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": "Osk",
+    "coisa": "carroça",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-254",
+   "lote": 2,
+   "frase": "compro água",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "água",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-255",
+   "lote": 2,
+   "frase": "compro agua do osk",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Osk",
+    "coisa": "água",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-256",
+   "lote": 2,
+   "frase": "compro dez pães",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "pão",
+    "quantia": 10,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-257",
+   "lote": 2,
+   "frase": "entrego a faca pro Varge",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Varge",
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-258",
+   "lote": 2,
+   "frase": "revisto os bolsos do Varge",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Varge",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-259",
+   "lote": 2,
+   "frase": "sigo pela estrada",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-260",
+   "lote": 2,
+   "frase": "enfio a gazua na fechadura da grade",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-261",
+   "lote": 2,
+   "frase": "passo a espada pro Fenn pela grade",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Fenn",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-262",
+   "lote": 2,
+   "frase": "suborno o carcereiro com cinco moedas",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Kragg",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-263",
+   "lote": 2,
+   "frase": "suborno o carcereiro",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-264",
+   "lote": 2,
+   "frase": "golpeio o Kragg",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-265",
+   "lote": 2,
+   "frase": "pego a tocha de parede",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "tocha de parede",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-266",
+   "lote": 2,
+   "frase": "pergunto pro Fenn como ele veio parar aqui",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Fenn",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-267",
+   "lote": 2,
+   "frase": "vendo minha gazua pro receptador",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-268",
+   "lote": 2,
+   "frase": "compro uma gazua do rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-269",
+   "lote": 2,
+   "frase": "pago o Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Rato",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-270",
+   "lote": 2,
+   "frase": "escalo a escada",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "escada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-271",
+   "lote": 2,
+   "frase": "dou uma geral no beco",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-272",
+   "lote": 2,
+   "frase": "cobro o Dedo Longo",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Dedo Longo",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-273",
+   "lote": 2,
+   "frase": "pego o anel do Dedo Longo",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Dedo Longo",
+    "coisa": "anel",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-274",
+   "lote": 2,
+   "frase": "dou o anel pro Ferran",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Ferran",
+    "coisa": "anel",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-275",
+   "lote": 2,
+   "frase": "passo cinco moedas pra guarda fazer vista grossa",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Dessa",
+    "coisa": "moeda",
+    "quantia": 5,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-276",
+   "lote": 2,
+   "frase": "me sento no banco e aguardo o barão",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-277",
+   "lote": 2,
+   "frase": "molho a mão do Rurik",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Rurik",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-278",
+   "lote": 2,
+   "frase": "compro uma passagem do Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Pavio",
+    "coisa": "passagem sem registro",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-279",
+   "lote": 2,
+   "frase": "dou três moedas pro Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Pavio",
+    "coisa": "moeda",
+    "quantia": 3,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-280",
+   "lote": 2,
+   "frase": "se a capitã deixar, eu passo",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Sabra Lopes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-281",
+   "lote": 2,
+   "frase": "não suborno guarda nenhum",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-282",
+   "lote": 2,
+   "frase": "compro rum do Pio",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Pio",
+    "coisa": "rum",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-283",
+   "lote": 2,
+   "frase": "compro uma passagem",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "passagem",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-284",
+   "lote": 2,
+   "frase": "compro duas passagens",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "passagem",
+    "quantia": 2,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-285",
+   "lote": 2,
+   "frase": "dou a bússola quebrada pro Brás",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Brás Tamm",
+    "coisa": "bússola quebrada",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-286",
+   "lote": 2,
+   "frase": "troco meu rum pelo biscoito da Neca",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Dona Neca",
+    "coisa": "rum",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-287",
+   "lote": 2,
+   "frase": "ajudo a puxar a rede",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "rede",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-288",
+   "lote": 2,
+   "frase": "me agarro no mastro",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "mastro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-289",
+   "lote": 2,
+   "frase": "olho o mar pela amurada",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-290",
+   "lote": 2,
+   "frase": "devolvo a faca pro Pio",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Pio",
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-291",
+   "lote": 2,
+   "frase": "compro uma pele",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "pele",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-292",
+   "lote": 2,
+   "frase": "vendo meu arco pra Tarsa",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Tarsa",
+    "coisa": "arco",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-293",
+   "lote": 2,
+   "frase": "vendo meu arco pra Tarsa por trinta",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": "Tarsa",
+    "coisa": "arco",
+    "quantia": 30,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-294",
+   "lote": 2,
+   "frase": "dou flechas pro Dunga",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dunga",
+    "coisa": "flechas",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-295",
+   "lote": 2,
+   "frase": "peço um prato de ensopado pro Dunga",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Dunga",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-296",
+   "lote": 2,
+   "frase": "furto uma pele da Tarsa",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Tarsa",
+    "coisa": "pele",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-297",
+   "lote": 2,
+   "frase": "empresto o arco pro Joaquim",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Joaquim Hurt",
+    "coisa": "arco",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-298",
+   "lote": 2,
+   "frase": "atiro no Dunga",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Dunga",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-299",
+   "lote": 2,
+   "frase": "compro dois pergaminhos do Anselmo",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Anselmo Pires",
+    "coisa": "pergaminho",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-300",
+   "lote": 2,
+   "frase": "pergunto pra Nara onde fica a seção de mapas",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Nara",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-301",
+   "lote": 2,
+   "frase": "folheio o livro grande",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "livro grande",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-302",
+   "lote": 2,
+   "frase": "dou a pena pra Ilze",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Ilze Brandt",
+    "coisa": "pena",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "morto"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-303",
+   "lote": 2,
+   "frase": "pergunto à Zelfa pelo Armando",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Zelfa Montes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-304",
+   "lote": 2,
+   "frase": "procuro na gaveta",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "gaveta",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-305",
+   "lote": 2,
+   "frase": "pego o relógio",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "relógio",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-306",
+   "lote": 2,
+   "frase": "furto o relógio da Zelfa",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Zelfa Montes",
+    "coisa": "relógio",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-307",
+   "lote": 2,
+   "frase": "dou a adaga pro Armando",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Armando Montes",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-308",
+   "lote": 2,
+   "frase": "jogo dois cobres pra Dorva",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-309",
+   "lote": 2,
+   "frase": "compro tres macas",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "maçã",
+    "quantia": 3,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-310",
+   "lote": 2,
+   "frase": "compro uma flor da Irene",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Irene Carvalho",
+    "coisa": "flor",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-311",
+   "lote": 2,
+   "frase": "dou uma maçã pra Dorva",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "maçã",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-312",
+   "lote": 2,
+   "frase": "dou uma moeda pra mendiga e pergunto do Ivarr",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "moeda",
+    "quantia": 1,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-313",
+   "lote": 2,
+   "frase": "não dou nada pra ninguém",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-314",
+   "lote": 2,
+   "frase": "pego uma maçã da banca",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "maçã",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-315",
+   "lote": 2,
+   "frase": "sento no banco da praça",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-316",
+   "lote": 2,
+   "frase": "compro uma ferradura do Bóris",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Bóris Kern",
+    "coisa": "ferradura",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-317",
+   "lote": 2,
+   "frase": "pago cinco pelo reparo",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "reparo",
+    "quantia": 5,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-318",
+   "lote": 2,
+   "frase": "empresto o escudo pro Bóris",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Bóris Kern",
+    "coisa": "escudo",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-319",
+   "lote": 2,
+   "frase": "pego o martelo da bigorna",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "martelo",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-320",
+   "lote": 2,
+   "frase": "pego o martelo do Bóris",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Bóris Kern",
+    "coisa": "martelo",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-321",
+   "lote": 2,
+   "frase": "devolvo o martelo pro Bóris",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Bóris Kern",
+    "coisa": "martelo",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-322",
+   "lote": 2,
+   "frase": "dou a espada quebrada pra Madame Orsolya",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Madame Orsolya",
+    "coisa": "espada quebrada",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-323",
+   "lote": 2,
+   "frase": "Bóris, quanto pelo reparo?",
+   "cena_de": "T-102",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Bóris Kern",
+    "coisa": "reparo",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-324",
+   "lote": 2,
+   "frase": "compro pão da Olga",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Olga",
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-325",
+   "lote": 2,
+   "frase": "dou lenha pro Garrik Salles",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Garrik Salles",
+    "coisa": "lenha",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-326",
+   "lote": 2,
+   "frase": "pago a lenha pro lenhador",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Garrik Moura",
+    "coisa": "lenha",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-327",
+   "lote": 2,
+   "frase": "converso com o chefe da aldeia",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Garrik Salles",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-328",
+   "lote": 2,
+   "frase": "subo no celeiro",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "agir",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "celeiro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-329",
+   "lote": 2,
+   "frase": "dou uma corrida até o poço",
+   "cena_de": "T-009",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "poço",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-330",
+   "lote": 2,
+   "frase": "deposito duas moedas no cofre de esmolas",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": 2,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-331",
+   "lote": 2,
+   "frase": "pego uma vela",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "vela",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-332",
+   "lote": 2,
+   "frase": "compro tres velas",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "vela",
+    "quantia": 3,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-333",
+   "lote": 2,
+   "frase": "acendo minha vela",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "vela",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-334",
+   "lote": 2,
+   "frase": "peço pro Frei Odo rezar por mim",
+   "cena_de": "T-002",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Frei Odo",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-335",
+   "lote": 2,
+   "frase": "pego um quarto com o Hugo Pires",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Hugo Pires",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-336",
+   "lote": 2,
+   "frase": "pago o quarto pro Hugo",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "dois_com_o_nome"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-337",
+   "lote": 2,
+   "frase": "pago o quarto pro Hugo Pires",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Hugo Pires",
+    "coisa": "quarto",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-338",
+   "lote": 2,
+   "frase": "compro a ceia e o quarto",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "ceia",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-339",
+   "lote": 2,
+   "frase": "falo com o Capitão Sorrel",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Capitão Sorrel",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-340",
+   "lote": 2,
+   "frase": "pergunto ao estalajadeiro sobre o capitão",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Hugo Pires",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-341",
+   "lote": 2,
+   "frase": "dou a corda pra Mira",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Mira Dantas",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ausente"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-342",
+   "lote": 2,
+   "frase": "vendo a ração",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "vender",
+    "quem": null,
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "ninguem_aqui"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-343",
+   "lote": 2,
+   "frase": "procuro água",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-344",
+   "lote": 2,
+   "frase": "como uma ração",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "ração",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-345",
+   "lote": 2,
+   "frase": "durmo no saco de dormir",
+   "cena_de": "T-003",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "saco de dormir",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-346",
+   "lote": 2,
+   "frase": "pego as brasas",
+   "cena_de": "T-004",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "brasas",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-347",
+   "lote": 2,
+   "frase": "pego a faca do Dolan",
+   "cena_de": "T-004",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": "Dolan",
+    "coisa": "faca",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-348",
+   "lote": 3,
+   "frase": "meto a espada no Kragg",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-349",
+   "lote": 3,
+   "frase": "enfio a adaga na guarda",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Dessa",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-350",
+   "lote": 3,
+   "frase": "saio no braço com o Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-351",
+   "lote": 3,
+   "frase": "sento a mão no Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-352",
+   "lote": 3,
+   "frase": "agarro o Gil pelo pescoço",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-353",
+   "lote": 3,
+   "frase": "mordo o braço do Kragg",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-354",
+   "lote": 3,
+   "frase": "arrebento a cara do Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-355",
+   "lote": 3,
+   "frase": "acerto o Kragg com a espada",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-356",
+   "lote": 3,
+   "frase": "jogo a tocha no Rurik",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Rurik",
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-357",
+   "lote": 3,
+   "frase": "vou pra cima do Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "lutar",
+    "subtipo": null,
+    "quem": "Pavio",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-358",
+   "lote": 3,
+   "frase": "ameaço o Rato com a adaga",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-359",
+   "lote": 3,
+   "frase": "jogo um charme pra Marta",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Marta Quint",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-360",
+   "lote": 3,
+   "frase": "levo o guarda no papo",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Rurik",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-361",
+   "lote": 3,
+   "frase": "minto pro Kragg que o barão mandou soltar o Fenn",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-362",
+   "lote": 3,
+   "frase": "prometo pagar amanhã, Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-363",
+   "lote": 3,
+   "frase": "uso minha lábia com a Sabra",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Sabra Lopes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-364",
+   "lote": 3,
+   "frase": "enrolo o carcereiro",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-365",
+   "lote": 3,
+   "frase": "falo grosso com o Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Gil",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-366",
+   "lote": 3,
+   "frase": "imploro pra Sabra me deixar passar",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Sabra Lopes",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-367",
+   "lote": 3,
+   "frase": "assusto o Juca",
+   "cena_de": "T-062",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Juca",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-368",
+   "lote": 3,
+   "frase": "mestre, tem alguém vigiando a porta?",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "porta dupla",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-369",
+   "lote": 3,
+   "frase": "tenho quanto de vida?",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-370",
+   "lote": 3,
+   "frase": "quanto de ouro eu tenho?",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-371",
+   "lote": 3,
+   "frase": "consigo ver o Rato daqui?",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-372",
+   "lote": 3,
+   "frase": "o que eu sei sobre o barão",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": "Barão Veltrin",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-373",
+   "lote": 3,
+   "frase": "a porta tá trancada?",
+   "cena_de": "T-022",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "porta dupla",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "sem_acento_ou_erro"
+  },
+  {
+   "id": "C-374",
+   "lote": 3,
+   "frase": "posso subir no mastro?",
+   "cena_de": "T-032",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "mastro",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-375",
+   "lote": 3,
+   "frase": "alguém me viu?",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-376",
+   "lote": 3,
+   "frase": "lustro a espada",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-377",
+   "lote": 3,
+   "frase": "escondo a gazua na bota",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-378",
+   "lote": 3,
+   "frase": "guardo as moedas na bolsa",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca"
+  },
+  {
+   "id": "C-379",
+   "lote": 3,
+   "frase": "saco a espada",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-380",
+   "lote": 3,
+   "frase": "seguro a tocha bem alto",
+   "cena_de": "T-004",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-381",
+   "lote": 3,
+   "frase": "amarro a corda na grade",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-382",
+   "lote": 3,
+   "frase": "visto a capa",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "usar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "capa",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-383",
+   "lote": 3,
+   "frase": "tiro um cochilo",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-384",
+   "lote": 3,
+   "frase": "passo a noite na estalagem",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-385",
+   "lote": 3,
+   "frase": "fico quieto no canto",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-386",
+   "lote": 3,
+   "frase": "capoto no banco",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "esperar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "banco",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-387",
+   "lote": 3,
+   "frase": "dou no pé",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-388",
+   "lote": 3,
+   "frase": "meto o pé daqui",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-389",
+   "lote": 3,
+   "frase": "caio fora da taverna",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "mover",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-390",
+   "lote": 3,
+   "frase": "fico de butuca no Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-391",
+   "lote": 3,
+   "frase": "passo o olho no baú",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": null,
+    "coisa": "baú",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-392",
+   "lote": 3,
+   "frase": "Rato, se eu pagar bem, abre o bico?",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "convencer",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": "moeda",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional"
+  },
+  {
+   "id": "C-393",
+   "lote": 3,
+   "frase": "se o Kragg dormir, eu pego a chave",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": "chave",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional"
+  },
+  {
+   "id": "C-394",
+   "lote": 3,
+   "frase": "Hilda, se eu levar duas adagas, quanto fica?",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": "adaga",
+    "quantia": 2,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional"
+  },
+  {
+   "id": "C-395",
+   "lote": 3,
+   "frase": "se eu correr agora, dá tempo?",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "perguntar_ao_mestre",
+    "subtipo": null,
+    "quem": null,
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "condicional"
+  },
+  {
+   "id": "C-396",
+   "lote": 3,
+   "frase": "bato a carteira do Tomás Veiga",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Tomás Veiga",
+    "coisa": "carteira",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "giria"
+  },
+  {
+   "id": "C-397",
+   "lote": 3,
+   "frase": "compro um pão e como",
+   "cena_de": "T-011",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "duas_acoes"
+  },
+  {
+   "id": "C-398",
+   "lote": 3,
+   "frase": "pago a cerveja e saio",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": null,
+    "coisa": "cerveja",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "duas_acoes"
+  },
+  {
+   "id": "C-399",
+   "lote": 3,
+   "frase": "empresto a corda pra ela",
+   "cena_de": "T-034",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Nara",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": "pronome"
+  },
+  {
+   "id": "C-400",
+   "lote": 3,
+   "frase": "dou a tocha pra ele",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": null,
+    "coisa": "tocha",
+    "quantia": null,
+    "veredito": "pergunta",
+    "motivo": "falta_quem"
+   },
+   "armadilha": "pronome"
+  },
+  {
+   "id": "C-401",
+   "lote": 3,
+   "frase": "compro um ensopado dele",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Dunga",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "pronome"
+  },
+  {
+   "id": "C-402",
+   "lote": 3,
+   "frase": "dou quinze moedas pro Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Rato",
+    "coisa": "moeda",
+    "quantia": 15,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "quantia_por_extenso"
+  },
+  {
+   "id": "C-403",
+   "lote": 3,
+   "frase": "dou trinta moedas pro Rato",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Rato",
+    "coisa": "moeda",
+    "quantia": 30,
+    "veredito": "nao",
+    "motivo": "sem_moeda"
+   },
+   "armadilha": "quantia_por_extenso"
+  },
+  {
+   "id": "C-404",
+   "lote": 3,
+   "frase": "compro quatro flechas",
+   "cena_de": "T-033",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": null,
+    "coisa": "flecha",
+    "quantia": 4,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": "quantia_por_extenso"
+  },
+  {
+   "id": "C-405",
+   "lote": 3,
+   "frase": "dou um pão pro mendigo",
+   "cena_de": "T-073",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Dorva",
+    "coisa": "pão",
+    "quantia": null,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-406",
+   "lote": 3,
+   "frase": "passo a corda pro Fenn",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Fenn",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
+  },
+  {
+   "id": "C-407",
+   "lote": 3,
+   "frase": "pergunto ao Rato quanto vale a gazua",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "pergunta_de_preco"
+  },
+  {
+   "id": "C-408",
+   "lote": 3,
+   "frase": "comento com a Nina que a gazua do Rato é cara",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Nina Cobra",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca"
+  },
+  {
+   "id": "C-409",
+   "lote": 3,
+   "frase": "admiro a espada da Hilda",
+   "cena_de": "T-001",
+   "resposta": {
+    "familia": "olhar",
+    "subtipo": null,
+    "quem": "Hilda Voss",
+    "coisa": "espada",
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "mencao_sem_troca"
+  },
+  {
+   "id": "C-410",
+   "lote": 3,
+   "frase": "não vou roubar ninguém, Nina",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Nina Cobra",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao"
+  },
+  {
+   "id": "C-411",
+   "lote": 3,
+   "frase": "jamais pagaria isso, Pavio",
+   "cena_de": "T-024",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Pavio",
+    "coisa": null,
+    "quantia": null,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "negacao"
+  },
+  {
+   "id": "C-412",
+   "lote": 3,
+   "frase": "“Kragg, toma três moedas e solta ele”",
+   "cena_de": "T-012",
+   "resposta": {
+    "familia": "falar",
+    "subtipo": null,
+    "quem": "Kragg",
+    "coisa": "moeda",
+    "quantia": 3,
+    "veredito": null,
+    "motivo": null
+   },
+   "armadilha": "fala_entre_aspas"
+  }
+ ]
+}
