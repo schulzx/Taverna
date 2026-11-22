@@ -1787,3 +1787,44 @@ graça, o dar item e o conferente.
 linha de sistema que já existe.
 
 **Não verificado até a nona sessão:** tudo isso contra um Narrador real.
+
+## 29. O conserto depois da nona sessão (21/11/2026)
+
+A nona sessão (v9.667; 54 de 58 no dado, dado indevido 0) mediu pela primeira vez a concordância entre
+linha, ficha e prosa nos turnos de troca: **20 de 39**. Onde o sistema decidia, a prosa obedecia; o
+resto eram frases para as quais o sistema não devolvia veredito nenhum, e quatro defeitos do próprio
+sistema. O conserto (`7cfe483` a `734b4a7`) ficou todo do lado do sistema.
+
+**Defeitos do sistema, e o que eram.**
+
+- **A cobrança em dobro (turno 57).** A compra cobrou uma vez; a segunda cobrança veio do gesto da
+  carta da quest («pagar a quem sabe»), que leu «dou 10 moedas» como pagamento a quem estava em cena.
+  Agora `aPortaDaMoeda` diz de quem é a moeda da frase (compra, suborno ou fiado) e o gesto só cobra o
+  que sobra. **Valia para todos, fora da chave**, desde 14/11.
+- **O furto «falho» que rendeu butim (turno 31).** A regra da casa diz que falhar por 1 ou 2 é
+  conseguir pagando; o butim estava certo, e quem mentia era a linha do dado e a bandeja, que diziam
+  «falha». As duas leem agora a mesma conta do motor.
+- **O fiado (turno 23)** era lido como compra. A bolsa da frase deixou de lê-lo. Valia fora da chave.
+- **O suborno com quantia** tinha duas listas, e a do catálogo não conhecia «ficar calado», «esquecer»
+  nem «não gritar». É uma lista só; rola Persuasão, e a moeda sai só no sim. Valia fora da chave.
+
+**O que passou a ter veredito.** O nome encurtado do item (`oItemDaFrase`, uma função só para vender,
+dar e pedir; dois itens que casam igual fazem a linha perguntar qual), o item vestido do companheiro,
+«me devolve», «aceito o que ele me estendeu», pedir emprestado (Persuasão; vem a coisa pedida, não um
+sorteio), tomar da mão de alguém (Atletismo), vender o que não se tem. A varredura das frases de troca
+das duas sessões foi de 29 de 38 e 24 de 26 para **38 de 38 e 26 de 26**.
+
+**O fato chega primeiro.** O veredito ia numa seção da pauta que o teto podia cortar. Vai agora numa
+seção própria, a primeira lida, cuja primeira linha nunca é cortada («FATO DESTE TURNO: …; nada mais
+muda de mão»), só no turno que tem troca, e o veto correspondente vai em `naoPode`. O prompt fixo não
+mudou.
+
+**A rede.** Quem fala do nome que a frase diz, ou com quem o herói falava no turno anterior, não está
+fora da vez (eram os dois cortes indevidos). Com a troca negada, a rede corta o gesto de prosa que a
+fecha.
+
+**Ficou de fora:** o ausente conhecido que aparece sem linha (turno 43), o cartão da Intimidação com
+texto de busca e narração dupla (51), o vendedor nomeado mas ausente na venda (9).
+
+**Não verificado até a décima sessão:** nada disso foi jogado; o turno 57 foi deduzido pelo código e
+reproduzido com uma carta sintética.
