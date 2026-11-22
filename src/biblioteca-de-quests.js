@@ -618,7 +618,7 @@ const A_MAO_QUE_MUDOU_DE_LADO = quest({
      para onde se foge (O_CLIMAX_DA_QUEST: o dado próprio da quest) */
   covil: "esconderijo",
   temperatura: "fogueira",
-  gancho: "{desertor} serviu sete anos a mão que anda por trás de tudo o que corre mal nesta terra, e uma noite saiu pela janela com o que sabia. Manda dizer, de {esconderijo}, que fala contigo e com mais ninguém — e só uma vez. {cacador} já pergunta por {desertor} nas tabernas, com uma moeda numa mão e uma corda na outra. E {vitima}, que enterrou um irmão por ordem de {desertor}, também pergunta.",
+  gancho: "{desertor} serviu sete anos a mão que anda por trás de tudo o que corre mal nesta terra, e uma noite saiu pela janela com o que sabia. Manda dizer, de {esconderijo}, que fala com você e com mais ninguém — e só uma vez. {cacador} já pergunta por {desertor} nas tavernas, com uma moeda numa mão e uma corda na outra. E {vitima}, que enterrou um irmão por ordem de {desertor}, também pergunta.",
   etapas: [
     { id: "achar", texto: "Encontrar {desertor} em {esconderijo}",
       conclui: ["todos", ["esteve", "lugar:esconderijo"], ["conversou", "papel:desertor"]] },
@@ -716,7 +716,7 @@ const O_CELEIRO_DE_INVERNO = quest({
   },
   mao: { tipo: "recurso", contra: [2, 4], papel: "comprador" },
   temperatura: "brasa",
-  gancho: "O inverno vem cedo este ano, e o único trigo que sobra em muitas léguas dorme em {celeiro}, nas mãos de {dono}. {faminta} já enterrou duas crianças da rua desde a última colheita, e só te pede que vás ver. Entretanto, {comprador} oferece o dobro por cada saca — e ninguém sabe para quem compra.",
+  gancho: "O inverno vem cedo este ano, e o único trigo que sobra em muitas léguas dorme em {celeiro}, nas mãos de {dono}. {faminta} já enterrou duas crianças da rua desde a última colheita, e só pede a você que vá ver. Enquanto isso, {comprador} oferece o dobro por cada saca — e ninguém sabe para quem compra.",
   etapas: [
     { id: "ouvir", texto: "Ouvir {faminta}", conclui: ["conversou", "papel:faminta"] },
     { id: "celeiro", texto: "Ver com os teus olhos o que guarda {celeiro}", conclui: ["esteve", "lugar:celeiro"] },
@@ -896,7 +896,7 @@ const O_CIMO_DA_ESCADA = quest({
   mao: { tipo: "confronto", contra: [6], papel: "vilao" },
   temperatura: "incendio",
   pressupoe: [["camada", "rosto"]],
-  gancho: "Já não há rumor nem recado: há uma porta, em {covil}, e atrás dela quem andou a mover esta terra contra ti desde o primeiro dia. {braco} guarda a escada. E lá em cima, diz quem viu, {refem} ainda respira — porque {vilao} sabe que é por isso que vens.",
+  gancho: "Já não há rumor nem recado: há uma porta, em {covil}, e atrás dela quem andou movendo esta terra contra você desde o primeiro dia. {braco} guarda a escada. E lá em cima, diz quem viu, {refem} ainda respira — porque {vilao} sabe que é por isso que você vem.",
   etapas: [
     { id: "covil", texto: "Entrar em {covil}", conclui: ["esteve", "lugar:covil"] },
     { id: "braco", texto: "Passar por {braco}",
@@ -1047,7 +1047,7 @@ const OS_DIAS_QUE_FALTAM = quest({
   mao: null,
   ponte: "{horto} fica numa cidade por onde um passo do vilão vai passar, e quem lá vende a erva paga a quem manda nele",
   temperatura: "chama",
-  gancho: "{quem} tosse para o lenço e dobra-o depressa, antes que vejas a cor. Diz que é o pó da estrada. {curandeira} olhou para {quem} uma vez, ao passar, e chamou-te à parte com a cara de quem já deu esta notícia muitas vezes e nunca se habituou.",
+  gancho: "{quem} tosse no lenço e o dobra depressa, antes que você veja a cor. Diz que é o pó da estrada. {curandeira} olhou para {quem} uma vez, ao passar, e chamou você de lado com a cara de quem já deu esta notícia muitas vezes e nunca se acostumou.",
   etapas: [
     { id: "sinal", texto: "Ouvir o que {curandeira} viu em {quem}",
       espera: 2, acende: ["acompanha", "papel:quem"],
@@ -1171,7 +1171,7 @@ const A_LAMINA_ENTERRADA = quest({
   ponte: "{sacerdote} guarda o altar de {templo}, numa cidade por onde um passo do vilão vai passar, e já aceitou o ouro de quem manda nele",
   temperatura: "fogueira",
   pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
-  gancho: "{quem} não puxa da lâmina. Nem quando devia, nem quando gritaste. Há muitos anos matou alguém que não merecia morrer e jurou, diante do altar de {templo}, que a sua mão não voltaria a sangrar ninguém. Agora {vingador}, que perdeu um irmão nessa noite, anda de terra em terra a perguntar por {quem} — e um voto não trava uma faca.",
+  gancho: "{quem} não puxa da lâmina. Nem quando devia, nem quando você gritou. Há muitos anos matou alguém que não merecia morrer e jurou, diante do altar de {templo}, que a sua mão não voltaria a sangrar ninguém. Agora {vingador}, que perdeu um irmão nessa noite, anda de terra em terra a perguntar por {quem} — e um voto não trava uma faca.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} porque não luta",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -1314,7 +1314,7 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
   quando: ["cedo"],
   afim: ["jornada", "arquipelago"],
   papeis: {
-    curral: { de: "lugar", e: "um sítio da cidade do ato", tipos: ["mercado", "taverna", "forja"] },
+    curral: { de: "lugar", e: "um lugar da cidade do ato", tipos: ["mercado", "taverna", "forja"] },
     toca: { de: "lugar", vizinho: "curral", tipos: ["cemitério", "arena", "docas"] },
     fera: { de: "fio", papel: "tenente", aceita: ["fera"], alcunha: "o que desce ao anoitecer", rotulo: "o que desce ao anoitecer" },
     pastora: { de: "elenco", do: "curral", rotulo: "quem perdeu o rebanho" },
@@ -1323,7 +1323,7 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
   mao: { tipo: "tenente", contra: [1, 2], papel: "fera" },
   temperatura: "brasa",
   estabelece: [["camada", "mao"]],
-  gancho: "Desce todas as noites quando o sino acaba de tocar, e nunca à mesma porta duas vezes. Ontem foi às traseiras de {curral}, onde {pastora} guardava o que lhe restava do rebanho: já não sobra um animal de pé, e {pastora} deixou-os lá para que vejas com os teus olhos. Na aldeia diz-se que é bicho do monte. {pastora} diz que bicho do monte não escolhe as portas.",
+  gancho: "Desce todas as noites quando o sino acaba de tocar, e nunca à mesma porta duas vezes. Ontem foi às traseiras de {curral}, onde {pastora} guardava o que lhe restava do rebanho: já não sobra um animal de pé, e {pastora} os deixou lá para que você veja com os próprios olhos. Na aldeia se diz que é bicho do monte. {pastora} diz que bicho do monte não escolhe as portas.",
   etapas: [
     { id: "ver", texto: "Ver o que ficou em {curral}", conclui: ["esteve", "lugar:curral"] },
     { id: "rasto", texto: "Seguir o rastro até onde a besta dorme",
@@ -1346,13 +1346,13 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
       coleira: {
         texto: "levar {fera} viva, de coleira, até à praça",
         ganha: "A marca cosida na coleira passa de mão em mão, e quem soltava a besta deixa de ser conversa de taberna: passa a ser um nome que se procura.",
-        custa: "Uma fera viva acorrentada no meio da praça, e {pastora} a cuspir-te aos pés. Quem a soltava fica a saber que lhe roubaste o bicho, e vai querer de volta o bicho ou a mão que o leva.",
+        custa: "Uma fera viva acorrentada no meio da praça, e {pastora} cuspindo aos seus pés. Quem a soltava fica sabendo que você roubou o bicho dele, e vai querer de volta o bicho ou a mão que o leva.",
         efeitos: [{ tipo: "afeicao", papel: "pastora", n: -1 }, { tipo: "relogio_do_fio", n: -1 }, { tipo: "avisa_vilao" }],
       },
       monte: {
         texto: "levar {fera} para o alto do monte, e soltar a besta lá em cima",
-        ganha: "Nem sangue nem corrente: volta para o sítio de onde a tiraram, sem dono, e não desce mais ao toque do sino.",
-        custa: "{pastora} queria a cabeça, e vai contar a toda a gente que a deixaste ir. E quem soltava a besta fica com a coleira vazia na mão, à espera de outra que lhe caiba.",
+        ganha: "Nem sangue nem corrente: volta para o lugar de onde a tiraram, sem dono, e não desce mais ao toque do sino.",
+        custa: "{pastora} queria a cabeça, e vai contar para todo mundo que você a deixou ir. E quem soltava a besta fica com a coleira vazia na mão, esperando outra que lhe sirva.",
         efeitos: [{ tipo: "afeicao", papel: "pastora", n: -1 }, { tipo: "dia", n: 1 }],
       },
     } },
@@ -1361,24 +1361,24 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
     fera: {
       lamina: [
         { id: "poupou", quando: ["poupou", "papel:fera"],
-          texto: "{fera} cai de lado na lama, a arfar, e não se volta a erguer. Ao pescoço, por baixo do pelo, há uma coleira de couro cosida com fio claro, gasta no sítio onde alguém a puxa." },
+          texto: "{fera} cai de lado na lama, arfando, e não se ergue mais. No pescoço, por baixo do pelo, há uma coleira de couro costurada com fio claro, gasta no ponto onde alguém a puxa." },
         { id: "matou", fecha: "concluida",
-          texto: "{fera} fica estendida à entrada de {toca}, e a aldeia sobe de lanterna na mão para a ver, em silêncio. Ninguém repara na coleira que lhe aperta o pescoço. Tu reparas — e a coleira arde com o resto.",
+          texto: "{fera} fica estendida à entrada de {toca}, e a aldeia sobe de lanterna na mão para a ver, em silêncio. Ninguém repara na coleira que aperta o pescoço dela. Você repara — e a coleira arde com o resto.",
           efeitos: [{ tipo: "afeicao", papel: "pastora", n: 1 }] },
       ],
       assobio: [
-        { texto: "{tratador} ensina-te o assobio de má vontade, com os olhos no chão. Ao terceiro, {fera} sai de {toca} de cabeça baixa e vem comer-te da mão, como um cão velho." },
+        { texto: "{tratador} ensina o assobio a você de má vontade, com os olhos no chão. No terceiro, {fera} sai de {toca} de cabeça baixa e vem comer da sua mão, como um cão velho." },
       ],
     },
     destino: {
       aldeia: [{ texto: "A aldeia faz o que as aldeias fazem. Ao amanhecer há uma fogueira grande em {curral}, e {pastora} fica até à última brasa." }],
-      coleira: [{ texto: "Atravessas a praça com {fera} pela corrente, e as janelas fecham-se à tua passagem. Ao pé do poço, alguém lê a marca da coleira em voz alta e cala-se a meio." }],
-      monte: [{ texto: "Sobes até o ar ficar frio. Tiras a coleira, e a besta fica a olhar para ti um tempo que não sabes medir. Depois vai-se, e não olha para trás." }],
+      coleira: [{ texto: "Você atravessa a praça com {fera} pela corrente, e as janelas se fecham quando você passa. Ao pé do poço, alguém lê a marca da coleira em voz alta e se cala no meio." }],
+      monte: [{ texto: "Você sobe até o ar ficar frio. Tira a coleira, e a besta fica olhando para você por um tempo que você não sabe medir. Depois vai embora, e não olha para trás." }],
     },
   },
   reviravoltas: [
     { id: "as_portas_que_nao_pagaram",
-      texto: "Quem te mostra as portas arranhadas à volta de {curral} mostra-te também, sem querer, as que ficaram inteiras: têm todas um prego novo por cima da ombreira, e um recibo pendurado no prego. {fera} não escolhe ao acaso. Alguém lhe aponta as portas — e alguém lhe dá de comer.",
+      texto: "Quem mostra a você as portas arranhadas em volta de {curral} mostra também, sem querer, as que ficaram inteiras: têm todas um prego novo por cima da ombreira, e um recibo pendurado no prego. {fera} não escolhe ao acaso. Alguém lhe aponta as portas — e alguém lhe dá de comer.",
       gatilho: ["todos", ["etapa", "ver"], ["nenhum", ["etapa", "fera"]], ["descobriu", "lugar:curral"]],
       efeitos: [{ tipo: "quem_e", papel: "tratador", linha: "dá de comer ao bicho que desce ao anoitecer, e sabe para onde o mandam" }, { tipo: "relogio_do_fio", n: 1 }] },
     { id: "as_crias",
@@ -1394,7 +1394,7 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
     texto: "Ninguém subiu o monte. Ao fim de uma semana, a aldeia inteira tem um prego novo por cima da porta e um recibo pendurado no prego, e {fera} já não precisa de descer.",
     efeitos: [{ tipo: "relogio_do_fio", n: 1 }] },
   fecho: {
-    texto: "As noites à volta de {curral} voltam a ser só noites. O sino toca, e a aldeia janta de porta aberta pela primeira vez desde a última lua.",
+    texto: "As noites em volta de {curral} voltam a ser só noites. O sino toca, e a aldeia janta de porta aberta pela primeira vez desde a última lua.",
     efeitos: [{ tipo: "favor", papel: "curral" }],
   },
 });
@@ -1512,7 +1512,7 @@ const OS_BRACOS_QUE_FALTAM = quest({
   },
   mao: { tipo: "recurso", contra: [2], papel: "feitor" },
   temperatura: "brasa",
-  gancho: "{pedinte} não te pede dinheiro: pede que vás ver {pedreira}. Há três luas que {devedor} lá entrou por uma dívida de sessenta moedas, e trabalha de corrente ao tornozelo da alva à noite. A dívida, em vez de minguar, cresce — come-se a pão e a palha, e paga-se a braço. Quem compra estas dívidas paga o dobro por cada par de braços, e não diz para que obra os quer.",
+  gancho: "{pedinte} não pede dinheiro a você: pede que você vá ver {pedreira}. Há três luas que {devedor} lá entrou por uma dívida de sessenta moedas, e trabalha de corrente ao tornozelo da alva à noite. A dívida, em vez de minguar, cresce — se come a pão e a palha, e se paga a braço. Quem compra estas dívidas paga o dobro por cada par de braços, e não diz para que obra os quer.",
   etapas: [
     { id: "pedido", texto: "Ouvir {pedinte}", conclui: ["conversou", "papel:pedinte"] },
     { id: "dentro", texto: "Entrar em {pedreira} e falar com {devedor}",
@@ -1713,7 +1713,7 @@ const O_VELORIO_PAGO = quest({
   mao: { tipo: "rosto", contra: [5], papel: "vilao" },
   temperatura: "fogueira",
   estabelece: [["camada", "rosto"]],
-  gancho: "Morreu em {capela} quem não devia, do lado errado de um negócio que não era seu. O enterro, a cera, o vinho do velório e o caixão de castanho estão pagos adiantado, por quem não pôs lá os pés. Esta noite vai pôr. {enlutada} manda dizer-te que vás, e que não leves lâmina: ao pé de um morto ninguém puxa de uma.",
+  gancho: "Morreu em {capela} quem não devia, do lado errado de um negócio que não era seu. O enterro, a cera, o vinho do velório e o caixão de castanho estão pagos adiantado, por quem não pôs lá os pés. Esta noite vai pôr. {enlutada} manda dizer que você vá, e que não leve lâmina: ao pé de um morto ninguém puxa uma.",
   etapas: [
     { id: "velorio", texto: "Ir velar o morto em {capela}",
       conclui: ["todos", ["esteve", "lugar:capela"], ["conversou", "papel:enlutada"]] },
@@ -1965,7 +1965,7 @@ const O_SANGUE_DO_OUTRO_LADO = quest({
   mao: null,
   ponte: "{irmao} serve, numa cidade por onde um passo do vilão vai passar, a mão que manda nele",
   temperatura: "fogueira",
-  gancho: "Há dez anos, alguém abriu de noite a porta de casa a quem vinha buscar a família, e só {quem} saiu de lá com vida. Ontem, numa praça, {quem} viu ao longe uma cara que já não via desde essa noite: {irmao}, com ao pulso a mesma fita que traziam os que entraram em casa naquela noite. {quem} não disse nada. Mas afiou a lâmina até de madrugada, e de manhã perguntou-te, como quem não quer a coisa, se sabias o caminho para {casa}.",
+  gancho: "Há dez anos, alguém abriu de noite a porta de casa a quem vinha buscar a família, e só {quem} saiu de lá com vida. Ontem, numa praça, {quem} viu ao longe uma cara que já não via desde essa noite: {irmao}, com ao pulso a mesma fita que traziam os que entraram em casa naquela noite. {quem} não disse nada. Mas afiou a lâmina até de madrugada, e de manhã perguntou a você, como quem não quer nada, se você sabia o caminho para {casa}.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} por quem viu na praça",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -2094,7 +2094,7 @@ const AS_CARTAS_DE_OUTRA_CASA = quest({
   ponte: "a casa de {amado} fica numa cidade por onde um passo do vilão vai passar, e a dívida que paga a mão prometida foi emprestada por quem paga a quem manda nele",
   temperatura: "chama",
   pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
-  gancho: "{quem} recebe cartas que não lê à tua frente, e guarda-as dentro da camisa, do lado do coração. São de {amado}, que mora em {casa} e tem a mão prometida a {prometido} desde o inverno — um casamento que paga uma dívida que não é de ninguém que se ame. {quem} diz que não é nada. Mas já perguntou duas vezes quantos dias faltam para a lua cheia, que é quando se casa quem se tem de casar.",
+  gancho: "{quem} recebe cartas que não lê na sua frente, e as guarda dentro da camisa, do lado do coração. São de {amado}, que mora em {casa} e tem a mão prometida a {prometido} desde o inverno — um casamento que paga uma dívida que não é de ninguém que se ame. {quem} diz que não é nada. Mas já perguntou duas vezes quantos dias faltam para a lua cheia, que é quando se casa quem se tem de casar.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} de quem são as cartas",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],

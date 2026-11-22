@@ -64,7 +64,7 @@ const OS_DADOS_DELE = quest({
   mao: { tipo: "rosto", contra: [4, 5], papel: "vilao", tambem: ["pista"] },
   temperatura: "fogueira",
   estabelece: [["camada", "rosto"]],
-  gancho: "Há três noites que alguém ganha tudo em {taberna}. Não joga por moedas: joga por escrituras, por dívidas, por anos de serviço, e nunca se levanta antes de a outra cadeira ficar vazia. {perdedor} levantou-se da última sem casa e sem mais nada, e não diz o que pôs na mesa no fim. Esta manhã, o taberneiro achou um recado na cadeira vazia, dobrado em quatro e endereçado só «ao forasteiro»: «Joga-se esta noite. Traz o que quiseres perder.»",
+  gancho: "Há três noites que alguém ganha tudo em {taberna}. Não joga por moedas: joga por escrituras, por dívidas, por anos de serviço, e nunca se levanta antes de a outra cadeira ficar vazia. {perdedor} se levantou da última sem casa e sem mais nada, e não diz o que pôs na mesa no fim. Esta manhã, o taverneiro achou um recado na cadeira vazia, dobrado em quatro e endereçado só «ao forasteiro»: «Esta noite se joga. Traga o que quiser perder.»",
   etapas: [
     { id: "perdedor", texto: "Ouvir {perdedor}", conclui: ["conversou", "papel:perdedor"] },
     { id: "mesa", texto: "Sentar-te à mesa de {vilao}, em {taberna}",
@@ -555,7 +555,7 @@ const O_TEU_NOME_NA_PAREDE = quest({
   mao: { tipo: "consequencia", contra: [3, 4], papel: "servo", tambem: ["pista"] },
   temperatura: "fogueira",
   pressupoe: [["camada", "mao"]],
-  gancho: "Há um papel pregado em cada porta da cidade: a tua cara, mal desenhada mas tua, e por baixo o que fizeste em {queimada} há três noites — o fogo, as portas trancadas por fora, os nomes dos que lá ficaram. Não estiveste lá. Mas {sobrevivente} jura que te viu à luz do fogo, de lâmina na mão e com as tuas cores, e a cidade inteira acredita. {meirinho} já mandou buscar corda.",
+  gancho: "Há um papel pregado em cada porta da cidade: a sua cara, mal desenhada mas sua, e embaixo o que você fez em {queimada} há três noites — o fogo, as portas trancadas por fora, os nomes dos que ficaram lá. Você não esteve lá. Mas {sobrevivente} jura que viu você à luz do fogo, de lâmina na mão e com as suas cores, e a cidade inteira acredita. {meirinho} já mandou buscar corda.",
   etapas: [
     { id: "parede", texto: "Ouvir {sobrevivente} sem que te reconheça a cara", conclui: ["conversou", "papel:sobrevivente"] },
     { id: "cinza", texto: "Ver com os teus olhos o que ficou de {queimada}",
@@ -649,7 +649,7 @@ const O_POSTO_DO_CAPITAO_MORTO = quest({
   mao: { tipo: "tenente", contra: [3], papel: "servo", tambem: ["consequencia"] },
   temperatura: "chama",
   estabelece: [["camada", "mao"]],
-  gancho: "O capitão da guarda caiu da muralha numa noite sem vento, há três dias, depois de trinta anos a subi-la de olhos fechados. A vila não tem mais ninguém, e o conselho pôs-te na mão as chaves de {quartel} «até se arranjar outro». A guarda faz-te a continência e olha por cima do teu ombro, para {servo}. Na taberna diz-se que há uma noite marcada para uma das portas se abrir sozinha.",
+  gancho: "O capitão da guarda caiu da muralha numa noite sem vento, há três dias, depois de trinta anos subindo-a de olhos fechados. A vila não tem mais ninguém, e o conselho pôs na sua mão as chaves de {quartel} «até se arranjar outro». A guarda bate continência para você e olha por cima do seu ombro, para {servo}. Na taverna se diz que há uma noite marcada para uma das portas se abrir sozinha.",
   etapas: [
     { id: "chaves", texto: "Receber as chaves de {quartel} das mãos de {viuva}",
       conclui: ["todos", ["esteve", "lugar:quartel"], ["conversou", "papel:viuva"]] },
@@ -1157,7 +1157,7 @@ const O_QUE_O_TIO_DEIXOU = quest({
   ponte: "a dívida que tirou {herdade} à família de {caseira} foi escrita por quem escreve hoje para a mão que manda nele, numa cidade por onde um passo dele vai passar",
   temperatura: "chama",
   pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
-  gancho: "Um correio alcançou-vos na estrada, com um selo de notário, e {quem} leu-o duas vezes e riu-se — riu-se como nunca o tinhas visto rir. Morreu-lhe um tio, e deixou-lhe tudo: {herdade}, as terras à volta, e o nome da casa. {quem}, que nunca teve onde cair morto, passou a noite a fazer contas no chão com um pau. De manhã já não se ria. Tinha lido a segunda folha.",
+  gancho: "Um correio alcançou vocês na estrada, com um selo de notário, e {quem} o leu duas vezes e riu — riu como você nunca tinha visto rir. Morreu um tio de {quem}, e deixou tudo: {herdade}, as terras em volta, e o nome da casa. {quem}, que nunca teve onde cair morto, passou a noite fazendo contas no chão com um pau. De manhã já não ria. Tinha lido a segunda folha.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} o que diz a segunda folha",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -1287,7 +1287,7 @@ const O_JURAMENTO_A_CABECEIRA = quest({
   ponte: "quem comprava o que o pai de {quem} vendia ainda compra, e hoje para a mão que manda nele, numa cidade por onde um passo dele vai passar",
   temperatura: "fogueira",
   pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
-  gancho: "{quem} tem uma frase que diz antes de dormir, baixinho, todas as noites, como outros rezam. Julgavas que era uma oração. Ontem ouviste-a inteira, porque o vento estava do teu lado: é um nome, e uma promessa, e a promessa é de sangue. Esta manhã, numa encruzilhada, {quem} parou a olhar para a placa de uma cidade e disse, sem se virar: «Está lá.»",
+  gancho: "{quem} tem uma frase que diz antes de dormir, baixinho, todas as noites, como outros rezam. Você achava que era uma oração. Ontem você a ouviu inteira, porque o vento estava do seu lado: é um nome, e uma promessa, e a promessa é de sangue. Esta manhã, numa encruzilhada, {quem} parou olhando para a placa de uma cidade e disse, sem se virar: «Está lá.»",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} de quem é o nome da frase",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -1418,7 +1418,7 @@ const O_MORTO_QUE_VOLTOU_A_CASA = quest({
   ponte: "quem deu {quem} por morto, e vendeu às galés o que sobrou, serve hoje a mão que manda nele, numa cidade por onde um passo dele vai passar",
   temperatura: "fogueira",
   pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
-  gancho: "{quem} não tem família. Disse-to no primeiro dia, e nunca mais falou disso. Ontem, num cemitério à beira da estrada de {aldeia}, onde pararam para tirar água do poço, {quem} ficou muito tempo de pé diante de uma pedra pequena, com um nome gravado e uma data de há sete anos. Era o nome de {quem}. Não disse nada. Tirou a água, bebeu, e só à noite, ao pé do fogo, perguntou se achavas que os mortos têm direito a voltar.",
+  gancho: "{quem} não tem família. Disse isso a você no primeiro dia, e nunca mais falou disso. Ontem, num cemitério à beira da estrada de {aldeia}, onde pararam para tirar água do poço, {quem} ficou muito tempo de pé diante de uma pedra pequena, com um nome gravado e uma data de há sete anos. Era o nome de {quem}. Não disse nada. Tirou a água, bebeu, e só à noite, ao pé do fogo, perguntou se você achava que os mortos têm direito a voltar.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} de quem é a pedra",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],

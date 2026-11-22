@@ -582,7 +582,7 @@ const AS_MAOS_QUE_CURAM = quest({
   mao: { tipo: "tenente", contra: [2, 3], papel: "servo", tambem: ["consequencia"] },
   temperatura: "chama",
   estabelece: [["camada", "mao"]],
-  gancho: "{curadora} cura a vila de graça há vinte anos, e há duas semanas começou a marcar portas com giz: febre, diz, não entrem. As casas marcadas ardem uma a uma, de noite, por mão de quem tem medo do contágio. {curadora} não dorme, não come, e quando te vê na rua agarra-te o braço e diz só: há quem tenha as minhas cartas.",
+  gancho: "{curadora} cura a vila de graça há vinte anos, e há duas semanas começou a marcar portas com giz: febre, diz, não entrem. As casas marcadas ardem uma a uma, de noite, por mão de quem tem medo do contágio. {curadora} não dorme, não come, e quando vê você na rua agarra o seu braço e diz só: há quem tenha as minhas cartas.",
   etapas: [
     { id: "curadora", texto: "Ouvir {curadora} longe de ouvidos", conclui: ["conversou", "papel:curadora"] },
     { id: "cartas", texto: "Saber o que dizem as cartas",
@@ -684,7 +684,7 @@ const DO_OUTRO_LADO_DO_VAU = quest({
   mao: { tipo: "rosto", contra: [5], papel: "vilao" },
   temperatura: "fogueira",
   estabelece: [["camada", "rosto"]],
-  gancho: "O rio subiu de noite e levou a ponte. De manhã, do outro lado, na margem que dá para {aldeia}, havia fogueiras — e entre as fogueiras, à vista de quem quisesse ver, {vilao}. Não atravessa. Não precisa. A gente de {aldeia} está toda do lado de lá, com a água pelo meio, e o que lá se fizer faz-se à frente dos teus olhos. {barqueira} diz que há um sítio onde o vau ainda dá pé. Um só.",
+  gancho: "O rio subiu de noite e levou a ponte. De manhã, do outro lado, na margem que dá para {aldeia}, havia fogueiras — e entre as fogueiras, à vista de quem quisesse ver, {vilao}. Não atravessa. Não precisa. A gente de {aldeia} está toda do lado de lá, com a água pelo meio, e o que se fizer lá se faz diante dos seus olhos. {barqueira} diz que há um lugar onde o vau ainda dá pé. Um só.",
   etapas: [
     { id: "rio", texto: "Chegar à margem, e ver", conclui: ["todos", ["esteve", "lugar:margem"], ["conheceu", "papel:vilao"]] },
     { id: "vau", texto: "Saber de {barqueira} onde o rio ainda dá pé", conclui: ["consultou", "papel:barqueira"] },
@@ -767,7 +767,7 @@ const A_PALAVRA_DADA_A_UM_ENFORCADO = quest({
   ponte: "o capitão que mandou atar a corda serve hoje, numa cidade por onde um passo do vilão vai passar, a mão que manda nele",
   temperatura: "fogueira",
   pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
-  gancho: "Há uma estrada que {quem} não faz: a que vai dar a {casa}. Dá a volta de um dia para não passar lá, e não diz porquê. Ontem, numa taberna, alguém disse em voz alta o nome de um soldado morto há seis anos, e {quem} entornou o copo. Esta noite, ao pé do fogo, {quem} tirou da mochila uma fita de luto que nunca tinhas visto, e ficou muito tempo a enrolá-la nos dedos.",
+  gancho: "Há uma estrada que {quem} não faz: a que vai dar a {casa}. Dá a volta de um dia para não passar lá, e não diz porquê. Ontem, numa taverna, alguém disse em voz alta o nome de um soldado morto há seis anos, e {quem} derrubou o copo. Esta noite, ao pé do fogo, {quem} tirou da mochila uma fita de luto que você nunca tinha visto, e ficou muito tempo enrolando-a nos dedos.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} de quem é a fita de luto",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -891,7 +891,7 @@ const A_VIDA_QUE_SE_DEVE = quest({
   mao: null,
   ponte: "{filho} pegou fogo a uma casa por ordem da mão que tudo estraga, numa cidade por onde um passo dele vai passar",
   temperatura: "brasa",
-  gancho: "Chegou uma carta para {quem}, sem selo, numa letra de quem escreve pouco. {quem} leu-a de pé, duas vezes, e depois sentou-se no chão. Só diz que alguém lhe salvou a vida há muitos anos, e que agora precisa de um favor. Não diz qual. Mas desde ontem que não larga a carta, e que olha para ti como quem vai pedir uma coisa e ainda não sabe se tem o direito.",
+  gancho: "Chegou uma carta para {quem}, sem selo, numa letra de quem escreve pouco. {quem} a leu de pé, duas vezes, e depois se sentou no chão. Só diz que alguém lhe salvou a vida há muitos anos, e que agora precisa de um favor. Não diz qual. Mas desde ontem não larga a carta, e olha para você como quem vai pedir uma coisa e ainda não sabe se tem o direito.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} o que diz a carta",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -1015,7 +1015,7 @@ const A_FARDA_DEBAIXO_DO_COLCHAO = quest({
   mao: null,
   ponte: "{filho} vai vestir a farda de quem serve a mão que tudo estraga, numa cidade por onde um passo dele vai passar",
   temperatura: "chama",
-  gancho: "Em {moinho}, {quem} parou de repente a meio da rua, a olhar para {filho}, que carregava sacos com o ombro torto de quem carrega desde criança. Não disse nada. Voltou lá no dia seguinte, e no outro, e de cada vez ficou do outro lado da rua, a ver. Ontem à noite perguntou-te, de olhos no fogo, se achavas que uma pessoa se reconhece pela maneira de rir.",
+  gancho: "Em {moinho}, {quem} parou de repente no meio da rua, olhando para {filho}, que carregava sacos com o ombro torto de quem carrega desde criança. Não disse nada. Voltou lá no dia seguinte, e no outro, e de cada vez ficou do outro lado da rua, olhando. Ontem à noite perguntou a você, de olhos no fogo, se você achava que uma pessoa se reconhece pelo jeito de rir.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} porque volta sempre a {moinho}",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],

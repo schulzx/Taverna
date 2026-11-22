@@ -2454,13 +2454,13 @@ sec("§14 a temperatura, os pressupostos e as premissas (Fase TE · TE1–TE3)")
   const pedreira = questPorId("o_fundo_da_pedreira");
   t("TE3 · O Fundo da Pedreira: a noite já não se prende ao relógio dele (que é dinâmico)", !/se cumpriu/.test(pedreira.gancho) && /as carroças de fora partiram cheias/.test(pedreira.gancho));
   const chaves = questPorId("as_chaves_da_guarda");
-  t("TE3 · As Chaves da Guarda: as chaves vêm parar-lhe à mão porque mais ninguém as quis", /ninguém da terra as quis, e tu eras quem estava na sala/.test(chaves.gancho) && chaves.temperatura === "brasa");
+  t("TE3 · As Chaves da Guarda: as chaves vêm parar-lhe à mão porque mais ninguém as quis", /ninguém da terra as quis, e era você quem estava na sala/.test(chaves.gancho) /* MOVIDA em 22/11 (a décima sessão do Mestre vivo): o gancho entra no pedido da abertura, e em PT-PT puxava o Narrador para o «tu»; a frase passou a PT-BR, a intenção (as chaves vêm porque mais ninguém as quis) é a mesma */ && chaves.temperatura === "brasa");
   /* o grupo B: o gancho que finge um passado partilhado fica, e passa a ser verdade */
   const B = {
-    o_morto_que_voltou_a_casa: "no primeiro dia", o_juramento_a_cabeceira: "todas as noites", a_lamina_enterrada: "nem quando gritaste",
-    a_cabeca_que_nao_se_baixa: "Em todas as tabernas por onde passam", as_cartas_de_outra_casa: "não lê à tua frente",
-    a_palavra_dada_a_um_enforcado: "Dá a volta", a_ultima_licao: "sempre disse", o_que_o_tio_deixou: "como nunca o tinhas visto rir",
-  };
+    o_morto_que_voltou_a_casa: "no primeiro dia", o_juramento_a_cabeceira: "todas as noites", a_lamina_enterrada: "nem quando você gritou",
+    a_cabeca_que_nao_se_baixa: "Em todas as tabernas por onde passam", as_cartas_de_outra_casa: "não lê na sua frente",
+    a_palavra_dada_a_um_enforcado: "Dá a volta", a_ultima_licao: "sempre disse", o_que_o_tio_deixou: "como você nunca tinha visto rir",
+  }; /* MOVIDAS em 22/11 (a décima sessão do Mestre vivo): três destes ganchos falavam com «tu» e passaram a PT-BR; a frase que prova o passado partilhado é a mesma, dita com «você» */
   const PB = [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]];
   for (const [id, frase] of Object.entries(B)) {
     const q = questPorId(id);

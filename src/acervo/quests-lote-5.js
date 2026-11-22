@@ -230,7 +230,7 @@ const AS_CHAVES_DA_GUARDA = quest({
   mao: { tipo: "tenente", contra: [1, 2], papel: "servo" },
   temperatura: "brasa",
   estabelece: [["camada", "mao"]],
-  gancho: "{capitao}, capitão da guarda de {quartel} há vinte anos, pôs-te as chaves na mão à frente do conselho — ninguém da terra as quis, e tu eras quem estava na sala — e disse que a guarda era tua até haver outro. Esta noite tem a carroça carregada à porta. Doze de guarda, e metade olha-te de lado. A ronda já não passa pela rua do mercado, e ninguém sabe dizer quem mandou que não passasse.",
+  gancho: "{capitao}, capitão da guarda de {quartel} há vinte anos, pôs as chaves na sua mão diante do conselho — ninguém da terra as quis, e era você quem estava na sala — e disse que a guarda era sua até haver outro. Esta noite tem a carroça carregada à porta. Doze de guarda, e metade olha você de lado. A ronda já não passa pela rua do mercado, e ninguém sabe dizer quem mandou que não passasse.",
   etapas: [
     { id: "chaves", texto: "Ouvir {capitao} antes que parta", conclui: ["conversou", "papel:capitao"] },
     { id: "ronda", texto: "Saber quem da guarda come da mão de {servo}",
@@ -323,7 +323,7 @@ const A_TORRE_DO_SINO = quest({
   mao: { tipo: "tenente", contra: [2, 3], papel: "servo", tambem: ["consequencia"] },
   temperatura: "chama",
   estabelece: [["camada", "mao"]],
-  gancho: "O sino de {torre} avisava o vale inteiro de fogo, de cheia e de gente armada na estrada. Há três dias que não toca: {servo} e os seus tomaram a torre de madrugada, trancaram a porta por dentro e cortaram a corda. {sineira} foi {sineira:atirado|atirada} pela escada abaixo e ainda coxeia. Ontem passaram carroças pelo vale de noite, e ninguém soube. {voluntario} juntou meia dúzia de vizinhos de forquilha e diz que vai lá esta noite, contigo ou sem ti.",
+  gancho: "O sino de {torre} avisava o vale inteiro de fogo, de cheia e de gente armada na estrada. Há três dias que não toca: {servo} e os seus tomaram a torre de madrugada, trancaram a porta por dentro e cortaram a corda. {sineira} foi {sineira:atirado|atirada} pela escada abaixo e ainda coxeia. Ontem passaram carroças pelo vale de noite, e ninguém soube. {voluntario} juntou meia dúzia de vizinhos de forquilha e diz que vai lá esta noite, com você ou sem você.",
   etapas: [
     { id: "sineira", texto: "Ouvir {sineira}", conclui: ["conversou", "papel:sineira"] },
     { id: "cerco", texto: "Ver a torre de perto, com {voluntario}",
@@ -680,7 +680,7 @@ const AS_DUAS_FOGUEIRAS = quest({
   },
   mao: { tipo: "pista", contra: [3, 4], papel: "servo" },
   temperatura: "fogueira",
-  gancho: "{informante} chegou a correr, sem fôlego: ouviu numa taberna, atrás de uma parede fina, {servo} combinar duas fogueiras para esta noite, à mesma hora — uma em {celeiro}, onde está o trigo do inverno da cidade inteira, e outra em {hospicio}, onde dormem trinta que não têm mais onde dormir. A cidade leva meia hora de uma ponta à outra. Não há guarda para as duas. Há tu.",
+  gancho: "{informante} chegou correndo, sem fôlego: ouviu numa taverna, atrás de uma parede fina, {servo} combinar duas fogueiras para esta noite, à mesma hora — uma em {celeiro}, onde está o trigo do inverno da cidade inteira, e outra em {hospicio}, onde dormem trinta que não têm mais onde dormir. A cidade leva meia hora de uma ponta à outra. Não há guarda para as duas. Há você.",
   etapas: [
     { id: "aviso", texto: "Ouvir {informante}", conclui: ["conversou", "papel:informante"] },
     { id: "provas", texto: "Saber o que se puder antes do anoitecer",
