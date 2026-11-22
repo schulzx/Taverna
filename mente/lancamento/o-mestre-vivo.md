@@ -1760,3 +1760,30 @@ mentira que vaza para quem não a ouviu (causa provável: o histórico da conver
 não é vizinha imediata do corte.
 
 **Não verificado até a oitava sessão:** tudo isso contra um Narrador real.
+
+## 28. Toda troca é decidida pelo sistema antes da narração (21/11/2026)
+
+A oitava sessão (56 de 62 no dado) ainda teve 16 turnos de prosa contra a ficha, depois de três
+rodadas podando a prosa. A pessoa cobrou o princípio que já era da casa: «tudo pelo sistema, o
+narrador apenas recebe fatos e narra, nada entra por ele». O erro de método foi meu: o conserto de uma
+prosa que diz o que a ficha não tem nunca começa pela poda; começa por o sistema decidir e aplicar
+antes.
+
+**O veredito da troca (`src/o-veredito-da-troca.js`, `741f9ba` a `ca4e0c5`).** Toda intenção de
+troca sai do sistema `aplicada` ou `negada` antes de o Narrador ser chamado, e chega a ele como fato
+na pauta do turno: a compra dita pela mão que paga, a venda de recurso de uso e de item vestido, o
+dar item, o pedido ao companheiro (ele dá o que tem; não guarda moeda à parte), o item de graça do
+figurante (Persuasão; uma coisa pequena e real entra), o fiado (negado), o pegar da cena (só o que o
+sistema pôs lá), o butim do furto que passou no dado (tabela por vítima e semente) e o suborno com
+quantia (dado; a moeda sai só no sim).
+
+**Para todos, fora da chave:** a compra pela mão que paga, a direção da água, o suborno, o fiado, as
+vendas e a pergunta de caminho. **Só atrás da chave:** o butim, o pegar, o companheiro, o item de
+graça, o dar item e o conferente.
+
+**O conferente virou rede:** confere a prosa contra o veredito do turno; troca aplicada não é cortada.
+
+**Falta desenhar (Figma, em Fable):** a linha da negativa de pegar e a da amostra de graça usam a
+linha de sistema que já existe.
+
+**Não verificado até a nona sessão:** tudo isso contra um Narrador real.
