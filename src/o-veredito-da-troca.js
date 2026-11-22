@@ -72,6 +72,10 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   /* onde a coisa comprada acaba: antes destas palavras */
   fimDaCoisa: Object.freeze(["ao", "aos", "a", "as", "para", "pra", "e", "que", "com", "se", "porque", "enquanto", "mas"]),
   palavrasDaCoisa: 4,
+  /* CASAR O NOME (oItemDaFrase): a ligação, o adjetivo que abre o nome, e o que fecha a coisa dita */
+  ligaDoNome: Object.freeze(["o", "a", "os", "as", "de", "do", "da", "dos", "das", "e", "meu", "minha", "seu", "sua", "um", "uma"]),
+  abreONome: Object.freeze(["rustico", "rustica", "velho", "velha", "pequeno", "pequena", "grande", "simples", "fino", "fina", "bom", "boa", "antigo", "antiga", "novo", "nova", "gasto", "gasta", "surrado", "surrada"]),
+  fimDoNome: Object.freeze(["a", "ao", "aos", "as", "para", "pra", "pro", "e", "que", "com", "por", "pelo", "pela", "no", "na", "em", "sem", "se", "mas", "enquanto", "dele", "dela", "ali", "aqui", "agora", "de", "do", "da"]),
   /* «compro duas rações e pago dez moedas»: a moeda é da compra */
   compraDeclarada: /\b(compro|compramos|comprei)\b/,
   /* o que se paga e não se leva na mão: saber (o gesto da carta) */
@@ -96,9 +100,9 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   /* DAR UMA COISA DA BOLSA a quem está (a moeda é do pagamento; o mantimento, da dádiva) */
   dar: /\b(dou|damos|entrego|entregamos|ofereco|oferecemos|presenteio|passo|deixo com)\s+(?!um passo|uma olhada|uma volta)/,
   /* O COMPANHEIRO: o pedido que o põe a pagar, comprar, emprestar ou entregar */
-  pedeAoCompanheiro: /\b(?:peco|pedimos|pergunto se|digo)\b|^\s*[a-z]+\s*,|\b(?:me empresta|me da|me de|me passa|me passe|me entrega|me entregue|me arruma)\b/,
+  pedeAoCompanheiro: /\b(?:peco|pedimos|pergunto se|digo)\b|^\s*[a-z]+\s*,|\b(?:me empresta|me da|me de|me passa|me passe|me entrega|me entregue|me arruma|me devolve|me devolva)\b/,
   companheiroPaga: /\b(pague|pagar|paga|compre|comprar|compra|empreste|emprestar|empresta|bancar|banque)\b/,
-  companheiroDa: /\b(?:me\s+(?:de|da|dar|passe|passa|passar|entregue|entrega|entregar|empreste|empresta|emprestar|arrume|arruma)|(?:dar|passar|entregar|emprestar|arrumar)-me|empreste|empresta|emprestar)\s+(?:(?:uma das|um dos|umas das|uns dos|o|a|os|as|um|uma|uns|umas|seu|sua|seus|suas)\s+)?([a-z][a-z-]*(?:\s+(?:de\s+)?[a-z][a-z-]*){0,3})/,
+  companheiroDa: /\b(?:me\s+(?:de|da|dar|passe|passa|passar|entregue|entrega|entregar|empreste|empresta|emprestar|arrume|arruma|devolve|devolva|devolver)|(?:dar|passar|entregar|emprestar|arrumar)-me|empreste|empresta|emprestar)\s+(?:(?:uma das|um dos|umas das|uns dos|o|a|os|as|um|uma|uns|umas|seu|sua|seus|suas)\s+)?([a-z][a-z-]*(?:\s+(?:de\s+)?[a-z][a-z-]*){0,3})/,
   /* o que não é coisa que se passe de mão («me dê uma mão», «me dê um minuto») */
   naoECoisaDoCompanheiro: Object.freeze(["mao", "maos", "jeito", "passo", "olhada", "forca", "ideia", "conselho", "opiniao", "cobertura", "volta", "sinal", "ouvido", "atencao", "licenca", "tempo", "chance", "minuto", "segundo", "momento", "cutucao", "razao", "noticia", "resposta", "palavra", "apoio", "ajuda", "carona"]),
   moedaDoCompanheiro: /\b(moedas?|dinheiro|prata|ouro|cobres?|conta|caneca|bebida|hidromel|cerveja|vinho|pao|comida|refeicao|quarto)\b/,
@@ -145,12 +149,18 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   vender: /\b(vendo|vendemos|vender|vendi)\b/,
   /* O QUE A TELA DIZ (a voz da mesa: «você», nunca o nome do mecanismo) */
   tela: Object.freeze({
-    pegarDono: "✋ Isso é de {Dono}: levar sem pedir é furto.",
+    pegarDono: "✋ Isso é {doDono}: levar sem pedir é furto.",
     pegarInventado: Object.freeze(["✋ Nada disso vai para a sua mochila: não é coisa que valha levar.", "✋ Você deixa isso onde está: não é coisa que se leve."]),
     companheiroDa: "🤝 {Nome} passa a você: {Coisa}.",
     companheiroSemMoeda: "🤝 {Nome} não guarda moeda à parte: a bolsa do grupo é a que você carrega.",
     companheiroUso: "🤝 As {coisa} do grupo estão na sua mochila: {Nome} não carrega outras.",
     companheiroNaoTem: "🤝 {Nome} não tem isso consigo.",
+    companheiroEmUso: "🤝 {Nome} usa {Coisa} e não a tira de si para dar.",
+    qual: "❓ Qual deles: {Lista}? Diga o nome inteiro.",
+    tomar: "✊ Você arranca {Coisa} da mão {doAlvo}.",
+    tomarFalhou: "✊ {Alvo} segura firme: a mão volta vazia.",
+    tomarNaoHa: "✊ Não há {coisa} na mão {doAlvo} que se tome.",
+    deGracaNaoTem: "🎁 {Alvo} não tem {coisa} para dar.",
     dar: "🤝 {Coisa} agora é de {Quem}.",
     fiado: "⛔ Fiado não: aqui se paga na hora.",
     furto: "🤲 Da bolsa {doAlvo}: {Ganho} (bolsa: ◉ {B}).",
@@ -163,7 +173,7 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   }),
   /* O QUE O NARRADOR RECEBE (bastidor, na pauta do turno: o fato e o veto) */
   fato: Object.freeze({
-    pegarDono: "Eu quis guardar «{coisa}», mas é de {Dono}: não guardei, e nada entrou na minha mochila.",
+    pegarDono: "Eu quis guardar «{coisa}», mas é {doDono}: não guardei, e nada entrou na minha mochila.",
     pegarInventado: "Eu quis guardar «{coisa}», e não guardei: não há aqui tal coisa que se leve. Nada entrou na minha mochila.",
     companheiroDa: "{Nome} me passou {Coisa}; já está na minha mochila, e saiu da bolsa de {Nome}.",
     companheiroNega: "{Nome} não me passou nada: {motivo}. Nada mudou de mão.",
@@ -176,6 +186,11 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     deGraca: "{Alvo} me deu {Coisa}, de graça; já está na minha mochila.",
     deGracaAli: "{Alvo} me deixou provar ali mesmo; nada foi para a minha mochila.",
     deGracaNao: "{Alvo} não me deu nada de graça: nada mudou de mão.",
+    qual: "Eu disse uma coisa que pode ser mais de uma ({Lista}); nada mudou de mão até eu dizer qual.",
+    tomar: "Arranquei {Coisa} da mão {doAlvo}; já está comigo. Use exatamente isto.",
+    tomarFalhou: "Tentei tomar «{coisa}» da mão {doAlvo} e não consegui: {Alvo} segurou firme. Nada mudou de mão.",
+    tomarNaoHa: "Quis tomar «{coisa}» da mão {doAlvo}, mas não há tal coisa ali: nada mudou de mão.",
+    deGracaNaoTem: "Pedi {coisa} de graça, e {Alvo} não tem isso para me dar: nada mudou de mão.",
   }),
   veto: Object.freeze({
     pegar: "pôr «{coisa}» na minha mochila, no meu bolso ou na minha mão",
@@ -184,6 +199,8 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     fiado: "entregar-me algo fiado, a crédito ou para pagar depois",
     furto: "dar-me do furto outra coisa ou outra quantia além do que está dito",
     deGraca: "pôr nas minhas mãos outra coisa dada de graça além do que está dito",
+    qual: "entregar, vender ou tirar da bolsa {Lista} nesta resposta",
+    tomar: "pôr nas minhas mãos outra coisa tomada além do que está dito",
   }),
   /* A BUSCA QUE NÃO ACHOU (a oitava sessão, T18): «olho dentro dos barris» sem
      dado, e a prosa pôs «uma lâmina de podão encostada na borda» — que o
@@ -206,7 +223,19 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     semMoeda: "não guarda moeda à parte; a bolsa do grupo é a minha",
     uso: "o que o grupo leva de {Coisa} está na minha mochila",
     naoTem: "não tem isso consigo",
+    emUso: "usa {Coisa} e não a tira de si para dar",
   }),
+  /* TOMAR DA MÃO DE ALGUÉM (a nona sessão, T28): é força contra quem segura —
+     o dado é do catálogo («vencer o peso», desafios.js#forcar); passou, a coisa
+     dita vem, se for coisa que cabe numa mão (a tabela); falhou, nada */
+  tomar: /\b(?:tomo|arranco|arrebato|puxo|tiro|agarro)\s+(?:(?:o|a|os|as|um|uma)\s+)?([a-z][a-z-]*(?:\s+(?:de\s+)?[a-z][a-z-]*){0,3}?)\s+d[aeo]s?\s+maos?\s+d[aeo]s?\s+/,
+  tomaveis: Object.freeze(["faca", "punhal", "adaga", "faquinha", "chave", "chaves", "carta", "bilhete", "papel", "mapa", "bolsa", "bolsinha", "anel", "colar", "amuleto", "moeda", "cajado", "bastao", "porrete", "pedra", "frasco", "garrafa", "caneca", "copo", "livro", "pergaminho", "lenco", "corda", "tocha", "vela", "lanterna", "cachimbo", "dado", "dados", "pena", "espeto", "anzol", "remo", "martelo", "machadinha"]),
+  /* O DE GRAÇA QUE NOMEIA A COISA (a nona sessão, T22: pediu um odre, entrou uma
+     Maçã seca da tabela): a coisa dita é a que vem, ou não vem — a amostra da
+     tabela é só para o pedido vago («uma amostra do que ele tem») */
+  usoDeGraca: Object.freeze(["agua", "tochas"]),
+  aceitar: /\b(?:aceito|recebo|pego|apanho)\s+(?:(?:o|a|os|as|um|uma)\s+)?([a-z][a-z-]*(?:\s+(?:de\s+)?[a-z][a-z-]*){0,3}?)\s+que\s+[a-z-]+\s+me\s+(?:estendeu|deu|ofereceu|passou|entregou|estende|da|oferece|passa|entrega)\b/,
+  pedidoVago: /\b(amostra|algo|alguma coisa|qualquer coisa|o que (?:ele|ela) (?:tem|tiver)|um pouco)\b/,
 });
 const V = O_VEREDITO_DA_TROCA;
 
@@ -242,6 +271,49 @@ export function nomeiaOItem(frase, nome) {
     if (f.includes(` ${cauda.join(" ")} `)) return true;
   }
   return false;
+}
+
+/* ============================================================
+   oItemDaFrase(frase, nomes) → null | { nome, i } | { ambiguos: [nomes] }
+   CASAR O QUE O JOGADOR DISSE COM O QUE ELE TEM (a nona sessão, T10–T13):
+   «vendo o couro» não achava o «Couro Batido»; «dou o distintivo do
+   regimento» não achava o «Distintivo do antigo regimento», e a prosa
+   decidia sozinha. Uma função só, para vender, dar, entregar e pedir ao
+   companheiro: o nome inteiro (ou a cauda dele, nomeiaOItem) ganha; senão a
+   palavra principal do nome (a primeira com corpo, pulando o adjetivo que
+   abre «Rústico Martelo»), sem artigo e sem acento — e nunca contra uma
+   palavra que a desdiz («a espada longa» não é a «Espada Curta»). Dois
+   candidatos que casam igual: `ambiguos`, e quem chama nomeia os dois.
+   ============================================================ */
+const palavrasDoNome = (nome) => sem(str(nome).replace(/\s*\(.*\)\s*$/, "").replace(/\s*\+\d+\s*$/, "")).replace(/[^a-z0-9\s-]/g, " ").split(/\s+/).filter((w) => w && !V.ligaDoNome.includes(w));
+export function oItemDaFrase(frase, nomes) {
+  try {
+    const ws = ` ${sem(frase).replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ")} `.split(" ").filter(Boolean);
+    const lista = arr(nomes).map(nomeDe);
+    const pontos = lista.map((n, i) => {
+      if (!n) return { n, i, p: 0 };
+      if (nomeiaOItem(frase, n)) return { n, i, p: 100 + n.length };
+      const pal = palavrasDoNome(n);
+      const corpo = pal.filter((w) => w.length >= 3);
+      const cabeca = corpo.find((w) => !V.abreONome.includes(w));
+      if (!cabeca) return { n, i, p: 0 };
+      const k = ws.indexOf(cabeca);
+      if (k < 0) return { n, i, p: 0 };
+      /* a palavra que vem logo depois, pulando a ligação: se não é do nome e não abre outra coisa (a quem, e…), desdiz */
+      const n1 = ws[k + 1] || "";
+      if (n1 && !(V.fimDoNome.includes(n1) && !/^d[eoa]s?$/.test(n1))) {
+        let j = k + 1;
+        while (j < ws.length && /^(d[eoa]s?|o|a|os|as)$/.test(ws[j])) j++;
+        const dep = ws[j] || "";
+        if (dep && !pal.includes(dep) && !V.fimDoNome.includes(dep) && !/^\d+$/.test(dep)) return { n, i, p: 0 };
+      }
+      return { n, i, p: 50 + corpo.filter((w) => ws.includes(w)).length };
+    }).filter((x) => x.p > 0).sort((a, b) => b.p - a.p);
+    if (!pontos.length) return null;
+    const [a, b] = pontos;
+    if (b && b.p === a.p && sem(b.n) !== sem(a.n)) return Object.freeze({ ambiguos: Object.freeze([...new Set(pontos.filter((x) => x.p === a.p).map((x) => x.n))]) });
+    return Object.freeze({ nome: a.n, i: a.i });
+  } catch { return null; }
 }
 
 /* ============================================================
@@ -338,6 +410,25 @@ function oQueSePega(t) {
   return coisa;
 }
 
+/* a coisa que se pede de graça: sem o «de graça», sem quem recebe o pedido,
+   sem o «devolvo amanhã» — o que fica depois do artigo («um odre de água») */
+function coisaDoPedido(frase, presentes) {
+  let t = sem(frase).replace(/,?\s*\b(?:devolvo|devolverei|pago|que eu|e eu|prometo)\b.*$/, "");
+  const q = quemDaFrase(frase, presentes);
+  if (q) {
+    const w = primeiro(q.nome);
+    if (w) t = t.replace(new RegExp(`\\b(?:a|ao|as|aos|da|do|de)?\\s*(?:o |a )?${w}\\b`), " ");
+  }
+  t = t.replace(/\b(?:de graca|gratis|gratuitamente|emprestad[oa]s?|de presente|para provar|pra provar|para experimentar|por favor)\b/g, " ").replace(/\s+/g, " ");
+  const m = t.match(/\b(?:peco|pedimos|quero|me da|me de|me empresta|me empreste|me arruma)\b[^.!?;]*?\b(?:um|uma|uns|umas|o|a|os|as)\s+([a-z]+(?:\s+(?:de|que)\s+[a-z]+)?(?:\s+[a-z]+)?)/);
+  if (!m) return "";
+  const out = [];
+  for (const w of m[1].split(" ")) { if (/^(a|ao|as|aos|para|pra|e|com|se|mas)$/.test(w)) break; out.push(w); }
+  while (out.length && /^(de|que)$/.test(out[out.length - 1])) out.pop();
+  const coisa = out.join(" ");
+  return /^(do|da|de|que|isso|algo|nada|um|uma)$/.test(coisa.split(" ")[0] || "") ? "" : coisa;
+}
+
 function oCompanheiroDaFrase(t, grupo) {
   const gs = arr(grupo).map(obj).filter((g) => g && primeiro(g.nome).length >= 3);
   for (const g of gs) {
@@ -402,10 +493,19 @@ export function aIntencaoDaTroca(frase, ctx) {
       const m = t.match(V.coisaDoFurto);
       return { tipo: "furto", coisa: m ? m[1] : "" };
     }
+    /* a nona sessão, T28: «tomo a faca de peixe da mão do estivador» — força
+       contra quem segura, com dado (antes caía em «pegar» e era negado sem dado) */
+    const mT = t.match(V.tomar);
+    if (mT && mT[1] && !V.naoECoisa.includes(mT[1].split(" ")[0])) return { tipo: "tomar", coisa: mT[1].trim() };
     if (V.deGraca.test(t) && V.pedeAlgo.test(t) && !comp) {
-      const m = t.match(/\b(?:peco|pedimos|quero|me da|me de|me empresta|me empreste|me arruma)\s+(?:a [a-z]+ |ao [a-z]+ |(?:ao|a) [a-z]+ (?:do|da) [a-z]+ )?(?:(?:um|uma|uns|umas|o|a|os|as)\s+)?([a-z]+(?:\s+de\s+[a-z]+)?)/);
-      const coisa = m && !/^(do|da|de|que|isso|algo|nada|um|uma)$/.test(m[1].split(" ")[0]) ? m[1] : "";
-      return { tipo: "deGraca", coisa };
+      return { tipo: "deGraca", coisa: coisaDoPedido(frase, c.presentes) };
+    }
+    /* a nona sessão, T38: «aceito o rosário de marfim que Torvald me estendeu e
+       guardo» — o que o companheiro dá sai da bolsa dele, se estiver lá */
+    const mA = t.match(V.aceitar);
+    if (mA && comp) {
+      const coisaA = mA[1].replace(/\s+(?:que|de|do|da)$/, "").trim();
+      if (coisaA) return { tipo: "companheiro", quem: nomeDe(comp), oQue: "coisa", coisa: coisaA };
     }
     const coisa = oQueSePega(t);
     if (coisa) {
@@ -510,11 +610,14 @@ export function oVereditoDaTroca(frase, ctx) {
       if (arr(c.chao).some((n) => nomeiaOItem(coisa, n) || nomeiaOItem(frase, n))) return null;
       if (naBolsa.some((n) => nomeiaOItem(frase, n))) return null;
       const pres = arr(c.presentes).map(str).filter(Boolean);
-      const dono = it.dono && it.dono !== "?" ? pres.find((p) => primeiro(p) === it.dono) : "";
+      /* a nona sessão, T27: o frasco de sais da banca é da banca (era «não é coisa que valha levar», dito de um frasco de ◉ 40) */
+      const daBanca = arr(c.bancas).map(obj).find((b) => b && arr(b.estoque).some((x) => obj(x) && x.nome && (nomeiaOItem(coisa, x.nome) || nomeiaOItem(frase, x.nome))));
+      const quemBanca = daBanca ? (() => { const q = quemDaFrase(frase, pres); return q ? maiuscula(q.nome) : str(daBanca.nome); })() : "";
+      const dono = quemBanca || (it.dono && it.dono !== "?" ? pres.find((p) => primeiro(p) === it.dono) : "");
       const semDono = doOriginal(frase, dono ? coisa.replace(/\s+(?:de|da|do)\s+[a-z]{3,}$/, "") : coisa);
       /* \`coisa\`: o conferente corta a prosa que a põe na mochila */
       if (dono) {
-        return Object.freeze({ ...negada("pegar", "dono", tpl(T.pegarDono, { Coisa: maiuscula(semDono), Dono: dono }), tpl(F.pegarDono, { coisa: semDono, Dono: dono }), tpl(X.pegar, { coisa: semDono })), coisa: semDono });
+        return Object.freeze({ ...negada("pegar", "dono", tpl(T.pegarDono, { Coisa: maiuscula(semDono), Dono: dono, doDono: deQuem(dono.charAt(0).toLowerCase() === dono.charAt(0) ? dono : (/^(O|A|Os|As) /.test(dono) ? dono.charAt(0).toLowerCase() + dono.slice(1) : dono)) }), tpl(F.pegarDono, { coisa: semDono, Dono: dono, doDono: deQuem(/^(O|A|Os|As) /.test(dono) ? dono.charAt(0).toLowerCase() + dono.slice(1) : dono) }), tpl(X.pegar, { coisa: semDono })), coisa: semDono });
       }
       const L = T.pegarInventado[Math.floor(sorteDe(`${chave}|pegar`) * T.pegarInventado.length)];
       return Object.freeze({ ...negada("pegar", "inventado", L, tpl(F.pegarInventado, { coisa: semDono }), tpl(X.pegar, { coisa: semDono })), coisa: semDono });
@@ -531,7 +634,20 @@ export function oVereditoDaTroca(frase, ctx) {
       const coisa = it.coisa;
       const uso = V.usos[coisa.split(" ").map((w) => w.replace(/s$/, "")).find((w) => V.usos[w]) || coisa.split(" ").find((w) => V.usos[w]) || ""];
       const inv = arr(g.inventario);
-      const k = inv.findIndex((raw) => { const n = nomeDe(raw); return n && (nomeiaOItem(coisa, n) || nomeiaOItem(frase, n) || sem(n).includes(coisa)); });
+      /* a nona sessão, T16: a Espada Longa estava nos «equipados» dele, e a linha
+         dizia «não tem isso consigo». O que ele tem: a bolsa e o que veste —
+         casado pela mesma função de quem dá e de quem vende (oItemDaFrase) */
+      const vestidosG = Object.values(obj(g.equipados) || {}).map(nomeDe).filter(Boolean);
+      const qual = uso ? null : oItemDaFrase(coisa, [...inv.map(nomeDe), ...vestidosG]) || oItemDaFrase(frase, [...inv.map(nomeDe), ...vestidosG]);
+      if (qual && qual.ambiguos) {
+        const Lista = qual.ambiguos.join(" ou ");
+        return negada("companheiro", "qual", tpl(T.qual, { Lista }), tpl(F.qual, { Lista }), tpl(X.qual, { Lista }));
+      }
+      const k = qual && qual.i < inv.length ? qual.i : -1;
+      if (qual && qual.i >= inv.length) {
+        const Coisa = qual.nome;
+        return negada("companheiro", "emUso", tpl(T.companheiroEmUso, { Nome, Coisa }), tpl(F.companheiroNega, { Nome, motivo: tpl(V.motivoCompanheiro.emUso, { Coisa }) }), tpl(X.companheiro, { Nome }));
+      }
       if (k >= 0 && !uso) {
         const nomeItem = nomeDe(inv[k]);
         const grupo = arr(ficha.grupo).map((x) => (x === g ? { ...g, inventario: inv.filter((_, i) => i !== k) } : x));
@@ -551,7 +667,13 @@ export function oVereditoDaTroca(frase, ctx) {
     if (it.tipo === "dar") {
       /* a coisa: só da mochila (o que está vestido não se dá numa frase), e a quem: alguém da cena ou do grupo */
       const inv = arr(ficha.inventario);
-      const k = inv.map((raw, i) => ({ raw, i, n: nomeDe(raw) })).filter((x) => x.n && nomeiaOItem(frase, x.n)).sort((a, b) => b.n.length - a.n.length)[0];
+      /* a nona sessão, T12 e T13: «dou o distintivo ao Torvald» — o nome encurtado casa pela palavra principal */
+      const qualD = oItemDaFrase(frase, inv);
+      if (qualD && qualD.ambiguos) {
+        const Lista = qualD.ambiguos.join(" ou ");
+        return negada("dar", "qual", tpl(T.qual, { Lista }), tpl(F.qual, { Lista }), tpl(X.qual, { Lista }));
+      }
+      const k = qualD ? { raw: inv[qualD.i], i: qualD.i, n: nomeDe(inv[qualD.i]) } : null;
       if (!k) return null;
       const t0 = sem(frase);
       const grupo = arr(ficha.grupo).filter((g) => obj(g) && nomeDe(g));
@@ -586,6 +708,20 @@ export function oVereditoDaTroca(frase, ctx) {
       return aplicada("furto", nova, mudou, tpl(T.furto, { Alvo, doAlvo, Ganho: ganho, B: moedas }), tpl(F.furto, { Alvo, doAlvo, Ganho: ganho }), X.furto);
     }
 
+    if (it.tipo === "tomar") {
+      const Alvo = nomeDoAlvo(alvoC);
+      const doAlvo = deQuem(str(alvoC && alvoC.nome));
+      const coisaT = doOriginal(frase, it.coisa);
+      const d = obj(c.dado);
+      if (!d) return Object.freeze({ tipo: "tomar", estado: "pendente", ficha: null, mudou: Object.freeze([]), linha: "", fato: "", veto: [] });
+      const passou = d.passou === true || d.acontece === true;
+      if (!passou) return negada("tomar", "falhou", tpl(T.tomarFalhou, { Alvo }), tpl(F.tomarFalhou, { Alvo, doAlvo, coisa: coisaT }), X.tomar);
+      if (!V.tomaveis.includes(sem(it.coisa).split(" ")[0])) return negada("tomar", "naoHa", tpl(T.tomarNaoHa, { coisa: coisaT, doAlvo }), tpl(F.tomarNaoHa, { coisa: coisaT, doAlvo }), X.tomar);
+      const Coisa = maiuscula(coisaT);
+      const nova = { ...ficha, inventario: [...arr(ficha.inventario), Coisa] };
+      return aplicada("tomar", nova, [{ coisa: Coisa, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.tomar, { Coisa: coisaT, doAlvo }), tpl(F.tomar, { Coisa, doAlvo }), X.tomar);
+    }
+
     if (it.tipo === "deGraca") {
       const Alvo = nomeDoAlvo(alvoC);
       const d = obj(c.dado);
@@ -598,6 +734,21 @@ export function oVereditoDaTroca(frase, ctx) {
         .filter((x) => nomeiaOItem(frase, x.nome)).sort((a, b) => (Number(a.preco) || 0) - (Number(b.preco) || 0))[0];
       if (doEstoque && (Number(doEstoque.preco) || 0) > V.tetoDaAmostra) {
         return negada("deGraca", "caro", tpl(T.deGracaCaro, { Coisa: doEstoque.nome, P: Number(doEstoque.preco) || 0 }), tpl(F.deGracaNao, { Alvo }), X.deGraca);
+      }
+      /* a nona sessão, T22: pediu um odre, entrou uma «Maçã seca» da tabela. A
+         coisa dita é a que vem (o que é de uso barato: uma unidade), ou não vem;
+         a amostra da tabela é só para o pedido vago */
+      const coisaG = str(it.coisa);
+      if (!doEstoque && coisaG && !V.pedidoVago.test(coisaG)) {
+        const usoG = V.usoDaVenda.find((u) => u.rx.test(coisaG));
+        if (usoG && V.usoDeGraca.includes(usoG.id)) {
+          const sup = obj(ficha.suprimentos) || {};
+          const nova = { ...ficha, suprimentos: { ...sup, [usoG.id]: (Number(sup[usoG.id]) || 0) + 1 } };
+          const Coisa = `1 ${usoG.um}`;
+          return aplicada("deGraca", nova, [{ coisa: usoG.id, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.deGraca, { Alvo, Coisa }), tpl(F.deGraca, { Alvo, Coisa }), X.deGraca);
+        }
+        const coisaO = doOriginal(frase, coisaG);
+        return negada("deGraca", "naoTem", tpl(T.deGracaNaoTem, { Alvo, coisa: coisaO }), tpl(F.deGracaNaoTem, { coisa: coisaO, Alvo }), X.deGraca);
       }
       const item = doEstoque ? (() => { const { preco, detalhe, ...limpo } = doEstoque; return limpo; })() : V.amostras[Math.floor(sorteDe(`${chave}|amostra|${sem(Alvo)}`) * V.amostras.length)];
       const nomeItem = nomeDe(item);

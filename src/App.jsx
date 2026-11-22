@@ -299,7 +299,7 @@ import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 /* 21/11 (a oitava sessão do Mestre vivo): a troca sai decidida antes do Narrador */
-import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA } from "./o-veredito-da-troca.js";
+import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA, oItemDaFrase } from "./o-veredito-da-troca.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
@@ -18966,14 +18966,15 @@ export default function Taverna() {
     try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas", e); bancasT = []; }
     const ctx = { ficha: f0, intencao: it, chao, presentes: pessoas.map((p) => p && p.nome).filter(Boolean), semente: sementeMundo(), lugar: lugarT, dia: diaRef.current, alvo, bancas: bancasT, moeda: moedaDoMundo() };
     trocaDoTurnoRef.current = { frase: acao, intencao: it, ctx: { alvo, lugar: lugarT, presentes: ctx.presentes }, veredito: null };
-    if (it.tipo === "furto" || it.tipo === "deGraca") {
+    /* a nona sessão, T28: tomar da mão de alguém espera o dado como o furto */
+    if (it.tipo === "furto" || it.tipo === "deGraca" || it.tipo === "tomar") {
       /* o dado decide: com teste, espera a rolagem (resolverATrocaDoDado); sem
          risco (a régua diz que acontece), é sim; sem dado e sem acontecer, o
          furto não houve e o de graça é não */
       let ehTeste = porta === "rola";
       if (!ehTeste && porta !== "acontece") { try { const vA = veredictoDaAcao(acao); ehTeste = !!(vA && vA.tipo === "teste"); } catch (e) { calou("o veredito da troca · o teste", e); } }
       if (ehTeste) return;
-      if (it.tipo === "furto" && porta !== "acontece") return;
+      if ((it.tipo === "furto" || it.tipo === "tomar") && porta !== "acontece") return;
       ctx.dado = porta === "acontece" ? { acontece: true } : { passou: false, semDado: true };
     }
     aplicarOVereditoDaTroca(oVereditoDaTroca(acao, ctx));
@@ -18985,7 +18986,7 @@ export default function Taverna() {
     const tr = trocaDoTurnoRef.current;
     if (!tr || tr.veredito || !tr.intencao || String(tr.frase || "").trim() !== String(frase || "").trim()) return null;
     const tipo = tr.intencao.tipo;
-    if (tipo === "furto" ? !(des && des.id === "bater_carteira") : tipo === "deGraca" ? !(des && des.social) : true) return null;
+    if (tipo === "furto" ? !(des && des.id === "bater_carteira") : tipo === "deGraca" ? !(des && des.social) : tipo === "tomar" ? !(des && des.id === "forcar") : true) return null;
     const alvo = des && des.pessoa && des.pessoa.nome ? des.pessoa : des && des.quem ? { nome: des.quem } : (tr.ctx && tr.ctx.alvo) || null;
     let bancasT = [];
     try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas (dado)", e); bancasT = []; }
@@ -27511,10 +27512,21 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           /* o nome sem o aposto entre parênteses: «Faca herdada (única lembrança…)» diz-se «a faca herdada» */
           .filter((x) => { const n = semNome(nomeDe(x.r).replace(/\s*\(.*\)\s*$/, "")); return (n.length >= 3 && tv.includes(n)) || nomeiaOItem(acao, nomeDe(x.r)); })
           .sort((x, y) => nomeDe(y.r).length - nomeDe(x.r).length);
-        /* o que está vestido e também na mochila de equipamento é o vestido */
+        /* 21/11 (a nona sessão, T10 e T11): «vendo o distintivo», «vendo o couro» —
+           o nome encurtado casa pela palavra principal (oItemDaFrase, a mesma
+           função de dar e de pedir ao companheiro); dois que casam igual: o
+           cartão pergunta qual, e nada vende */
+        let qualV = null;
+        if (!cands.length) {
+          const todosV = [...(p0.inventario || []).map((r) => ({ r, origem: "inventario" })), ...(p0.equipamento || []).map((r) => ({ r, origem: "equipamento" })), ...vestidos];
+          try { qualV = oItemDaFrase(acao, todosV.map((x) => nomeDe(x.r))); } catch (e) { calou("a proposta: o nome encurtado", e); qualV = null; }
+          if (qualV && !qualV.ambiguos) cands.push(todosV[qualV.i]);
+        }        /* o que está vestido e também na mochila de equipamento é o vestido */
         const vestido = (c) => c && (c.origem === "equipados" || Object.values(p0.equipados || {}).some((e) => e && nomeDe(e) === nomeDe(c.r)));
         const c0 = cands[0];
-        if (c0 && vestido(c0)) {
+        if (!c0 && qualV && qualV.ambiguos) {
+          L.venda = { item: qualV.ambiguos[0], rotulo: qualV.ambiguos.join(" ou "), origem: "inventario", motivo: O_VEREDITO_DA_TROCA.tela.qual.replace("❓ ", "").replace("{Lista}", qualV.ambiguos.join(" ou ")) };
+        } else if (c0 && vestido(c0)) {
           L.venda = { item: nomeDe(c0.r), rotulo: curto(c0.r), origem: "equipamento", motivo: O_TEXTO_DA_VENDA_DE_USO.emUso };
         } else if (!c0) {
           /* o que é de uso (rações, água, tochas): pelo balcão, com a revenda da tabela */

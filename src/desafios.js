@@ -64,6 +64,8 @@ import { falaSoPergunta } from "./perguntas.js";
 import { pressionaSegredo, pedidoDoSegredo, ARRANCAR } from "./segredo-guardado.js";
 /* MC9: o cativeiro diz a CD de escapar/arrebentar — a do captor */
 import { cdDaSaida } from "./cativeiro.js";
+/* 21/11 (a nona sessão): o suborno, o de graça e o tomar da mão têm UMA leitura — a do veredito da troca */
+import { oSubornoDaFrase, aIntencaoDaTroca } from "./o-veredito-da-troca.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 /* o nome (ou um pedaço dele) dito como palavra inteira na frase */
@@ -2208,6 +2210,23 @@ export function lerAcao(texto, ctx = {}) {
   /* 20.ª sessão: e o gesto que casou não pode vir negado (NEGACAO_DO_GESTO) */
   let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta || x.leFala ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)) && temOObjeto(x.precisaDe, ctx)
     && !gestoNegado(x.rx, x.lePergunta || x.leFala ? inteira : declarada));
+  /* 21/11 (a nona sessão do Mestre vivo): três frases de troca com risco que o
+     catálogo não ouvia, e que por isso passavam sem dado — e a prosa fechava:
+     o suborno com quantia («ofereço 5 moedas à Gwynn para ela esquecer», T33–T35:
+     a lista do suborno é a de oSubornoDaFrase, uma só), o pedir de graça a quem
+     não é do grupo («peço emprestado à vendedora um odre», T22) e o tomar da mão
+     de alguém («tomo a faca de peixe da mão do estivador», T28: força contra quem
+     segura). A leitura é a do veredito da troca; o dado decide o veredito. */
+  if (!d && !pedido) {
+    try {
+      /* o pedido ao companheiro é da bolsa do grupo (sem dado): a intenção lê o grupo da ficha, e a frase dita a alguém pelo nome, na vírgula, fica com ele */
+      const grupoT = (personagem && Array.isArray(personagem.grupo)) ? personagem.grupo : [];
+      const itT = oSubornoDaFrase(cru) ? { tipo: "suborno" } : aIntencaoDaTroca(cru, { grupo: grupoT });
+      const aAlguem = /^\s*[a-z]+(?:\s+[a-z-]+)?\s*,/.test(t);
+      const idT = itT && (itT.tipo === "suborno" || (itT.tipo === "deGraca" && !aAlguem)) ? "convencer" : itT && itT.tipo === "tomar" ? "forcar" : "";
+      if (idT) d = DESAFIOS.find((x) => x.id === idT) || null;
+    } catch { d = null; }
+  }
   /* MM4: o que o catálogo não conhece, a família do verbo conhece. Vem
      DEPOIS do pedido de teste (pedir continua não sendo declarar) e ANTES do
      "sem dado" — "pego a cadeira e arremesso" tem um verbo de usar o que se
