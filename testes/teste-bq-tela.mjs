@@ -180,7 +180,7 @@ sec("2. o veredito antes do clique");
   t("o preço na carta: a ficha «60 da sua bolsa», com a moeda desenhada", /data-ficha="preco"/.test(s) && tx.includes("60 da sua bolsa") && /aria-label="moedas"/.test(s));
   t("o que fecha diz-se na carta: «Esta história acaba aqui.»", tx.includes(GRAVIDADE_DA_ESCOLHA.fecha.frase));
   t("a carta virada diz que há outras maneiras, sem as contar", tx.includes(ENCRUZILHADA.textos.virada.titulo) && /data-carta="virada"/.test(s));
-  t("sem carta escolhida, o botão cala: «Escolhe uma carta», desligado", /data-confirmar="calado"/.test(s) && /disabled=""[^>]*data-confirmar="calado"|data-confirmar="calado"[^>]*disabled/.test(s) || (/<button[^>]*disabled=""[^>]*>/.test(s) && tx.includes("Escolhe uma carta")));
+  t("sem carta escolhida, o botão cala: «Escolha uma carta» (PT-BR: a carta da quest estava em «tu» na décima primeira sessão), desligado", /data-confirmar="calado"/.test(s) && /disabled=""[^>]*data-confirmar="calado"|data-confirmar="calado"[^>]*disabled/.test(s) || (/<button[^>]*disabled=""[^>]*>/.test(s) && tx.includes("Escolha uma carta")));
   t("o verbo diz a escolha e o preço, por gravidade",
     R.verboDeConfirmar(VEREDITO_GIL.opcoes[1]) === "Escolher: levar Gil até ao fim na mesma"
     && R.verboDeConfirmar(VEREDITO_GIL.opcoes[2]) === "Pagar ◉ 60"

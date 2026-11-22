@@ -67,7 +67,7 @@ const OS_DADOS_DELE = quest({
   gancho: "Há três noites que alguém ganha tudo em {taberna}. Não joga por moedas: joga por escrituras, por dívidas, por anos de serviço, e nunca se levanta antes de a outra cadeira ficar vazia. {perdedor} se levantou da última sem casa e sem mais nada, e não diz o que pôs na mesa no fim. Esta manhã, o taverneiro achou um recado na cadeira vazia, dobrado em quatro e endereçado só «ao forasteiro»: «Esta noite se joga. Traga o que quiser perder.»",
   etapas: [
     { id: "perdedor", texto: "Ouvir {perdedor}", conclui: ["conversou", "papel:perdedor"] },
-    { id: "mesa", texto: "Sentar-te à mesa de {vilao}, em {taberna}",
+    { id: "mesa", texto: "Sentar à mesa de {vilao}, em {taberna}",
       conclui: ["todos", ["esta_em", "lugar:taberna"], ["conversou", "papel:vilao"]] },
     { id: "partida", texto: "Jogar a partida que {vilao} te propõe",
       conclui: ["algum", ["escolheu", "partida", "aceitar"], ["escolheu", "partida", "jogar"], ["escolheu", "partida", "virar"]],
@@ -78,21 +78,21 @@ const OS_DADOS_DELE = quest({
   escolhas: {
     partida: { etapa: "partida", opcoes: {
       aceitar: {
-        texto: "aceitar a aposta dele: um favor teu, sem preço nem prazo, contra tudo o que {perdedor} perdeu",
+        texto: "aceitar a aposta dele: um favor seu, sem preço nem prazo, contra tudo o que {perdedor} perdeu",
         ganha: "{vilao} perde de propósito, devagar, para que vejas que é de propósito. {perdedor} recupera a casa, e {aposta} dorme em casa antes do amanhecer.",
-        custa: "Ficas a dever um favor a quem manda nisto tudo, e ele diz-to a sorrir, a empurrar-te as fichas por cima da mesa: um dia vem cobrar, e nesse dia não vais poder dizer que não.",
+        custa: "Você fica devendo um favor a quem manda em tudo isto, e ele diz isso sorrindo, empurrando as fichas para você por cima da mesa: um dia vem cobrar, e nesse dia você não vai poder dizer não.",
         efeitos: [{ tipo: "aliado", papel: "vilao" }],
       },
       jogar: {
         texto: "jogar a sério, com os dados dele, e não aceitar mais nada",
         ganha: "Jogam até de manhã, e enquanto joga, fala — do que quer, do que já tem, do que vem a seguir. Ganhes ou percas, levas da mesa mais do que moedas: a forma como pensa.",
-        custa: "Também te vê jogar: onde arriscas, onde recuas, o que não aguentas perder. E {perdedor} só recupera o que tu ganhares — e tu não ganhas tudo.",
+        custa: "Ele também vê você jogar: onde você arrisca, onde recua, o que não aguenta perder. E {perdedor} só recupera o que você ganhar — e você não ganha tudo.",
         efeitos: [{ tipo: "avisa_vilao" }, { tipo: "afeicao", papel: "perdedor", n: -1 }],
       },
       virar: {
         texto: "virar a mesa à frente da taberna inteira e chamar-lhe batoteiro",
         ganha: "Os dados rolam pelo chão, à vista de todos, e caem do lado que não deviam cair. Ninguém paga uma dívida feita com dados assim: {perdedor} fica livre, e {aposta} também.",
-        custa: "Quem é envergonhado em público não paga em moedas. {vilao} levanta-se, apanha os dados um a um, sem pressa, e diz em voz alta de onde vens e por onde andaste, para que a taberna inteira o saiba. A partir de hoje, o que anda a fazer anda mais depressa.",
+        custa: "Quem é envergonhado em público não paga em moedas. {vilao} se levanta, recolhe os dados um a um, sem pressa, e diz em voz alta de onde você vem e por onde andou, para que a taberna inteira saiba. A partir de hoje, o que ele anda fazendo anda mais depressa.",
         efeitos: [{ tipo: "relogio_do_fio", n: 1 }, { tipo: "avisa_vilao" }, { tipo: "afeicao", papel: "perdedor", n: 1 }],
       },
     } },
@@ -157,7 +157,7 @@ const A_MESMA_TEMPESTADE = quest({
     { id: "abrigo", texto: "Chegar a {abrigo} antes da noite", conclui: ["esteve", "lugar:abrigo"] },
     { id: "lume", texto: "Partilhar o lume com {vilao}",
       conclui: ["todos", ["esta_em", "lugar:abrigo"], ["conheceu", "papel:vilao"]] },
-    { id: "noite", texto: "Decidir o que fazes enquanto a tempestade dura",
+    { id: "noite", texto: "Decidir o que fazer enquanto a tempestade dura",
       conclui: ["algum", ["escolheu", "noite", "guardar"], ["escolheu", "noite", "vigiar"], ["escolheu", "noite", "sair"]],
       ramos: ["guardar", "vigiar", "sair"] },
     { id: "manha", texto: "Ver o que fica de {abrigo} quando a tempestade passar",
@@ -168,19 +168,19 @@ const A_MESMA_TEMPESTADE = quest({
       guardar: {
         texto: "guardar a trégua do telhado e dormir do mesmo lado do lume",
         ganha: "Ninguém sangra debaixo deste telhado. De manhã, {vilao} vai-se antes de toda a gente, e deixa à porta uma coisa que só se deixa a quem se respeita.",
-        custa: "Dormiste ao alcance de {vilao}, e agora sabe que consegues fechar os olhos à frente do inimigo — e tu sabes que também consegue. É mais difícil odiar o que se viu dormir. E a tempestade não para o relógio de ninguém.",
+        custa: "Você dormiu ao alcance de {vilao}, e agora ele sabe que você consegue fechar os olhos na frente do inimigo — e você sabe que ele também consegue. É mais difícil odiar o que se viu dormir. E a tempestade não para o relógio de ninguém.",
         efeitos: [{ tipo: "relogio_do_fio", n: 1 }],
       },
       vigiar: {
         texto: "ficar acordado a noite inteira, de lâmina nos joelhos, a ver",
-        ganha: "Vês tudo o que {vilao} é quando julga que ninguém vê: como respira, de que lado se deita, o que o acorda. Coisas que numa luta nunca verias.",
-        custa: "Amanheces sem ter dormido, à beira de uma estrada longa, e {vilao} viu-te a ver. A trégua aguentou, mas por um fio — e {menino} passou a noite a olhar para a tua lâmina em vez de dormir.",
+        ganha: "Você vê tudo o que {vilao} é quando acha que ninguém vê: como respira, de que lado se deita, o que o acorda. Coisas que numa luta você nunca veria.",
+        custa: "O dia nasce e você não dormiu, à beira de uma estrada longa, e {vilao} viu você vigiando. A trégua aguentou, mas por um fio — e {menino} passou a noite olhando para a sua lâmina em vez de dormir.",
         efeitos: [{ tipo: "avisa_vilao" }],
       },
       sair: {
         texto: "pegar em {menino} e sair para a tempestade, longe do lume",
         ganha: "{menino} não passa a noite ao alcance do que entrou com a chuva. Seja o que for que lá dentro aconteça, acontece sem vocês.",
-        custa: "A tempestade não tem trégua nenhuma. Andas a noite toda à chuva com a febre de {menino} nos braços, e {vilao} fica com o lume e o telhado — e com a certeza de que lhe deixaste o sítio.",
+        custa: "A tempestade não tem trégua nenhuma. Você anda a noite toda na chuva com a febre de {menino} nos braços, e {vilao} fica com o fogo e o telhado — e com a certeza de que você lhe deixou o lugar.",
         efeitos: [{ tipo: "situacao", papel: "menino", situacao: "ferida" }, { tipo: "dia", n: 1 }, { tipo: "afeicao", papel: "estalajadeira", n: -1 }],
       },
     } },
@@ -264,11 +264,11 @@ const A_NONA_NOITE = quest({
       cumprir: {
         texto: "prometer-lhe o gado da vila todos os invernos, e abrir as portas em paz",
         ganha: "As portas abrem-se sem sangue, {oferenda} volta para casa pelo próprio pé, e {vilao} vai-se para a serra antes do meio-dia. Nenhuma vila tem de ver morrer nada.",
-        custa: "Todos os invernos, enquanto houver vila, o melhor do gado vai à serra por uma estrada que ninguém mais pode usar. E {vilao} sabe que foste tu quem fez o preço — quando quiser mais, é a ti que o vem pedir.",
+        custa: "Todos os invernos, enquanto houver vila, o melhor do gado vai à serra por uma estrada que ninguém mais pode usar. E {vilao} sabe que foi você quem fez o preço — quando quiser mais, é a você que vem pedir.",
       },
       romper: {
         texto: "dizer que não, do alto da porta, e sair na mesma",
-        ganha: "Ficas sem dívida nenhuma, e com o campo todo pela frente.",
+        ganha: "Você fica sem dívida nenhuma, e com o campo todo pela frente.",
         custa: "{vilao} responde antes de a porta se fechar, contra a madeira, com o corpo inteiro. A porta aguenta. {oferenda}, que estava encostada a ela do lado de dentro, não.",
         efeitos: [{ tipo: "situacao", papel: "oferenda", situacao: "ferida" }, { tipo: "rompe_laco", papel: "vilao" }],
       },
@@ -281,7 +281,7 @@ const A_NONA_NOITE = quest({
       },
       guardar: {
         texto: "guardar o que trazes, e decidir à lâmina, no campo aberto",
-        ganha: "Ninguém nas ameias vai dizer que venceste com truques: venceste à luz do dia, no chão que era de {vilao}.",
+        ganha: "Ninguém nas ameias vai dizer que você venceu com truques: venceu à luz do dia, no chão que era de {vilao}.",
         custa: "Se a luta correr mal, cais em {campo} com a coisa que o vergava no bolso, à vista da vila que te viu sair.",
       },
     } },
@@ -294,7 +294,7 @@ const A_NONA_NOITE = quest({
       acabar: {
         texto: "acabar com {vilao} ali, em {campo}, à vista das ameias",
         ganha: "As portas abrem-se de manhã, e as crianças saem a correr para os campos pela primeira vez em nove dias.",
-        custa: "Matar o que já está no chão não se desfaz. E se havia razão para o cerco, morre contigo a saber qual era.",
+        custa: "Matar o que já está no chão não se desfaz. E, se havia razão para o cerco, ela morre com você sabendo qual era.",
       },
       selar: {
         texto: "levar {vilao} até à garganta da serra e deitar a encosta abaixo por cima",
@@ -422,12 +422,12 @@ const O_ULTIMO_BARCO = quest({
     frete: { etapa: "frete", opcoes: {
       cumprir: {
         texto: "deixar o barco sair com a maré, como {vilao} propõe",
-        ganha: "Ninguém sangra no convés. {levado} desce no primeiro porto do outro lado, com toda a gente do porão, e esta costa fica livre de {vilao} — longe, e a dever-te uma.",
-        custa: "Do outro lado do mar há outra costa, com outra gente que não sabe o que lhe vai chegar. E entre ti e {vilao} fica um negócio, e quem faz negócios não esquece os sócios.",
+        ganha: "Ninguém sangra no convés. {levado} desce no primeiro porto do outro lado, com toda a gente do porão, e esta costa fica livre de {vilao} — longe, e devendo uma a você.",
+        custa: "Do outro lado do mar há outra costa, com outra gente que não sabe o que vai chegar. E entre você e {vilao} fica um negócio, e quem faz negócios não esquece os sócios.",
       },
       romper: {
         texto: "rasgar o negócio e subir a bordo na mesma",
-        ganha: "Ficas sem negócio nenhum com {vilao}, e com o barco inteiro pela frente.",
+        ganha: "Você fica sem negócio nenhum com {vilao}, e com o barco inteiro pela frente.",
         custa: "Uma ordem gritada chega ao porão antes de chegares ao portaló, e lá em baixo alguém descarrega a primeira resposta em {levado}.",
         efeitos: [{ tipo: "situacao", papel: "levado", situacao: "ferida" }, { tipo: "rompe_laco", papel: "vilao" }],
       },
@@ -440,14 +440,14 @@ const O_ULTIMO_BARCO = quest({
       },
       guardar: {
         texto: "guardar o que trazes, e decidir à lâmina, no convés",
-        ganha: "Ninguém vai dizer que venceste com truques: venceste num barco que era de {vilao}, com a tripulação dele a ver.",
-        custa: "Se a luta correr mal, o barco sai com a maré, contigo no convés e {levado} no porão, e a coisa que o vergava no teu bolso.",
+        ganha: "Ninguém vai dizer que você venceu com truques: venceu num barco que era de {vilao}, com a tripulação dele olhando.",
+        custa: "Se a luta correr mal, o barco sai com a maré, com você no convés e {levado} no porão, e a coisa que o dobrava no seu bolso.",
       },
     } },
     sentenca: { etapa: "sentenca", opcoes: {
       poupar: {
         texto: "pôr {vilao} num bote, com água para dois dias, e deixar a maré decidir",
-        ganha: "Não matas quem está de joelhos. A maré leva o bote para o largo, e o que lhe acontecer é do mar, não teu.",
+        ganha: "Você não mata quem está de joelhos. A maré leva o bote para o largo, e o que acontecer com ele é do mar, não seu.",
         custa: "O mar é grande, mas não é fundo em todo o lado. Há ilhas, e barcos de pesca, e gente que não sabe a cara que tem — e quem sobrevive a um bote não esquece quem o pôs lá.",
       },
       acabar: {
@@ -457,7 +457,7 @@ const O_ULTIMO_BARCO = quest({
       },
       selar: {
         texto: "tirar toda a gente para os botes, fechar {vilao} no porão vazio e abrir os rombos",
-        ganha: "Nem sangue nas tuas mãos nem fuga: o último barco vai ao fundo com quem o fretou, e nenhum porto do mundo o volta a ver.",
+        ganha: "Nem sangue nas suas mãos nem fuga: o último barco vai ao fundo com quem o fretou, e nenhum porto do mundo volta a vê-lo.",
         custa: "Um barco no fundo é uma tumba que ninguém visita, e o mar devolve sempre alguma coisa. Um dia, numa praia, alguém encontra o que sobrou — e o nome volta a andar de boca em boca.",
       },
     } },
@@ -558,33 +558,33 @@ const O_TEU_NOME_NA_PAREDE = quest({
   gancho: "Há um papel pregado em cada porta da cidade: a sua cara, mal desenhada mas sua, e embaixo o que você fez em {queimada} há três noites — o fogo, as portas trancadas por fora, os nomes dos que ficaram lá. Você não esteve lá. Mas {sobrevivente} jura que viu você à luz do fogo, de lâmina na mão e com as suas cores, e a cidade inteira acredita. {meirinho} já mandou buscar corda.",
   etapas: [
     { id: "parede", texto: "Ouvir {sobrevivente} sem que te reconheça a cara", conclui: ["conversou", "papel:sobrevivente"] },
-    { id: "cinza", texto: "Ver com os teus olhos o que ficou de {queimada}",
+    { id: "cinza", texto: "Ver com os próprios olhos o que ficou de {queimada}",
       conclui: ["pelo_menos", 2, ["esteve", "lugar:queimada"], ["descobriu", "lugar:queimada"], ["consultou", "papel:meirinho"]] },
-    { id: "outro", texto: "Pôr a mão em quem usou a tua cara",
+    { id: "outro", texto: "Pôr a mão em quem usou a sua cara",
       conclui: ["algum", ["tem", "item:capa"], ["derrotou", "papel:servo"]],
       ramos: ["capa", "lamina"] },
-    { id: "nome", texto: "Decidir o que se faz com o teu nome",
+    { id: "nome", texto: "Decidir o que se faz com o seu nome",
       conclui: ["algum", ["escolheu", "nome", "limpar"], ["escolheu", "nome", "carregar"], ["escolheu", "nome", "comprar"]],
       ramos: ["limpar", "carregar", "comprar"] },
   ],
   escolhas: {
     nome: { etapa: "nome", opcoes: {
       limpar: {
-        texto: "levar a prova a {meirinho}, na praça, e limpar o teu nome à frente de todos",
-        ganha: "Os papéis saem das portas à tua frente, um a um, e a cidade que te queria enforcar fica a olhar para o chão. O teu nome volta a ser só teu.",
-        custa: "{sobrevivente} jurou falso diante da lei, e a lei não pergunta porquê: vai à forca pela mentira que te pôs lá. E quem usou a tua cara fica a saber, nessa mesma hora, que foi descoberto.",
+        texto: "levar a prova a {meirinho}, na praça, e limpar o seu nome na frente de todos",
+        ganha: "Os papéis saem das portas na sua frente, um a um, e a cidade que queria enforcar você fica olhando para o chão. O seu nome volta a ser só seu.",
+        custa: "{sobrevivente} jurou falso diante da lei, e a lei não pergunta por quê: vai à forca pela mentira que pôs você lá. E quem usou a sua cara fica sabendo, nessa mesma hora, que foi descoberto.",
         efeitos: [{ tipo: "avisa_vilao" }, { tipo: "situacao", papel: "sobrevivente", situacao: "cativa" }, { tipo: "afeicao", papel: "meirinho", n: 1 }],
       },
       carregar: {
-        texto: "deixar o teu nome na parede, e tirar {sobrevivente} da cidade antes que alguém pergunte",
-        ganha: "{sobrevivente} vive, e os que lhe restam também. E quem usou a tua cara julga que ganhou — e quem julga que ganhou deixa de olhar para trás.",
-        custa: "Em cada cidade desta terra vai haver uma porta com a tua cara, e uma corda à tua espera. {meirinho} não esquece um nome que lhe fugiu.",
+        texto: "deixar o seu nome na parede, e tirar {sobrevivente} da cidade antes que alguém pergunte",
+        ganha: "{sobrevivente} vive, e os que lhe restam também. E quem usou a sua cara acha que ganhou — e quem acha que ganhou deixa de olhar para trás.",
+        custa: "Em cada cidade desta terra vai haver uma porta com a sua cara, e uma corda à sua espera. {meirinho} não esquece um nome que lhe fugiu.",
         efeitos: [{ tipo: "inimigo", papel: "meirinho" }, { tipo: "relogio_do_fio", n: -1 }, { tipo: "afeicao", papel: "sobrevivente", n: 2 }],
       },
       comprar: {
         texto: "pagar a {meirinho} para arrancar os papéis e esquecer o assunto",
-        ganha: "Os papéis saem das portas antes do anoitecer, e ninguém vai à forca — nem tu, nem {sobrevivente}. A cidade esquece depressa o que deixa de ver.",
-        custa: "Cinquenta moedas, e um meirinho que sabe agora que o teu nome se vende. E quem usou a tua cara continua com ela, e com as tuas cores no armário.",
+        ganha: "Os papéis saem das portas antes do anoitecer, e ninguém vai à forca — nem você, nem {sobrevivente}. A cidade esquece depressa o que deixa de ver.",
+        custa: "Cinquenta moedas, e um meirinho que agora sabe que o seu nome se vende. E quem usou a sua cara continua com ela, e com as suas cores no armário.",
         efeitos: [{ tipo: "moedas", n: -50 }],
       },
     } },
@@ -671,8 +671,8 @@ const O_POSTO_DO_CAPITAO_MORTO = quest({
       },
       expor: {
         texto: "acusar {servo} na formatura da manhã, à frente da guarda inteira",
-        ganha: "Dizes em voz alta o que se passou na muralha, e a guarda ouve. Os que não estavam metidos nisto passam para o teu lado ali mesmo, e {servo} sai do pátio sem as divisas.",
-        custa: "Os que estavam metidos saem também, e são quase metade. Ficas com uma guarda de rapazes, e quem manda em {servo} fica a saber nessa mesma hora que a porta já não abre.",
+        ganha: "Você diz em voz alta o que aconteceu na muralha, e a guarda ouve. Os que não estavam metidos nisto passam para o seu lado ali mesmo, e {servo} sai do pátio sem as divisas.",
+        custa: "Os que estavam metidos saem também, e são quase metade. Você fica com uma guarda de rapazes, e quem manda em {servo} fica sabendo nessa mesma hora que a porta já não abre.",
         efeitos: [{ tipo: "avisa_vilao" }, { tipo: "inimigo", papel: "servo" }, { tipo: "afeicao", papel: "viuva", n: 1 }],
       },
     } },
@@ -767,7 +767,7 @@ const AS_ARMAS_DO_POCO = quest({
       vender: {
         texto: "vender as armas a um mercador de passagem, que paga bem e não pergunta",
         ganha: "Oitenta moedas, contadas em cima de uma pipa, e as armas saem da vila antes do amanhecer: ninguém aqui vai ter de decidir o que fazer com elas.",
-        custa: "Não sabes para que mãos vão. O mercador pagou demasiado bem, e não perguntou nada — e quem não pergunta, normalmente, já sabe a resposta.",
+        custa: "Você não sabe para que mãos vão. O mercador pagou bem demais, e não perguntou nada — e quem não pergunta, em geral, já sabe a resposta.",
         efeitos: [{ tipo: "moedas", n: 80 }, { tipo: "relogio_do_fio", n: 1 }, { tipo: "afeicao", papel: "ferreira", n: -1 }],
       },
     } },
@@ -846,20 +846,20 @@ const O_RECADO_VERDADEIRO = quest({
     noite: { etapa: "noite", opcoes: {
       alvo: {
         texto: "ficar em {alvo} com toda a gente, como o recado manda",
-        ganha: "Se o fogo vier onde disseram, encontra-te à porta, e a cidade vê-te onde disseste que estarias. Ninguém te pode acusar de não ter acreditado.",
+        ganha: "Se o fogo vier onde disseram, encontra você na porta, e a cidade vê você onde disse que estaria. Ninguém pode acusar você de não ter acreditado.",
         custa: "Se o recado for mentira, {outro} fica sozinho com {guardia} e uma tranca, e o golpe verdadeiro cai onde ninguém olhava. E quem o mandou fica a saber que acreditas no que te dizem.",
         efeitos: [{ tipo: "relogio_do_fio", n: 1 }, { tipo: "afeicao", papel: "guardia", n: -1 }],
       },
       outro: {
         texto: "ir para {outro}, contra o que toda a gente diz",
-        ganha: "Estás onde ninguém espera. Se tiveres razão, quem vier vem confiado, e vês-lhe a cara antes de saber que foi visto.",
+        ganha: "Você está onde ninguém espera. Se tiver razão, quem vier vem confiante, e você vê a cara dele antes de ele saber que foi visto.",
         custa: "Se te enganares, {alvo} arde à frente de uma cidade inteira que te viu ir para o outro lado — e ninguém aqui te volta a abrir uma porta.",
         efeitos: [{ tipo: "relogio_do_fio", n: -1 }, { tipo: "afeicao", papel: "guardia", n: 1 }, { tipo: "relogio_regional", n: 1 }],
       },
       dividir: {
         texto: "mandar metade da gente para {outro}, e ficar com a outra metade em {alvo}",
         ganha: "Ninguém fica sozinho, e nenhum dos dois sítios fica de porta aberta. Seja qual for a verdade, há alguém lá.",
-        custa: "Metade em cada sítio é pouco em cada sítio. Se o golpe vier com força, chega para os dois — e vais ter de escolher, a meio da noite, para que lado corres.",
+        custa: "Metade em cada lugar é pouco em cada lugar. Se o golpe vier com força, chega para os dois — e você vai ter de escolher, no meio da noite, para que lado correr.",
         efeitos: [{ tipo: "relogio_regional", n: 1 }, { tipo: "avisa_vilao" }],
       },
     } },
@@ -951,15 +951,15 @@ const O_QUE_A_AMA_ESQUECEU = quest({
         efeitos: [{ tipo: "dia", n: 3 }, { tipo: "afeicao", papel: "neta", n: 1 }, { tipo: "quem_e", papel: "ama", linha: "lembrou-se de tudo o que esqueceu, e não voltou a dormir uma noite inteira" }],
       },
       dormir: {
-        texto: "deixar {ama} dormir em paz, e contentar-te com a canção",
+        texto: "deixar {ama} dormir em paz, e se contentar com a canção",
         ganha: "{ama} acaba os dias sem saber o que criou, a sorrir a quem lhe der a mão. E a canção, cantada inteira, diz mais do que parece.",
-        custa: "Uma canção não é uma memória: ficas com metade do que ela sabia, e a outra metade vai com ela. E foi {servo} quem decidiu, por todos, o que ela esquecia.",
+        custa: "Uma canção não é uma memória: você fica com metade do que ela sabia, e a outra metade vai com ela. E foi {servo} quem decidiu, por todos, o que ela esquecia.",
         efeitos: [{ tipo: "relogio_do_fio", n: 1 }, { tipo: "afeicao", papel: "neta", n: 1 }],
       },
       perguntar: {
         texto: "dar-lhe metade do chá e perguntar-lhe tudo esta noite, no meio do sono",
         ganha: "Responde a tudo, com a voz de quem fala a um menino: o nome verdadeiro, o sítio, a coisa que o assustava. Numa noite só.",
-        custa: "{neta} vê-te arrancar memórias a uma velha meio a dormir, e não te perdoa. E {ama} acorda de manhã a chamar por um menino que já não existe, e não para.",
+        custa: "{neta} vê você arrancar memórias de uma velha meio adormecida, e não perdoa. E {ama} acorda de manhã chamando por um menino que já não existe, e não para.",
         efeitos: [{ tipo: "afeicao", papel: "neta", n: -2 }, { tipo: "relogio_do_fio", n: -1 }],
       },
     } },
@@ -1052,8 +1052,8 @@ const A_CABECA_QUE_NAO_SE_BAIXA = quest({
       },
       paz: {
         texto: "dizer a {quem} que não há nada a provar a quem já viu tudo",
-        ganha: "{quem} ouve de ti o que ninguém lhe disse em dez anos: que não perdeu o nome, perdeu um combate.",
-        custa: "{quem} cala-se, e o silêncio pesa. Há quem ouça «não há nada a provar» como «já não és capaz».",
+        ganha: "{quem} ouve de você o que ninguém lhe disse em dez anos: que não perdeu o nome, perdeu um combate.",
+        custa: "{quem} se cala, e o silêncio pesa. Há quem ouça «não há nada a provar» como «você já não é capaz».",
       },
     } },
     areia: { etapa: "areia", opcoes: {
@@ -1065,10 +1065,10 @@ const A_CABECA_QUE_NAO_SE_BAIXA = quest({
       ate_ao_fim: {
         texto: "deixar {quem} lutar até ao fim, como pede o nome que tem",
         ganha: "{quem} entra na areia como entrava há dez anos, e a arena levanta-se: há coisas que merecem ver-se uma vez antes de acabarem.",
-        custa: "{quem} tem uma ferida velha que abre ao terceiro assalto, e não sabe ceder. Sem a confiança inteira de {quem} ao teu lado, não há voz na arena que lhe faça baixar a lâmina quando a ferida abrir.",
+        custa: "{quem} tem uma ferida velha que abre no terceiro assalto, e não sabe ceder. Sem a confiança inteira de {quem} ao seu lado, não há voz na arena que faça {quem:ele|ela} baixar a lâmina quando a ferida abrir.",
       },
       trocar: {
-        texto: "entrar tu na areia, no lugar de {quem}",
+        texto: "entrar você na areia, no lugar de {quem}",
         ganha: "{quem} não arrisca a ferida velha, e {rival} encontra pela frente quem não tem nada a provar.",
         custa: "Tiras a {quem} o combate de uma vida, à frente de toda a gente que o conheceu no tempo dele. Há coisas que se perdoam e não se esquecem.",
       },
@@ -1182,8 +1182,8 @@ const O_QUE_O_TIO_DEIXOU = quest({
       },
       devolver: {
         texto: "dizer a {quem} que uma terra roubada continua roubada, seja quem for que a herde",
-        ganha: "{quem} ouve de ti o que a segunda folha já lhe disse em voz baixa: que há heranças que não se aceitam.",
-        custa: "Pedes a {quem}, que nunca teve nada, que dê tudo no dia em que o teve. Se a mão lhe tremer, a culpa também é tua.",
+        ganha: "{quem} ouve de você o que a segunda folha já lhe disse em voz baixa: que há heranças que não se aceitam.",
+        custa: "Você pede a {quem}, que nunca teve nada, que dê tudo no dia em que teve. Se a mão {quem:dele|dela} tremer, a culpa também é sua.",
       },
     } },
     assinar: { etapa: "assinatura", opcoes: {
@@ -1307,13 +1307,13 @@ const O_JURAMENTO_A_CABECEIRA = quest({
       cumprir: {
         texto: "dizer a {quem} que um juramento feito a uma moribunda não se desfaz",
         ganha: "{quem} deixa de andar dividido entre a mãe e o resto do mundo: alguém lhe diz que a promessa é sagrada, e que não a carrega sozinho.",
-        custa: "Ajudas {quem} a afiar uma lâmina para alguém que ainda não ouviste. E um juramento regado cresce mais depressa do que a dúvida.",
+        custa: "Você ajuda {quem} a afiar uma lâmina para alguém que ainda não ouviu. E um juramento regado cresce mais depressa do que a dúvida.",
         efeitos: [{ tipo: "vinculo", papel: "quem", n: 5 }],
       },
       quebrar: {
         texto: "dizer a {quem} que ninguém herda o ódio de outro, nem de uma mãe",
-        ganha: "{quem} ouve de ti a única coisa que não se atrevia a pensar: que a mãe já não está, e a vida é {quem:dele|dela}.",
-        custa: "Pões em causa a última coisa que {quem} prometeu à mãe. Se o juramento ficar a meio, a culpa também é tua — e {quem} vai lembrar-se disso cada noite em que não disser a frase.",
+        ganha: "{quem} ouve de você a única coisa que não se atrevia a pensar: que a mãe já não está, e a vida é {quem:dele|dela}.",
+        custa: "Você põe em dúvida a última coisa que {quem} prometeu à mãe. Se o juramento ficar pela metade, a culpa também é sua — e {quem} vai se lembrar disso cada noite em que não disser a frase.",
       },
     } },
     noite: { etapa: "noite", opcoes: {
@@ -1330,7 +1330,7 @@ const O_JURAMENTO_A_CABECEIRA = quest({
       avisar: {
         texto: "avisar {alvo} pelas costas de {quem}, antes da noite",
         ganha: "Ninguém morre esta noite: {alvo} tem tempo de sair, e {quem} fica de mãos limpas, queira ou não.",
-        custa: "Traís o juramento de {quem} sem lhe perguntar. E se {quem} não confiar em ti o bastante para te ouvir antes de sair, não vai esperar por ti: vai de noite, sozinho, a uma casa avisada, onde há quem espere armado.",
+        custa: "Você trai o juramento de {quem} sem perguntar. E, se {quem} não confiar em você o bastante para ouvir você antes de sair, não vai esperar por você: vai de noite, sozinho, a uma casa avisada, onde há quem espere armado.",
       },
     } },
   },
@@ -1443,7 +1443,7 @@ const O_MORTO_QUE_VOLTOU_A_CASA = quest({
       },
       ficar_morto: {
         texto: "dizer a {quem} que há vidas que se fecharam bem, e que se abrem mal",
-        ganha: "{quem} ouve de ti o que tinha medo de ouvir, e é um alívio: alguém lhe diz que deixar em paz também é amar.",
+        ganha: "{quem} ouve de você o que tinha medo de ouvir, e é um alívio: alguém lhe diz que deixar em paz também é amar.",
         custa: "Pedes a {quem} que continue morto para quem mais amou. E isso, para quem o carrega, é morrer outra vez todos os dias.",
       },
     } },
@@ -1451,7 +1451,7 @@ const O_MORTO_QUE_VOLTOU_A_CASA = quest({
       reclamar: {
         texto: "ficar com {quem} enquanto reclama a casa, {esposo} e {filho}",
         ganha: "{quem} volta para o sítio que era seu: a mesma mesa, a mesma cama, {filho} a crescer debaixo dos olhos de quem lhe deu o nome.",
-        custa: "Há outra pessoa naquela casa, que foi boa durante sete anos e não fez nada de mal. Alguém sai ferido, e não és tu. E sem a confiança inteira de {quem} ao teu lado, não vai esperar por ti para bater à porta: vai de noite, sozinho, a uma casa onde há quem a guarde.",
+        custa: "Há outra pessoa naquela casa, que foi boa durante sete anos e não fez nada de mal. Alguém sai ferido, e não é você. E sem a confiança inteira de {quem} ao seu lado, não vai esperar por você para bater à porta: vai de noite, sozinho, a uma casa onde há quem a guarde.",
       },
       mostrar: {
         texto: "ficar ao lado de {quem} enquanto se mostra a {esposo}, e depois partir",

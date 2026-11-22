@@ -2197,7 +2197,7 @@ export const ENCRUZILHADA = {
     picote: { cor: T.tintaDoPergaminhoDim, alfa: 0.5, traco: [3, 3] },
     escolhida: { aro: T.amber, espessura: 3, sobe: 8, sombra: { y: 10, raio: 24, alfa: 0.5 }, tag: { chao: T.amber, letra: T.onAccent } } },
   virada: { chao: T.couro, aro: MOLDURA_POR_DEGRAU.ouro.meio, medalhao: 44, titulo: 20 },
-  confirmar: { alto: ALVOS.piso, calado: "Escolhe uma carta", leve: "Escolher: {texto}", preco: "Pagar ◉ {n}", fecha: "{texto}, e acabar aqui" },
+  confirmar: { alto: ALVOS.piso, calado: "Escolha uma carta", leve: "Escolher: {texto}", preco: "Pagar ◉ {n}", fecha: "{texto}, e acabar aqui" },
   movimento: { dar: { dura: 180, entre: 60, sobe: 12, giro: 2 }, escolher: { dura: 120 }, folha: { dura: 220 } },  /* reduzido: tudo seco */
   /* as palavras da cabeça, da carta e do rodapé (318:900 · 317:11) */
   textos: {

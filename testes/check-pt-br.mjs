@@ -112,10 +112,10 @@ const TETO = {
   "src/classes.js": 4,
   "src/habilidades.js": 2,
   "src/regras.js": 1,
-  "src/biblioteca-de-quests.js": 418,  /* 22/11 (a décima sessão do Mestre vivo): os ganchos com «tu» e a quest O Que Desce ao Anoitecer em PT-BR */
-  "src/acervo/quests-lote-6.js": 417,
-  "src/acervo/quests-lote-4.js": 262,
-  "src/acervo/quests-lote-5.js": 223,
+  "src/biblioteca-de-quests.js": 299,  /* 22/11 (a décima sessão do Mestre vivo): os ganchos com «tu» e a quest O Que Desce ao Anoitecer em PT-BR; (a décima primeira): as cartas e os passos de todas as quests em «você» */
+  "src/acervo/quests-lote-6.js": 320,  /* 22/11 (a décima primeira sessão): as cartas e os passos em «você» */
+  "src/acervo/quests-lote-4.js": 187,  /* idem */
+  "src/acervo/quests-lote-5.js": 180,  /* idem */
   "src/acervo/artefactos-lote-1.js": 79,
   "src/plano-do-vilao.js": 60,
   "src/subtramas.js": 35,
