@@ -402,8 +402,8 @@ export function oFiguranteDaCena(estado, opcoes) {
    sistema. «vazio»: ninguém com nome em cena. */
 export const O_ELENCO_FECHADO = Object.freeze({
   max: 6,
-  linha: "dar nome a quem não é {nomes} (quem mais aparecer fica sem nome), ou mudar a cena de sítio sem o sistema",
-  vazio: "dar nome a quem aparecer (aqui ninguém tem nome, e quem passar fica sem nome), ou mudar a cena de sítio sem o sistema",
+  linha: "dar nome a quem não é {nomes} (quem mais aparecer fica sem nome), ou mudar a cena de lugar sem o sistema",
+  vazio: "dar nome a quem aparecer (aqui ninguém tem nome, e quem passar fica sem nome), ou mudar a cena de lugar sem o sistema",
   junta: ", ",
   ultimo: " ou ",
 });

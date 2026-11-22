@@ -14918,7 +14918,7 @@ export default function Taverna() {
           const ef = oElencoFechado({ nomes: [...grupoE, ...aquiE, ...(figE ? [figE.nome] : [])], lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "" });
           if (ef) porNaPautaDoTurno({ naoPode: [ef] });
         }
-      } catch (e) { calou("QC1 · o elenco fechado", e); }
+      } catch (e) { calou("Mestre vivo · o elenco fechado (QC1)", e); }
     }
     /* O MESTRE VIVO (19/11, o-mestre-vivo.md §16): com a chave ligada, o
        momento da frase lê-se antes das portas — o veredito que a régua julgou

@@ -1389,7 +1389,11 @@ export function aPautaDoTurno(estado, entrada, portas) {
            mesmas entradas) e quem em cena sabe o caminho. O Narrador nunca sabe
            menos do que a tela mostra. Sem passos (a campanha antiga), "". */
         let ponte = "";
-        try {
+        /* no turno do espólio (TE9, O QUE O HERÓI LEVA: a etapa acabou de fechar e a
+           paga é de um turno só) a ponte cede — medido em teste-te9-motor §6, com ela
+           o anúncio cheio deixava de chegar em 3 de 40 pautas; ela volta no seguinte */
+        const comEspolio = !!(mesaDasQuests && Array.isArray(mesaDasQuests.espolio) && mesaDasQuests.espolio.length);
+        if (!comEspolio) try {
           const grupoP = ((fichaViva() || {}).grupo) || [];
           let sabem = [];
           try { sabem = quemSabeDoCaso(osQuadrosDoEstado({ ...estadoDosPassos, quadro: $ref.quadro }, { mundo: mundoDaBase() })); } catch (e3) { calou("quem sabe do caso", e3); sabem = []; }

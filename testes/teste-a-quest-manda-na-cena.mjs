@@ -393,7 +393,7 @@ sec("6. O ELENCO FECHADO");
 {
   const l = oElencoFechado({ nomes: ["Lavinia Sallow", "Mercy Quintus", "Caleb"], lugar: BECO.nome });
   console.log("      " + l + " (" + l.length + ")");
-  t("nome só para quem o sistema pôs em cena, e a cena não muda de sítio sozinha", l === "dar nome a quem não é Lavinia Sallow, Mercy Quintus ou Caleb (quem mais aparecer fica sem nome), ou mudar a cena de sítio sem o sistema", l);
+  t("nome só para quem o sistema pôs em cena, e a cena não muda de sítio sozinha", l === "dar nome a quem não é Lavinia Sallow, Mercy Quintus ou Caleb (quem mais aparecer fica sem nome), ou mudar a cena de lugar sem o sistema", l);
   t("sem ninguém com nome, a forma vazia", oElencoFechado({ nomes: [], lugar: BECO.nome }) === O_ELENCO_FECHADO.vazio);
   t("no máximo a tabela de nomes, sem repetir", oElencoFechado({ nomes: ["A", "B", "C", "D", "E", "F", "G", "a"], lugar: "x" }) === O_ELENCO_FECHADO.linha.replace("{nomes}", "A, B, C, D, E ou F"));
   t("sem lugar, nada (lixo não estoura)", oElencoFechado({ nomes: ["x"] }) === "" && oElencoFechado(null) === "");
