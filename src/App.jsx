@@ -34,7 +34,7 @@ import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HO
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
 import { gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
-import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA, PRECOS_COMUNS } from "./economia.js";
+import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA, PRECOS_COMUNS, precoComum } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
 import { escolherReacao, resolverReacao, reacoesDe, revideNoCampo } from "./reacoes.js";
 /* ---------------- A JANELA DA REACAO (v9.259, Fase K - K3) ----------------
@@ -287,7 +287,8 @@ import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 import { aFichaDeAtor } from "./motor/ficha-de-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-proposta-da-frase.js";
-import { aCenaDoOuvido, oOuvidoNaTroca, aTrocaDoOuvido, aFichaMudou, aRespostaDaPergunta, oRegistroDoOuvido } from "./motor/a-cena-do-ouvido.js";
+import { aTrocaDoOuvido, oRegistroDoOuvido, osPratosDaCasa } from "./motor/a-cena-do-ouvido.js";
+import { aPortaUnica, UMA_PORTA_SO } from "./motor/uma-porta-so.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui } from "./quem-esta-aqui.js";
 import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ausente.js";
@@ -5983,7 +5984,8 @@ export default function Taverna() {
   const pautaDeUmTurnoRef = useRef(null);
   /* O OUVIDO (22/11): a leitura da frase deste turno, e a pergunta da troca à espera da resposta */
   const ouvidoDoTurnoRef = useRef(null);
-  const perguntaDoOuvidoRef = useRef(null);     // o canal de um turno (ACABOU DE e NÃO PODE): o encontro da estrada, e quem mais o pedir
+  const perguntaDoOuvidoRef = useRef(null);
+  const portaUnicaRef = useRef(null);           // UMA PORTA SÓ (23/11): o resultado da frase, lido na proposta e executado no turno     // o canal de um turno (ACABOU DE e NÃO PODE): o encontro da estrada, e quem mais o pedir
   const crimeConfirmadoRef = useRef(false);
   /* A PROPOSTA (04/11): a frase cujo veredito do crime já foi visto no cartão — o turno não pergunta outra vez */
   const crimeVistoNaPropostaRef = useRef(null);
@@ -14846,7 +14848,8 @@ export default function Taverna() {
       try { ouvido = ouvirAFrase(acao); } catch (e) { calou("Mestre vivo · o ouvido", e); ouvido = null; ouvidoDoTurnoRef.current = null; }
     }
     if (ouvido && ouvido.parou) return;
-    const portasDeTroca = !ouvido || (!ouvido.fechou && !!ouvido.leitura && ouvido.leitura.familia === "trocar");
+    /* UMA PORTA SÓ (23/11): com a leitura do ouvido, nenhuma porta antiga de troca abre — a resposta já é uma */
+    const portasDeTroca = !ouvido;
     if (portasDeTroca) { try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); } }
     try { if (ouvido && ouvidoDoTurnoRef.current) ouvidoDoTurnoRef.current = { ...ouvidoDoTurnoRef.current, bolsaFalou: (naoPodeDoTurnoRef.current || []).length + (semFolgaDoTurnoRef.current || []).length > 0 }; } catch (e) { calou("o ouvido · o que a bolsa disse", e); }
     /* NE4 (13/11): A PALAVRA DO HERÓI. A promessa da frase entra no caderno
@@ -19117,8 +19120,11 @@ export default function Taverna() {
      sistema sabe noutro lugar, o chão e a ficha — cada leitura no seu calou. */
   const retratoDoOuvido = () => {
     const f0 = fichaViva() || personagem || {};
-    let pessoas = [], bancas = [], ausentes = [], chao = [];
+    let pessoas = [], bancas = [], ausentes = [], chao = [], conhecidos = [], anteriores = {}, casa = [];
     try { pessoas = pessoasDaCena() || []; } catch (e) { calou("o ouvido · quem está", e); pessoas = []; }
+    /* 23/11 (a décima sexta sessão, frases 4 e 7): quem a tela põe em cena também está — «Mercy» era
+       Mercy Quintus, à vista, e o ouvido a resolvia para a Mercy Ottoline, longe (quemONomeDiz: presente ganha) */
+    try { for (const n of presentesDaTela()) if (n && !pessoas.some((p) => p && p.nome === n)) pessoas = [...pessoas, { nome: n, papel: "" }]; } catch (e) { calou("o ouvido · quem a tela põe em cena", e); }
     try { bancas = [...(bancasDaCena() || [])]; } catch (e) { calou("o ouvido · as bancas", e); bancas = []; }
     try {
       const cidB = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
@@ -19132,66 +19138,101 @@ export default function Taverna() {
       const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
       ausentes = osAusentes(quemAgora(), { gente: genteA, npcs: npcsRef.current, heroi: f0, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) }) || [];
     } catch (e) { calou("o ouvido · quem está noutro lugar", e); ausentes = []; }
-    try { chao = pertoDaqui(chaoRef.current, null, RAIO_EXAME).map((x) => x && x.nome).filter(Boolean); } catch (e) { calou("o ouvido · o chão", e); chao = []; }
-    return { lugar: { nome: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "", tipo: (lugarRef.current && lugarRef.current.tipo) || "" }, pessoas, grupo: f0.grupo || [], bancas, ausentes, chao, ficha: f0 };
+    /* quem o sistema conhece (o registo, a gente da cidade, a pessoa que o passo da quest nomeia): «dou duas
+       moedas pra Constance» com ela fora é «não está aqui», nunca «a quem?» (frase 40) */
+    try { conhecidos = [...(ausentesAgora().conhecidos || [])]; } catch (e) { calou("o ouvido · quem o sistema conhece", e); conhecidos = []; }
+    try { for (const p of passosDasQuestsAgora()) for (const c of ((p && p.candidatos && p.candidatos.pessoa) || [])) if (c && c.nome) conhecidos.push(c.nome); } catch (e) { calou("o ouvido · a gente do passo", e); }
+    try { chao = pertoDaqui(chaoRef.current, null, RAIO_EXAME).filter((x) => x && x.nome).map((x) => ({ id: x.id, nome: x.nome })); } catch (e) { calou("o ouvido · o chão", e); chao = []; }
+    /* a conversa: a frase anterior e a última fala do Mestre (o «ele/ela» de uma mesa) */
+    try { anteriores = { jogador: fraseAnteriorDoJogador(mensagensRef.current), mestre: falasDoMestre(mensagensRef.current, 1)[0] || "" }; } catch (e) { calou("o ouvido · a conversa", e); anteriores = {}; }
+    /* a casa: o que a taverna serve, pelos preços comuns do cenário e o fator do pouso */
+    try { if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current) casa = osPratosDaCasa((PRECOS_COMUNS || []).map((p) => ({ id: p.id, rx: p.rx, preco: precoComum(p.id, fatorDoPouso()) }))); } catch (e) { calou("o ouvido · a casa", e); casa = []; }
+    return { lugar: { nome: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "", tipo: (lugarRef.current && lugarRef.current.tipo) || "" }, pessoas, grupo: f0.grupo || [], bancas, ausentes, conhecidos, chao, anteriores, casa, ficha: f0 };
   };
-  /* lê a frase e responde. Devolve o que o turno faz a seguir: { parou } (a
-     pergunta: o turno para aqui, sem Narrador), { fechou } (a negativa já foi
-     à tela e à pauta) ou a leitura (as portas de hoje aplicam a troca) */
+  /* ---------------- UMA PORTA SÓ (23/11, a décima sexta sessão) ----------------
+     A sessão mediu a fiação do ouvido: 12 de 40 trocas com linha, ficha e prosa
+     de acordo. Duas portas respondiam — a antiga (a mão da frase, os cartões de
+     pagar e vender, a bolsa da frase) antes do ouvido e às vezes sozinha — e o que
+     o ouvido decidia nem sempre ia à ficha. Agora a decisão é uma função pura
+     (motor/uma-porta-so.js#aPortaUnica): a frase e o retrato entram, UM resultado
+     sai, e o App só o executa. Lida uma vez (na proposta da frase, antes de tudo)
+     e guardada pela frase para o turno; a pergunta pendente vai junto, e a
+     resposta completa a leitura. A revenda do que é de uso é a do cartão «Vender». */
+  const ofertaDoUsoAqui = (id, quantos) => {
+    try {
+      const s0 = precoDoSuprimento(id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: true }) });
+      const ofU = s0 ? ofertaPor({ nome: s0.nome }) : null;
+      const rU = aVendaDoUso(fichaViva() || personagem, { id, quantos, preco: s0 ? s0.preco : 0, quem: ofU && ofU.quem, motivo: s0 ? (ofU && ofU.motivo) : "" });
+      return rU && rU.ok && ofU && ofU.quem ? { valor: rU.valor, quem: ofU.quem } : null;
+    } catch (e) { calou("o ouvido · a revenda do que é de uso", e); return null; }
+  };
+  const aPortaDaFrase = (texto) => {
+    const frase = String(texto || "").trim();
+    const g = portaUnicaRef.current;
+    /* o guardado vale para a mesma frase (a digitada ou a que a escolha compôs), e por pouco tempo */
+    if (g && (g.entrada === frase || g.frase === frase) && Date.now() - g.em < UMA_PORTA_SO.guardadaMs) return g.r;
+    const pend = perguntaDoOuvidoRef.current;
+    perguntaDoOuvidoRef.current = null;
+    let r = null;
+    try { r = aPortaUnica(frase, retratoDoOuvido(), { pendente: pend, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO }); } catch (e) { calou("o ouvido · a porta única", e); r = null; }
+    portaUnicaRef.current = r ? { entrada: frase, frase: r.frase, r, em: Date.now() } : null;
+    return r;
+  };
+  /* executa o resultado único. Devolve o que o turno faz a seguir: { parou } (a
+     pergunta: o turno para aqui, sem Narrador), { fechou } (o veredito já foi à
+     ficha, à tela e à pauta) ou a leitura (o dado: o caminho de hoje, ou adiado) */
   const ouvirAFrase = (acao) => {
     ouvidoDoTurnoRef.current = null;
-    perguntaDoOuvidoRef.current = null;
-    if (!acao || acao.startsWith("/") || acao.startsWith("[") || combateRef.current) return null;
-    const retrato = retratoDoOuvido();
-    const cena = aCenaDoOuvido(retrato);
-    const o = oOuvidoNaTroca(acao, cena);
+    if (!acao || acao.startsWith("/") || acao.startsWith("[") || combateRef.current) { portaUnicaRef.current = null; return null; }
+    const r = aPortaDaFrase(acao);
+    portaUnicaRef.current = null;
     /* só o console: os testadores de sessão jogada leem a leitura e a resposta */
-    try { console.info(oRegistroDoOuvido(acao, o)); } catch (e) { calou("o ouvido · o registro", e); }
-    if (!o || !o.lido) return null;
-    /* a bolsa do começo do turno: o cartão de pagar ou vender já pode ter mexido nela */
-    const foto = fotoInicioRef.current;
-    const antes = foto && foto.frase === acao && foto.retrato && foto.retrato.personagem ? foto.retrato.personagem : retrato.ficha;
-    const ov = { ...o, frase: acao, cena, bancas: retrato.bancas, antes, fechou: false };
+    try { console.info(oRegistroDoOuvido(acao, r ? { leitura: r.leitura, resposta: r.resposta, caminho: r.caminho, intencao: r.intencao } : null)); } catch (e) { calou("o ouvido · o registro", e); }
+    if (!r || !r.lido) return null;
+    const ov = { ...r, frase: acao, fechou: false };
     ouvidoDoTurnoRef.current = ov;
-    if (o.caminho === "pergunta" && o.pergunta) {
-      perguntaDoOuvidoRef.current = o.pergunta;
+    if (r.caminho === "pergunta" && r.pergunta) {
+      perguntaDoOuvidoRef.current = r.pergunta;
       setEntrada(""); apagarORascunho();
-      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: o.pergunta.linha }]);
+      pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: r.pergunta.linha }]);
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true, parou: true };
     }
-    if (o.caminho === "nao" && o.negada) {
-      aplicarOVereditoDaTroca(o.negada);
+    if ((r.caminho === "nao" || r.caminho === "aplicado" || r.caminho === "desiste") && r.veredito) {
+      aplicarOVereditoDaTroca(r.veredito);
+      /* a baixa no estoque da banca, como a compra à banca da frase */
+      if (r.veredito.estado === "aplicada" && r.veredito.comprado && r.veredito.comprado.banca) {
+        try {
+          const merc = mercadoRef.current || {};
+          const doMercador = ((merc.comprados || {})[r.veredito.comprado.banca]) || [];
+          mercadoRef.current = { ...merc, comprados: { ...(merc.comprados || {}), [r.veredito.comprado.banca]: [...doMercador, r.veredito.comprado.nome] } };
+          setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
+        } catch (e) { calou("o ouvido · a baixa na banca", e); }
+      }
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true };
     }
-    return ov;
+    if (r.caminho === "recolher" && r.recolher) {
+      try { recolherDoChao(r.recolher); } catch (e) { calou("o ouvido · o recolher", e); }
+      ouvidoDoTurnoRef.current = { ...ov, fechou: true };
+      return { ...ov, fechou: true };
+    }
+    /* não é troca, mas o sistema sabe o preço: vai como fato do turno (a prosa não inventa outro) */
+    if (r.caminho === "falar" && r.fato) { try { porNaPautaDoTurno({ fato: [r.fato] }); } catch (e) { calou("o ouvido · o preço", e); } }
+    /* o dado com caminho de hoje: a porta do veredito lê a intenção (o furto, o pedido, o tomar) */
+    if (r.caminho === "dado" && r.intencao) ouvidoDoTurnoRef.current = { ...ov, caminho: "aplicar", intencao: r.intencao };
+    return ouvidoDoTurnoRef.current;
   };
-  /* depois das portas de hoje: o que o ouvido leu como troca e nenhuma porta
-     aplicou (nem fato na pauta, nem bolsa mexida, nem dado à espera), ele
-     aplica — o menor que é verdadeiro (aTrocaDoOuvido) */
+  /* o dado sem caminho de hoje (cobrar, pedir emprestado, o fiado, o regateio): com a porta do
+     momento, a resposta é a do teste à espera ou «não cede» — e nada muda de mão nesta resposta */
   const oOuvidoFechaATroca = (acao, porta) => {
     const ov = ouvidoDoTurnoRef.current;
-    if (!ov || ov.frase !== acao || ov.fechou || ov.caminho !== "aplicar") return;
-    const um = pautaDeUmTurnoRef.current;
-    if (um && Array.isArray(um.fato) && um.fato.length) return;
-    if (ov.bolsaFalou) return;
+    if (!ov || ov.frase !== acao || ov.fechou || !ov.adiado) return;
     const agora = fichaViva() || personagem;
-    if (!agora || aFichaMudou(ov.antes, agora)) return;
-    const tr = trocaDoTurnoRef.current;
-    if (tr && tr.frase === acao && tr.intencao && !tr.veredito) return;
-    const v = aTrocaDoOuvido(ov, { ficha: agora, bancas: ov.bancas || [], porta: porta || "", vaiAoCorpo: VAI_AO_CORPO, ofertaDe: (item) => ofertaPor(item) });
+    if (!agora) return;
+    const v = aTrocaDoOuvido({ caminho: "aplicar", leitura: ov.leitura, resposta: ov.resposta }, { ficha: agora, bancas: [], porta: porta || "", vaiAoCorpo: VAI_AO_CORPO, ofertaDe: (item) => ofertaPor(item) });
     if (!v) return;
     aplicarOVereditoDaTroca(v);
-    /* a baixa no estoque da banca, como a compra à banca da frase */
-    if (v.estado === "aplicada" && v.comprado && v.comprado.banca) {
-      try {
-        const merc = mercadoRef.current || {};
-        const doMercador = ((merc.comprados || {})[v.comprado.banca]) || [];
-        mercadoRef.current = { ...merc, comprados: { ...(merc.comprados || {}), [v.comprado.banca]: [...doMercador, v.comprado.nome] } };
-        setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
-      } catch (e) { calou("o ouvido · a baixa na banca", e); }
-    }
     ouvidoDoTurnoRef.current = { ...ov, fechou: true };
   };
   const vereditoDaTrocaAntes = (acao, m, porta) => {
@@ -27902,15 +27943,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   };
   /* devolve true quando a frase virou proposta (e o turno não parte) */
   const proporAFrase = (texto) => {
-    /* O OUVIDO (22/11): a resposta à pergunta da troca — o número ou o nome da
-       opção reenvia a frase inteira (que passa por aqui de novo e parte);
-       qualquer outra frase segue como turno */
-    try {
-      const pend = perguntaDoOuvidoRef.current;
-      perguntaDoOuvidoRef.current = null;
-      const r = pend ? aRespostaDaPergunta(pend, texto) : null;
-      if (r) { if (!proporAFrase(r)) partirOTurno(r); return true; }
-    } catch (e) { calou("o ouvido · a resposta à pergunta", e); }
+    /* UMA PORTA SÓ (23/11, a décima sexta sessão): com o Mestre vivo, a frase é lida
+       aqui primeiro, pela porta única. A frase de troca parte sem abrir a mão da
+       frase nem o cartão (eles só existem como aplicação da leitura do ouvido); a
+       resposta à pergunta pendente completa a leitura e parte com a frase dela;
+       o resto segue como sempre */
+    if (mestreVivoLigado()) {
+      try {
+        const acao0 = String(texto || "").trim();
+        if (acao0 && !acao0.startsWith("/") && !acao0.startsWith("[") && !salaRef.current && !combateRef.current && !carregando && !rolagem) {
+          const rU = aPortaDaFrase(acao0);
+          if (rU && rU.troca) {
+            setPropostaDaFrase(null); setPropostaAberta(false);
+            if (rU.frase !== acao0) { partirOTurno(rU.frase); return true; }
+            return false;
+          }
+          if (rU && rU.frase !== acao0) { partirOTurno(rU.frase); return true; }
+        }
+      } catch (e) { calou("Mestre vivo · a porta única", e); }
+    }
     try {
       const acao = String(texto || "").trim();
       if (!acao || acao.startsWith("/") || acao.startsWith("[")) return false;
@@ -27921,6 +27972,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          botão (recolherDoChao — o envelope «JÁ APLICADO» vai com o turno), e
          vender ou dar o que não está na bolsa é recusado aqui, antes do
          Narrador, como a compra sem dinheiro (a-mao-da-frase.js) */
+      /* UMA PORTA SÓ (23/11): com o Mestre vivo, a mão da frase não lê (a régua de 22/11: as listas não somaram troca ao ouvido, só falsas) */
+      if (!mestreVivoLigado()) {
       try {
         const nomeDe = (r) => (typeof r === "string" ? r : (r && r.nome) || "");
         const f0 = pm || personagem || {};
@@ -27934,7 +27987,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           return true;
         }
       } catch (e) { calou("S2 · a mão da frase", e); }
-      const p = aPropostaDaFrase(leituraDaFrase(acao), { ...estadoDoPedido(), passos: (() => { try { return passosDasQuestsAgora(); } catch (e) { calou("a proposta: os passos", e); return []; } })() });
+      }
+      /* com o Mestre vivo, o cartão não cobra, não vende e não compra por lista: só o ouvido aplica a troca */
+      const lf = leituraDaFrase(acao);
+      const p = aPropostaDaFrase(mestreVivoLigado() ? { ...lf, pagar: null, venda: null, compras: null } : lf, { ...estadoDoPedido(), passos: (() => { try { return passosDasQuestsAgora(); } catch (e) { calou("a proposta: os passos", e); return []; } })() });
       if (!p) { setPropostaDaFrase(null); setPropostaAberta(false); return false; }
       setPropostaDaFrase(p); setPropostaAberta(false);
       setEntrada("");
@@ -28222,7 +28278,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
        A frase que não é carta fecha a encruzilhada e segue como sempre. */
     try {
       const lista = escolhasAgora();
-      if (lista.length && !carregando && !rolagem && !combateRef.current) {
+      /* UMA PORTA SÓ (23/11, frase 34): «devolvo o livro a Mercy» com ela fora abria a carta e o livro ficava;
+         a troca que a porta única nega ou pergunta não abre a encruzilhada */
+      let rBQ = null;
+      try { const e0 = String(entrada || "").trim(); if (mestreVivoLigado() && lista.length && e0 && !e0.startsWith("/") && !e0.startsWith("[")) rBQ = aPortaDaFrase(e0); } catch (e) { calou("Mestre vivo · a porta única na encruzilhada", e); rBQ = null; }
+      if (lista.length && !carregando && !rolagem && !combateRef.current && !(rBQ && rBQ.troca && (rBQ.caminho === "nao" || rBQ.caminho === "pergunta"))) {
         const c = aEscolhaDaFrase(entrada, lista);
         const esc = c ? lista.find((x) => x.quest === c.quest && x.chave === c.chave) : null;
         if (esc) { abrirAEscolha(esc, { preEscolhida: c.opcao, frase: entrada.trim() }); setEntrada(""); return; }

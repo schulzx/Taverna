@@ -284,7 +284,9 @@ sec("§7 a fiação do App: os três patches da abertura");
   t("1 · o convite passa o nome e os passos da história a pesarConvite", /\bnome, passos: \(\(\) => \{ try \{ return passosDasQuestsAgora\(\); \} catch \(e\) \{ calou\(/.test(conv), conv.slice(0, 200));
   const conh = trecho("const conhecidos = new Set();", 2200);
   t("2 · a gente que os passos nomeiam entra nos conhecidos da recusa", /for \(const p of passosDasQuestsAgora\(\)\) for \(const c of \(\(p && p\.candidatos && p\.candidatos\.pessoa\) \|\| \[\]\)\) if \(c && c\.nome\) conhecidos\.add\(c\.nome\); \} catch \(e\) \{ calou\(/.test(conh));
-  t("2 · e a proposta da frase recebe os passos", /aPropostaDaFrase\(leituraDaFrase\(acao\), \{ \.\.\.estadoDoPedido\(\), passos: \(\(\) => \{ try \{ return passosDasQuestsAgora\(\);/.test(app));
+  /* AJUSTADA em 23/11 (a décima sexta sessão, «uma porta só»): a leitura da frase passa por `lf` (com o
+     Mestre vivo, sem o pagar, a venda e a compra das listas). A intenção fica: a proposta recebe os passos. */
+  t("2 · e a proposta da frase recebe os passos", /aPropostaDaFrase\(mestreVivoLigado\(\) \? \{ \.\.\.lf, pagar: null, venda: null, compras: null \} : lf, \{ \.\.\.estadoDoPedido\(\), passos: \(\(\) => \{ try \{ return passosDasQuestsAgora\(\);/.test(app));
   const aq = trecho("const aplicarAsQuests = (r, onde) => {", 2400);
   t("3 · aplicarAsQuests põe no mapa as cidades dos papéis da quest aberta", /R\.estado !== "aberta"[\s\S]*Object\.values\(R\.papeis[\s\S]*descobrirCidade\(mapaRef\.current, p\.cidade\)[\s\S]*setMapa\(d\.mapa\)[\s\S]*calou\("BQ7 · " \+ onde \+ " · as cidades da quest no mapa"/.test(aq));
   /* o laço do patch 3 numa campanha real: a cidade de cada papel sai da névoa */

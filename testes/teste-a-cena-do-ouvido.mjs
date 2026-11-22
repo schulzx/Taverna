@@ -64,8 +64,11 @@ sec("§1 o adaptador — do retrato do estado real para a cena do ouvido");
   t("o lugar e o tipo", CENA.lugar === "Taverna do Javali" && CENA.tipo === "taverna");
   t("o companheiro sai das pessoas e vai para o herói", !CENA.pessoas.some((p) => p.nome === "Rhogar") && CENA.heroi.companheiro === "Rhogar");
   t("quem está tem o ofício do papel", CENA.pessoas.some((p) => p.nome === "Tobias Arn" && p.oficio === "mendigo"));
-  t("a banca vira quem vende, com o item e o preço", J(CENA.pessoas.find((p) => p.nome === "Armazém do Porto").vende.slice(0, 2)) === J([{ item: "Corda de cânhamo", preco: 2 }, { item: "Pão", preco: 1 }]));
-  t("o balcão também vende (a ração, a tocha)", CENA.pessoas.some((p) => p.nome === "o balcão" && p.vende.length === 2));
+  /* MOVIDAS em 23/11 (a décima sexta sessão), e o motivo: a banca entrava como pessoa, e a sessão a
+     viu nas opções de «a quem» («4. O Sino Rachado · 5. A Âncora do Sul») e um «dela» virar a loja.
+     A banca vai à parte (`bancas`), com o estoque. A intenção fica: quem vende, com o item e o preço. */
+  t("a banca vende (à parte, nunca como gente), com o item e o preço", !CENA.pessoas.some((p) => p.nome === "Armazém do Porto") && J(CENA.bancas.find((p) => p.nome === "Armazém do Porto").vende.slice(0, 2)) === J([{ item: "Corda de cânhamo", preco: 2 }, { item: "Pão", preco: 1 }]));
+  t("o balcão também vende (a ração, a tocha)", CENA.bancas.some((p) => p.nome === "o balcão" && p.vende.length === 2));
   t("o ausente vivo é ausente, o morto é morto", J(CENA.ausentes) === J(["Kael Durn"]) && J(CENA.mortos) === J(["Edrik Sorn"]));
   t("quem está aqui não é ausente, mesmo na lista de longe", !CENA.ausentes.includes("Marta Vell"));
   t("as coisas soltas vêm do chão (objeto ou nome)", J(CENA.coisas) === J(["caneca", "banquinho"]));
@@ -254,26 +257,32 @@ sec("§7 a fiação, lida no App.jsx");
 {
   const APP = ler("../src/App.jsx");
   const corpo = (nome) => { const i = APP.indexOf(`  const ${nome} = `); if (i < 0) return ""; const j = APP.indexOf("\n  };\n", i); return APP.slice(i, j + 5); };
-  t("o App importa a ponte do ouvido", /import \{ aCenaDoOuvido, oOuvidoNaTroca, aTrocaDoOuvido, aFichaMudou, aRespostaDaPergunta, oRegistroDoOuvido \} from "\.\/motor\/a-cena-do-ouvido\.js";/.test(APP));
+  /* MOVIDAS em 23/11 (a décima sexta sessão, «uma porta só»), e o motivo: a decisão saiu do App para
+     motor/uma-porta-so.js (aPortaUnica lê a frase com a ponte e devolve UM resultado), e o App só o
+     executa. A intenção de cada asserção fica — o ouvido antes da bolsa, a chave em try e calou, a
+     leitura só no console, a negativa e o que se aplica pela porta da troca de hoje, a pergunta que
+     para o turno — e as que mudaram de forma dizem a forma nova; a fiação inteira tem prova própria
+     em teste-mestre-vivo-sessao-16.mjs §4. */
+  t("o App importa a ponte do ouvido (o que ainda executa) e a porta única", /import \{ aTrocaDoOuvido, oRegistroDoOuvido, osPratosDaCasa \} from "\.\/motor\/a-cena-do-ouvido\.js";\nimport \{ aPortaUnica, UMA_PORTA_SO \} from "\.\/motor\/uma-porta-so\.js";/.test(APP));
   const ag = corpo("agirInterno");
   const iO = ag.indexOf("ouvido = ouvirAFrase(acao)"), iB = ag.indexOf("registarABolsaDaFrase(acao)");
   t("no turno, o ouvido lê antes da bolsa da frase", iO > 0 && iB > iO);
   t("…só com a chave do Mestre vivo, em try e calou", /if \(mestreVivoLigado\(\)\) \{\n\s*try \{ ouvido = ouvirAFrase\(acao\); \} catch \(e\) \{ calou\("Mestre vivo · o ouvido", e\);/.test(ag));
   t("a pergunta para o turno antes do Narrador", /if \(ouvido && ouvido\.parou\) return;/.test(ag));
-  t("sem o ouvido (chave desligada ou estouro), a bolsa da frase abre como hoje", /const portasDeTroca = !ouvido \|\| /.test(ag) && /if \(portasDeTroca\) \{ try \{ registarABolsaDaFrase\(acao\); \}/.test(ag));
+  t("sem o ouvido (chave desligada ou estouro), a bolsa da frase abre como hoje — e com ele, nunca", /const portasDeTroca = !ouvido;/.test(ag) && /if \(portasDeTroca\) \{ try \{ registarABolsaDaFrase\(acao\); \}/.test(ag));
   t("depois das portas de hoje, o ouvido fecha a troca, em calou", /vereditoDaTrocaAntes\(acao, [^\n]*\n\s*\/\*[^\n]*\*\/\n\s*try \{ oOuvidoFechaATroca\(acao, oQueOMomentoFaz\(momentoDoTurnoRef\.current\)\); \} catch \(e\) \{ calou\("Mestre vivo · o ouvido fecha a troca", e\); \}/.test(ag));
   t("o momento não rola a troca que o ouvido já negou", /&& !ouvidoFechou\) momentoDoTurnoRef\.current = momentoDaAdjudicacao\(acao\);/.test(ag));
   const vt = corpo("vereditoDaTrocaAntes");
   t("a porta do veredito lê a intenção do ouvido; as listas só sem ele", /let it = ov \? ov\.intencao : aIntencaoDaTroca\(acao/.test(vt) && /if \(ov && \(ov\.fechou \|\| ov\.caminho !== "aplicar" \|\| !ov\.intencao\)\) return;/.test(vt));
   t("com o ouvido, a porta final não fala por cima dele", /it\.tipo === "dar" && !ov\)/.test(vt));
   const oa = corpo("ouvirAFrase");
-  t("a leitura vai ao console, e só ao console", /console\.info\(oRegistroDoOuvido\(acao, o\)\)/.test(oa) && !/pushMsgs\([^\n]*oRegistroDoOuvido/.test(APP));
-  t("a negativa vai pela porta da troca negada de hoje (aplicarOVereditoDaTroca)", /aplicarOVereditoDaTroca\(o\.negada\)/.test(oa));
-  t("a pergunta mostra a linha com as opções e guarda a espera", /perguntaDoOuvidoRef\.current = o\.pergunta;/.test(oa) && /texto: o\.pergunta\.linha/.test(oa));
+  t("a leitura vai ao console, e só ao console", /console\.info\(oRegistroDoOuvido\(acao, r \?/.test(oa) && !/pushMsgs\([^\n]*oRegistroDoOuvido/.test(APP));
+  t("a negativa (e o que se aplica) vai pela porta da troca de hoje (aplicarOVereditoDaTroca)", /aplicarOVereditoDaTroca\(r\.veredito\)/.test(oa));
+  t("a pergunta mostra a linha com as opções e guarda a espera", /perguntaDoOuvidoRef\.current = r\.pergunta;/.test(oa) && /texto: r\.pergunta\.linha/.test(oa));
   const fe = corpo("oOuvidoFechaATroca");
-  t("o ouvido só aplica o que nenhuma porta aplicou (fato, bolsa, dado à espera)", /um\.fato\.length\) return;/.test(fe) && /aFichaMudou\(ov\.antes, agora\)\) return;/.test(fe) && /tr\.intencao && !tr\.veredito\) return;/.test(fe));
+  t("depois das portas, o ouvido fecha só o dado que esperou a porta do momento (o resto já fechou na leitura)", /!ov\.adiado\) return;/.test(fe));
   t("o que ele aplica vira fato do turno e linha pela porta de hoje", /aplicarOVereditoDaTroca\(v\);/.test(fe));
-  t("a resposta à pergunta (o número ou o nome) reenvia a frase inteira, pela proposta da frase", /const r = pend \? aRespostaDaPergunta\(pend, texto\) : null;\n\s*if \(r\) \{ if \(!proporAFrase\(r\)\) partirOTurno\(r\); return true; \}/.test(corpo("proporAFrase")));
+  t("a resposta à pergunta (o número ou o nome) completa a leitura na porta única e parte, pela proposta da frase", /const rU = aPortaDaFrase\(acao0\);/.test(corpo("proporAFrase")) && /if \(rU\.frase !== acao0\) \{ partirOTurno\(rU\.frase\); return true; \}/.test(corpo("proporAFrase")));
   t("nenhum bloco estático novo no prompt: o ouvido fala só pela pauta de um turno", !/SECOES|TETO_DA_PAUTA/.test(oa + fe + corpo("retratoDoOuvido")));
   t("o retrato lê cada fonte no seu calou", (corpo("retratoDoOuvido").match(/calou\("o ouvido · /g) || []).length >= 5);
   t("a regra do improviso é lida pela ponte (o módulo deixou a lista de espera)", aRespostaDoMestre(oOuvido("dou a gazua", CENA), CENA).veredito === ouve("dou a gazua").resposta.veredito &&!/"a-regra-do-improviso\.js":/.test(ler("./teste-ligacao.mjs")));
