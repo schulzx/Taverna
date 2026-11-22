@@ -27527,7 +27527,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         const vestido = (c) => c && (c.origem === "equipados" || Object.values(p0.equipados || {}).some((e) => e && nomeDe(e) === nomeDe(c.r)));
         const c0 = cands[0];
         if (!c0 && qualV && qualV.ambiguos) {
-          L.venda = { item: qualV.ambiguos[0], rotulo: qualV.ambiguos.join(" ou "), origem: "inventario", motivo: O_VEREDITO_DA_TROCA.tela.qual.replace("❓ ", "").replace("{Lista}", qualV.ambiguos.join(" ou ")) };
+          L.venda = { item: qualV.ambiguos[0], rotulo: qualV.ambiguos.join(" ou "), origem: "inventario", motivo: O_VEREDITO_DA_TROCA.tela.qual.replace("✋ ", "").replace("{Lista}", qualV.ambiguos.join(" ou ")) };
         } else if (c0 && vestido(c0)) {
           L.venda = { item: nomeDe(c0.r), rotulo: curto(c0.r), origem: "equipamento", motivo: O_TEXTO_DA_VENDA_DE_USO.emUso };
         } else if (!c0) {
