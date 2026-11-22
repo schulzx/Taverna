@@ -47,6 +47,8 @@
 import { NUMERO_POR_EXTENSO } from "./cobranca.js";
 import { aQuem } from "./a-venda-da-bolsa.js";
 import { oNomeDito, quemONomeDiz } from "./quem-esta-aqui.js";
+/* a décima terceira sessão (T45): o tipo do lugar de mercado de cada molde («feira do andar», «mercado de espólios», «concourse») */
+import { O_TIPO_DO_LOCAL } from "./o-que-ha-nas-coisas.js";
 
 const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 const obj = (x) => (x != null && typeof x === "object" && !Array.isArray(x) ? x : null);
@@ -328,6 +330,67 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   tiposDoMercado: Object.freeze(["mercado", "feira", "praca"]),
   /* o tipo de sítio que o sistema não conhece (a décima segunda sessão, T44) */
   tipoDesconhecido: Object.freeze(["?"]),
+  /* E1 · O MUNDO FECHADO (a décima terceira sessão: 13 de 23 trocas certas,
+     e em turnos que o sistema NÃO via como troca a prosa entregou a chave, o
+     pano e a pederneira, a tocha, a bolsa). O padrão de todo turno em que o
+     Mestre vivo fala é «nada muda de mão»: sem troca aplicada, o NÃO PODE
+     diz isto, numa linha; com a bolsa mudada pelo sistema sem fato de troca
+     (o preço da carta, o espólio, a quest), o FATO diz o que mudou, e só
+     isso. Na voz do herói em terceira pessoa (a primeira pessoa da pauta
+     vazou como prosa na sessão 13, T19). */
+  mundoFechado: Object.freeze({
+    /* 75 caracteres e não 150 (a primeira forma): medida nas 138 pautas reais da 6.ª e 7.ª sessões, a de 150
+       tirava 7 vetos do NÃO PODE numa pauta cheia; esta não tira nenhum (testes/teste-mestre-vivo-sessao-13.mjs, E1).
+       Os quatro gestos que a ordem nomeia — receber, entregar, achar, perder — estão nela */
+    veto: "dar, receber, achar ou perder moeda ou coisa: neste turno nada mudou de mão",
+    fatoDaBolsa: "Neste turno o sistema mudou a bolsa do herói: {Partes}.",
+    ganhou: "◉ +{N}",
+    perdeu: "◉ −{N}",
+    entrou: "entrou {Lista}",
+    saiu: "saiu {Lista}",
+    usos: Object.freeze({ racoes: "ração", agua: "odre de água", tochas: "tocha", flechas: "flecha" }),
+  }),
+  /* E2 · A PORTA FINAL DA TROCA (a décima terceira sessão, T7, T9, T49): a
+     frase de troca que nenhuma porta resolvia seguia sem veredito, e a prosa
+     decidia. Agora, com verbo de mudança de mão e alguém do outro lado, ela
+     cai na porta mais próxima por regra escrita, ou sai negada com uma linha
+     de mesa que diz como dizer. */
+  portaFinal: Object.freeze({
+    /* o verbo que muda de mão, com o herói como parte (quem dá, quem pede, quem recebe) */
+    verbo: /\b(?:dou|damos|entrego|entregamos|devolvo|devolvemos|empresto|emprestamos|presenteio|troco|trocamos|aceito|aceitamos|recebo|me (?:da|de|passa|passe|entrega|entregue|devolve|devolva|empresta|empreste))\b/,
+    /* «eu entrego você ao cobrador»: entregar ALGUÉM é denunciar, não dar coisa (T9) */
+    gente: /\b(?:dou|damos|entrego|entregamos|passo|ofereco|vendo|troco|devolvo)\s+(?:voce|voces|te|vos|o senhor|a senhora)\b/,
+    /* T7 e T49: tirar do bolso, do cinto, da bolsa de alguém, ou «sem ele ver», é furto */
+    furtoDoBolso: /\b(?:tiro|tiramos|pego|pegamos|puxo|levo|apanho|surrupio|enfio a mao)\b[^.!?;]{0,50}?\b(?:d[oa]s?|de)\s+(?:bolso|bolsos|bolsa|bolsinha|cinto|algibeira|carteira|alforje)\s+(?:de|do|da|dos|das|dele|dela)\b/,
+    semVer: /\bsem (?:que )?(?:ele|ela|eles|elas|ninguem|o dono|a dona)\s+(?:me\s+)?(?:ver|veja|vejam|perceber|perceba|percebam|notar|note|notem|reparar|repare)\b/,
+    /* o objeto do pegar que não é coisa (a moeda é: o furto de uma moeda é furto) */
+    naoEObjeto: Object.freeze(["isso", "isto", "aquilo", "tudo", "nada", "ar", "folego", "caminho"]),
+    pegaDe: /\b(?:tiro|tiramos|pego|pegamos|puxo|levo|apanho|surrupio)\s+(?:(?:a|o|as|os|um|uma|uns|umas)\s+)?([a-z]+)/,
+    /* «aceito o pão de Dagon» (T6): o que o companheiro dá sai da bolsa dele */
+    aceitarDe: /\b(?:aceito|recebo|pego|apanho)\s+(?:(?:o|a|os|as|um|uma)\s+)?(?:(?:meio|meia|pedaco de|pedaco do|pedaco da|pouco de|pouco do|pouco da)\s+)?([a-z][a-z-]*(?:\s+de\s+[a-z]+)?)\s+(?:de|do|da)\s+([a-z]+)/,
+    /* «tomo a chave de Gareth» (sem «da mão»): o tomar do que se segura */
+    tomarDe: /\b(?:tomo|arranco|arrebato|agarro)\s+(?:(?:o|a|os|as|um|uma)\s+)?([a-z]+)\s+(?:de|do|da)\s+[a-z]/,
+    /* «dou a corda a Hakon»: o que se dá e não está na bolsa (só coisa que se segura) */
+    darObjeto: /\b(?:dou|damos|entrego|entregamos|devolvo|empresto|presenteio)\s+(?:(?:o|a|os|as|um|uma|meu|minha|meus|minhas)\s+)?([a-z]+)/,
+    troca: /\btroc(?:o|amos|ar)\b/,
+    tela: Object.freeze({
+      generica: "🤝 Diga o que você dá ou pede, e a quem — por exemplo: «dou a corda a Hakon» ou «peço uma tocha a Hakon».",
+      darSemQuem: "🤝 A quem você dá {Coisa}? Diga o nome de quem recebe.",
+      darNaoTem: "🎒 {Coisa} não está com você: não há o que dar.",
+      troca: "🤝 Coisa por coisa não se fecha numa frase: venda uma e compre a outra («vendo a faca a Hakon», depois «compro uma tocha»).",
+      furtoSemNada: "🤲 A mão volta do bolso {doAlvo}: nada que valha levar.",
+    }),
+    fato: Object.freeze({
+      generica: "O herói disse uma troca sem dizer o que ou com quem: nada mudou de mão.",
+      darSemQuem: "O herói quis dar {Coisa} sem dizer a quem: não deu, e nada mudou de mão.",
+      darNaoTem: "O herói quis dar {Coisa}, que não está com ele: nada mudou de mão.",
+      troca: "O herói quis trocar coisa por coisa numa frase: não houve troca, e nada mudou de mão.",
+    }),
+    veto: "fazer acontecer agora a troca que a mesa não entendeu: ninguém dá nem recebe nada nesta resposta",
+  }),
+  /* a décima terceira sessão (T19): o preço da carta da quest saía da bolsa sem
+     linha. Toda moeda que sai tem linha — a mesma forma do cartão «Pagar» */
+  linhaDaMoedaQueSai: "◉ −{N} moedas",
 });
 const V = O_VEREDITO_DA_TROCA;
 
@@ -613,7 +676,7 @@ export function aIntencaoDaTroca(frase, ctx) {
        pagamento. O cartão «Pagar» é dele; o veredito só o nega a quem não está */
     if (aMoedaPostaNaMesa(frase, c.moeda) > 0 && !aCompraPorMoeda(frase, c.moeda) && !V.compraDeclarada.test(t)) return { tipo: "pagamento", quantia: aMoedaPostaNaMesa(frase, c.moeda) };
     /* dar uma coisa da bolsa: o veredito confere se ela está lá, e a quem vai */
-    if (V.dar.test(t) && !aCompraPorMoeda(frase, c.moeda) && !oSubornoDaFrase(frase, c.moeda) && quantiaNa(t, c.moeda) === 0 && !Object.keys(V.usos).some((u) => new RegExp(`\\b${u}\\b`).test(t))) {
+    if (V.dar.test(t) && !V.portaFinal.gente.test(t) && !aCompraPorMoeda(frase, c.moeda) && !oSubornoDaFrase(frase, c.moeda) && quantiaNa(t, c.moeda) === 0 && !Object.keys(V.usos).some((u) => new RegExp(`\\b${u}\\b`).test(t))) {
       return { tipo: "dar" };
     }
     const mAb = t.match(V.tomarAbstrato);
@@ -624,6 +687,14 @@ export function aIntencaoDaTroca(frase, ctx) {
     }
     const mE = t.match(V.furtoEscondido);
     if (mE) return { tipo: "furto", coisa: mE[1] };
+    /* a décima terceira sessão (T7, T49, T60): «tiro uma moeda do bolso de Gareth
+       sem ele ver», «tiro a bolsa de moedas do cinto de Corwin» — tirar do bolso,
+       do cinto, da bolsa de alguém, ou «sem ele ver», é furto (a porta final, E2) */
+    {
+      const P = V.portaFinal;
+      const mP = t.match(P.pegaDe);
+      if ((P.furtoDoBolso.test(t) || (P.semVer.test(t) && mP)) && !(mP && P.naoEObjeto.includes(mP[1]))) return { tipo: "furto", coisa: mP ? mP[1] : "" };
+    }
     /* a nona sessão, T28: «tomo a faca de peixe da mão do estivador» — força
        contra quem segura, com dado (antes caía em «pegar» e era negado sem dado) */
     const mT = t.match(V.tomar);
@@ -740,7 +811,15 @@ export function quemDaFrase(frase, presentes) {
     const t = sem(frase);
     if (!t) return null;
     const ps = arr(presentes).map(nomeDe).filter(Boolean);
-    for (const p of ps) {
+    /* a décima terceira sessão (T56, T60): «tomo a atenção de Freya… para ela não
+       ver o que Dagon faz» virou Dagon — a lista era lida na ordem de quem está,
+       e o primeiro dela que a frase dizia ganhava. Quem a frase aponta é o
+       complemento do verbo («de Freya», «a Hakon»): pela ordem em que a frase
+       diz os nomes, e o que vem logo depois de «de/do/da/a/ao/para» primeiro */
+    const onde = (p) => { const w = primeiro(p); const m = w.length >= 3 ? new RegExp(`\\b${w}\\b`).exec(t) : null; return m ? m.index : -1; };
+    const complemento = (p) => { const i = onde(p); return i >= 0 && /\b(?:de|do|da|dos|das|a|ao|aos|as|para|pra|pro)\s+(?:(?:o|a)\s+)?$/.test(t.slice(Math.max(0, i - 12), i)); };
+    const ordem = ps.filter((p) => onde(p) >= 0).sort((a, b) => (complemento(b) - complemento(a)) || (onde(a) - onde(b)));
+    for (const p of ordem) {
       const w = primeiro(p);
       if (w.length < 3 || !new RegExp(`\\b${w}\\b`).test(t)) continue;
       /* a décima segunda sessão (o homônimo): dois que estão com o mesmo primeiro
@@ -796,7 +875,8 @@ export function oCompradorDaFrase(frase, pessoas) {
 
 /* o objeto do furto: da palavra do furto até onde começa a outra oração (sem acento) */
 function objetoDoFurto(t) {
-  const m = t.match(V.furto) || t.match(V.furtoEscondido);
+  /* a décima terceira sessão (T49): o furto sem palavra de furto («tiro a bolsa… do cinto de Corwin») também corta na outra oração */
+  const m = t.match(V.furto) || t.match(V.furtoEscondido) || t.match(V.portaFinal.pegaDe);
   if (!m) return t;
   const resto = t.slice(m.index);
   const k = resto.search(V.fimDoObjetoDoFurto);
@@ -839,7 +919,15 @@ export function aVendaSemComprador(frase, ctx) {
     const dito = oCompradorDito(frase);
     if (!dito) return null;
     if (oCompradorDaFrase(frase, c.pessoas)) return null;
-    const tipo = sem(obj(c.lugar) ? c.lugar.tipo : "");
+    const tipo0 = sem(obj(c.lugar) ? c.lugar.tipo : "");
+    /* a décima terceira sessão (T45; é o T44 da décima segunda): «vendo o Elixir
+       de Intelecto ao mercador do balcão» no Balcão do Degrau, com Hakon a vender
+       ali, foi negado. A causa real, reproduzida em teste: o mercado da Torre é do
+       tipo «feira do andar» (o do Arquipélago, «mercado de espólios», e o da
+       estação, «concourse»), e só «mercado/feira/praça» contavam. O tipo do local
+       de cada molde lê-se no tipo das coisas (O_TIPO_DO_LOCAL) antes da lista */
+    const par = Object.entries(O_TIPO_DO_LOCAL).find(([k]) => sem(k) === tipo0);
+    const tipo = par ? sem(par[1]) : tipo0;
     /* a décima segunda sessão (T44): «vendo a bússola ao mercador do Martelo de
        Ferro» no Pátio das Trocas, com o painel do mercado aberto, foi negado — o
        sítio não estava na lista dos lugares conhecidos e o tipo chegava «?». O
@@ -1042,7 +1130,13 @@ export function oVereditoDaTroca(frase, ctx) {
     const ehDoGrupo = (a) => !!a && arr(ficha.grupo).some((g) => primeiro(nomeDe(g)).length >= 3 && primeiro(nomeDe(g)) === primeiro(a.nome));
     const doCtx = it.tipo === "furto" && ehDoGrupo(doCtx0) && !ditoNaFrase(doCtx0) ? null : doCtx0;
     const qualQuem = daFrase && arr(daFrase.qual).length > 1 ? daFrase.qual : null;
-    const alvoC = qualQuem ? daFrase : doCtx && (ditoNaFrase(doCtx) || !daFrase) ? doCtx : daFrase || doCtx;
+    /* a décima terceira sessão (T56): «tomo a atenção de Freya… para ela não ver o
+       que Dagon faz» — o alvo que veio (Dagon) também é dito na frase, mas não é o
+       complemento do verbo. Quem está aqui e a frase aponta (quemDaFrase, pela ordem
+       do complemento) ganha do que veio, quando são dois diferentes */
+    const daFraseAqui = !!daFrase && !qualQuem && arr(c.presentes).some((p) => primeiro(nomeDe(p)) && primeiro(nomeDe(p)) === primeiro(daFrase.nome));
+    const doisDitos = daFraseAqui && !!doCtx && primeiro(doCtx.nome) !== primeiro(daFrase.nome);
+    const alvoC = qualQuem ? daFrase : doisDitos ? daFrase : doCtx && (ditoNaFrase(doCtx) || !daFrase) ? doCtx : daFrase || doCtx;
     /* a décima segunda sessão: o nome é de dois que estão — a mesa pergunta qual, sem dado */
     if (qualQuem && ["furto", "tomar", "deGraca"].includes(it.tipo)) {
       const Lista = qualQuem.join(" ou ");
@@ -1123,6 +1217,138 @@ export function oVereditoDaTroca(frase, ctx) {
       return aplicada("deGraca", nova, [{ coisa: nomeItem, quantos: 1, de: Alvo, para: "heroi" }], tpl(T.deGraca, { Alvo, Coisa: nomeItem }), tpl(F.deGraca, { Alvo, Coisa: nomeItem }), X.deGraca);
     }
     return null;
+  } catch { return null; }
+}
+
+/* ============================================================
+   E1 · aBolsaQueMudou(antes, agora) → null | { moedas, entrou: [nome], saiu: [nome], partes: [texto] }
+   `antes`/`agora`: { moedas, itens: [nome], usos: { racoes, agua, tochas } }
+   (a forma de aBolsaAgora, o-conferente-da-prosa.js). O uso que DESCE não
+   conta (a tocha que arde, a ração que se come): só o que entra.
+   ============================================================ */
+export function aBolsaQueMudou(antes, agora) {
+  try {
+    const a = obj(antes), d = obj(agora);
+    if (!a || !d) return null;
+    const M = V.mundoFechado;
+    const resta = arr(a.itens).map(str).filter(Boolean);
+    const entrou = [];
+    for (const n of arr(d.itens).map(str).filter(Boolean)) { const k = resta.indexOf(n); if (k >= 0) resta.splice(k, 1); else entrou.push(n); }
+    const saiu = resta;
+    const ua = obj(a.usos) || {}, ud = obj(d.usos) || {};
+    for (const u of Object.keys(M.usos)) {
+      const x = Number(ua[u]), y = Number(ud[u]);
+      if (Number.isFinite(x) && Number.isFinite(y) && y > x) entrou.push(`${y - x} × ${M.usos[u]}`);
+    }
+    const ma = Number(a.moedas), md = Number(d.moedas);
+    const moedas = Number.isFinite(ma) && Number.isFinite(md) ? md - ma : 0;
+    const partes = [
+      ...(moedas > 0 ? [tpl(M.ganhou, { N: moedas })] : moedas < 0 ? [tpl(M.perdeu, { N: -moedas })] : []),
+      ...(entrou.length ? [tpl(M.entrou, { Lista: entrou.join(", ") })] : []),
+      ...(saiu.length ? [tpl(M.saiu, { Lista: saiu.join(", ") })] : []),
+    ];
+    if (!partes.length) return null;
+    return Object.freeze({ moedas, entrou: Object.freeze(entrou), saiu: Object.freeze(saiu), partes: Object.freeze(partes) });
+  } catch { return null; }
+}
+
+/* ============================================================
+   E1 · oMundoFechadoDoTurno({ um, antes, agora }) →
+     null | { fato: [linha], naoPode: [veto] } | { maoFechada: [veto] }
+   `um`: o canal de um turno como está agora (PAUTA_DE_UM_TURNO); `antes`: a
+   bolsa da última vez que o Narrador foi chamado; `agora`: a de agora.
+     · já há FATO DESTE TURNO (o veredito, a compra, a venda, o pagamento): ele
+       fecha a mão sozinho («Narre só isto; nada mais muda de mão») — null;
+     · a bolsa mudou sem fato (o preço de uma carta, o espólio, a quest): o
+       FATO diz o que mudou, e o veto de sempre fecha a porta;
+     · nada mudou: o mundo fechado, uma linha (secção `maoFechada`, pauta.js).
+   ============================================================ */
+export function oMundoFechadoDoTurno(o) {
+  try {
+    const x = obj(o) || {};
+    const um = obj(x.um) || {};
+    if (arr(um.fato).some((l) => str(l).trim())) return null;
+    const d = aBolsaQueMudou(x.antes, x.agora);
+    if (d) return Object.freeze({ fato: Object.freeze([`${tpl(V.mundoFechado.fatoDaBolsa, { Partes: d.partes.join("; ") })} ${V.fatoFecho}`]), naoPode: Object.freeze([V.vetoDoFato]) });
+    return Object.freeze({ maoFechada: Object.freeze([V.mundoFechado.veto]) });
+  } catch { return null; }
+}
+
+/* ============================================================
+   E2 · aPortaFinalDaTroca(frase, ctx) → null | { intencao } | veredito negada
+   ctx: { ficha, presentes: [nome], moeda }. Só depois de todas as portas
+   (aIntencaoDaTroca e oVereditoDaTroca deram null): a frase que tem verbo de
+   mudança de mão e alguém do outro lado não segue sem veredito.
+     · o que tem outra porta (a moeda na mesa, a compra, a venda, o fiado, o
+       suborno) e o que não é troca («entrego você ao cobrador») → null;
+     · a porta mais próxima, por regra escrita: tirar do bolso ou «sem ele
+       ver» → furto; «aceito o pão de Dagon» → o companheiro; «tomo a chave
+       de Gareth» → o tomar (com dado);
+     · o resto sai `negada`, com a linha de mesa que diz como dizer.
+   ============================================================ */
+export function aPortaFinalDaTroca(frase, ctx) {
+  try {
+    const c = obj(ctx) || {};
+    const t = sem(frase);
+    if (!t || t.startsWith("[") || t.startsWith("/") || /\?\s*$/.test(t)) return null;
+    const P = V.portaFinal;
+    if (P.gente.test(t)) return null;
+    if (aPortaDaMoeda(frase, c.moeda) || V.vender.test(t) || aMoedaPostaNaMesa(frase, c.moeda) > 0 || /\bcompr(?:o|amos|ar|ei)\b/.test(t)) return null;
+    const ficha = obj(c.ficha) || {};
+    const grupo = arr(ficha.grupo).map(nomeDe).filter(Boolean);
+    const pres = [...new Set([...arr(c.presentes).map(nomeDe).filter(Boolean), ...grupo])];
+    /* 1. o furto que nenhuma lista via (T7, T49) */
+    if ((P.furtoDoBolso.test(t) || (P.semVer.test(t) && P.pegaDe.test(t))) && !P.naoEObjeto.includes((t.match(P.pegaDe) || [])[1] || "")) {
+      const m = t.match(P.pegaDe);
+      return Object.freeze({ intencao: Object.freeze({ tipo: "furto", coisa: m ? m[1] : "" }) });
+    }
+    /* 2. o que o companheiro estende e o herói aceita (T6) */
+    const mA = t.match(P.aceitarDe);
+    if (mA) {
+      const g = arr(ficha.grupo).find((x) => obj(x) && primeiro(nomeDe(x)) === mA[2]);
+      if (g) return Object.freeze({ intencao: Object.freeze({ tipo: "companheiro", quem: nomeDe(g), oQue: "coisa", coisa: mA[1] }) });
+    }
+    /* 3. o tomar do que se segura, sem «da mão» */
+    const mT = t.match(P.tomarDe);
+    if (mT && V.tomaveis.includes(mT[1])) return Object.freeze({ intencao: Object.freeze({ tipo: "tomar", coisa: mT[1] }) });
+    if (!P.verbo.test(t) && !P.troca.test(t)) return null;
+    const quem = quemDaFrase(frase, pres);
+    const aoComp = /\bme (?:da|de|passa|passe|entrega|entregue|devolve|devolva|empresta|empreste)\b/.test(t);
+    if (P.troca.test(t)) return negada("troca", "troca", P.tela.troca, P.fato.troca, P.veto);
+    /* 4. dar o que se segura: sem a coisa na bolsa, ou sem quem receba */
+    const mD = t.match(P.darObjeto);
+    if (mD && !aoComp) {
+      const w = mD[1];
+      const ehCoisa = V.tomaveis.includes(w) || Object.prototype.hasOwnProperty.call(V.doBolso, w) || V.usoDaVenda.some((u) => u.rx.test(w));
+      const naBolsa = [...arr(ficha.inventario), ...arr(ficha.equipamento), ...Object.values(obj(ficha.equipados) || {})].map(nomeDe).filter(Boolean);
+      if (!ehCoisa && !oItemDaFrase(frase, naBolsa)) return null;
+      const art = (mD[0].match(/\s(o|a|os|as|um|uma)\s+[a-z]+$/) || [])[1] || "";
+      const coisaMin = doOriginal(frase, `${art ? art + " " : ""}${w}`) || w;
+      const Coisa = maiuscula(coisaMin);
+      if (!oItemDaFrase(frase, naBolsa) && !V.usoDaVenda.some((u) => u.rx.test(w))) return negada("dar", "naoTem", tpl(P.tela.darNaoTem, { Coisa }), tpl(P.fato.darNaoTem, { Coisa: coisaMin }), P.veto);
+      if (!quem) return negada("dar", "semQuem", tpl(P.tela.darSemQuem, { Coisa: coisaMin }), tpl(P.fato.darSemQuem, { Coisa: coisaMin }), P.veto);
+      return null;
+    }
+    if (!quem && !aoComp) return null;
+    return negada("generica", "generica", P.tela.generica, P.fato.generica, P.veto);
+  } catch { return null; }
+}
+
+/* ============================================================
+   E2 · aIntencaoDoDadoDaTroca(frase, desafio) → null | intenção
+   O dado de troca que passou sempre aplica algo e diz o quê (T7, T49: a
+   Prestidigitação passou e nenhuma linha). Quando o turno não tinha leitura
+   de troca e o dado rolado é o da mão leve, a intenção é o furto, com a
+   coisa que a frase diz (o objeto do verbo).
+   ============================================================ */
+export function aIntencaoDoDadoDaTroca(frase, desafio) {
+  try {
+    const id = str(obj(desafio) ? desafio.id : desafio);
+    if (id !== "bater_carteira") return null;
+    const t = sem(frase);
+    if (!t) return null;
+    const m = t.match(V.portaFinal.pegaDe) || t.match(V.coisaDoFurto);
+    return Object.freeze({ tipo: "furto", coisa: m && !V.portaFinal.naoEObjeto.includes(m[1]) ? m[1] : "" });
   } catch { return null; }
 }
 

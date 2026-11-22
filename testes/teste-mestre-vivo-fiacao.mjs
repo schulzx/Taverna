@@ -269,7 +269,9 @@ sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
      espontâneo que pousa no seu envelope (na resolução do dado) e a oferta da
      chegada que o Mestre vivo cala. A intenção fica: cada caminho novo mora
      numa guarda contável, em try e calou. */
-  t("há as cinco guardas (o momento do turno, o destino e a resposta, a adjudicação, o espontâneo que pousa, a chegada calada)", guardas.length === 5, String(guardas.length));
+  /* MOVIDA em 22/11 (a décima terceira sessão, E1), e o motivo: o mundo fechado no envio é uma guarda nova
+     (o veto «nada muda de mão» em todo turno do Mestre vivo). A intenção fica: guarda contável, em try e calou. */
+  t("há as seis guardas (o momento do turno, o destino e a resposta, a adjudicação, o espontâneo que pousa, a chegada calada, o mundo fechado)", guardas.length === 6, String(guardas.length));
   t("toda guarda abre em try e cala em calou", guardas.every((g) => /^if \(mestreVivoLigado\(\)\) \{\s*try \{/.test(g) && /catch \(e\) \{ calou\("Mestre vivo · /.test(g)));
   t("o efeito do espontâneo também", /if \(carregando \|\| !mestreVivoLigado\(\)\) return;\n    try \{[\s\S]*?catch \(e\) \{ calou\("Mestre vivo · o espontâneo", e\); \}/.test(APP));
   t("o retrato cala o que estoura e devolve null", /catch \(e\) \{ calou\("Mestre vivo · o retrato", e\); return null; \}/.test(corpo("retratoAgora")));

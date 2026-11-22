@@ -346,6 +346,21 @@ export const SECOES = [
      nenhuma secção que já existia, e chega em 212 das 500 (357 na luta,
      onde a linha do caso cede e o veto fica). */
   { id: "vetoDoCaso", rotulo: "NÃO PODE", prio: 2.487, o: "o que o caso ainda tem por saber, que só o dado revela" },
+  /* E1 (a décima terceira sessão do Mestre vivo): O MUNDO FECHADO. Em turno sem
+     troca nenhuma a prosa entregou a chave, o pano e a pederneira, a tocha, a
+     bolsa — e o veto «nada mais muda de mão» só ia no turno que tinha troca.
+     Agora todo turno em que o Mestre vivo fala e o sistema não mudou nada de
+     mão leva esta linha (o-veredito-da-troca.js, oMundoFechadoDoTurno): uma só,
+     ~150 caracteres, pelo canal de um turno — nenhum bloco estático. Com o
+     rótulo do NÃO PODE e logo depois dos vetos do Juiz e do caso (o Narrador lê um
+     bloco de vetos só; o do Juiz continua colado ao NÃO PODE).
+     A PRIO É A MEDIDA (testes/teste-mestre-vivo-sessao-13.mjs, E1): a 2,41 —
+     depois dos nove primeiros vetos (2,0..2,4), à frente do rumo (2,42), do fecho
+     e de toda a decoração. Nas 138 pautas reais da 6.ª e 7.ª sessões ela entra em
+     todas e não tira nenhum veto; a 0,95 (a primeira forma) entrava igual, mas nas
+     pautas de estresse das suítes (todas as secções cheias) tirava o 1.º veto —
+     e um veto cortado não avisa. */
+  { id: "maoFechada", rotulo: "NÃO PODE", prio: 2.41, o: "o mundo fechado: neste turno nada mudou de mão" },
   /* A campanha que prende (item 1): O QUE VOLTA — a promessa que o próprio
      Narrador plantou e que o sistema traz de volta agora
      (`prometido.js#cobrarNoTurno`), uma por turno no máximo e nunca numa

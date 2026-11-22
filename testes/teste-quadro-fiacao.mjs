@@ -121,7 +121,9 @@ sec("§4 o gesto sem dado (agirInterno)");
   t("só quando a frase não é um teste (o teste vira pelo dado) e fora da luta", AGIR.includes('if (!acao.startsWith("/") && !combateRef.current && !veredictoDaAcao(acao)) aCartaDoGestoAgora'));
   t("adjudicarAcao ficou como era (o gancho morto saiu)", ADJ.includes("const v = veredictoDaAcao(acao);\n    if (!v) return false;") && !ADJ.includes("aCartaDoGestoAgora"));
   /* Alargada a 14/11 (28cd0cd): o gesto passa também o `pago` da frase; a leitura da bolsa é a mesma. */
-  t("o gesto lê a bolsa (mais o que a proposta já tirou), a pessoa chamada e quem está à vista", GESTO.includes("moedas: (Number((fichaViva() || {}).moedas) || 0) + pago, ...(pago > 0 ? { pago } : {}) }, { ...ondeDoPasso(), emCena: presentes })"));
+  /* 22/11 (a décima terceira sessão do Mestre vivo, T19): o gesto lê também quem o sistema sabe longe (`ausentes`) — a
+     quem não está não se paga. A intenção desta asserção (a bolsa, o que a proposta tirou, quem está à vista) fica igual */
+  t("o gesto lê a bolsa (mais o que a proposta já tirou), a pessoa chamada e quem está à vista", GESTO.includes("moedas: (Number((fichaViva() || {}).moedas) || 0) + pago, ...(pago > 0 ? { pago } : {}) }, { ...ondeDoPasso(), emCena: presentes, ausentes: ausentesG })"));
   /* Movida a 14/11 (28cd0cd): o pagamento a menos passou a ser regra do motor (PAGAR_A_MENOS:
      a essencial vira incompleta, a extra não vira); o App só passa o que a frase já pagou e
      respeita o `pago` que o motor devolve — a intenção (nunca cobrar duas vezes) continua. */

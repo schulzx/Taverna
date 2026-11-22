@@ -327,6 +327,31 @@ export const O_CONFERENTE = Object.freeze({
     lugares: Object.freeze(["do outro lado", "no topo", "em cima", "no alto", "a salvo", "fora do alcance", "longe dele", "longe deles"]),
     trava: Object.freeze(["quase", "mas", "porem", "contudo", "entretanto"]),
   }),
+  /* E1 · O MUNDO FECHADO NA REDE (a décima terceira sessão): em turno em que o
+     sistema não mudou nada de mão, a prosa pôs a chave «na sua palma» (T7), a
+     bolsa «está com você» (T49), Dagon «a devolve» (T24), «Você pega o pão» (T6),
+     «A chave pesava no seu bolso» (T10). Com `mundoFechado` (o Mestre vivo), a
+     frase que põe coisa ou moeda na mão do herói, ou a tira dela, sai — só pelo
+     gesto que FECHA a mudança de mão: oferecer, mostrar, estender sem o herói
+     pegar não é troca (o portão morde só o necessário). Fica: o que o herói já
+     tem, o que a linha do sistema nomeou, a negação, o «quase», o «se». */
+  maoFechada: Object.freeze({
+    comVoce: /\b(?:esta|estao|fica|ficam|ficou|ficaram)\s+(?:agora\s+|ja\s+)?com voce\b/,
+    paraASuaMao: /\b(?:desliz\w*|escorreg\w*|cai|caiu|caem|pous\w*|vem|veio|chega\w*|volta\w*)\s+(?:direto\s+|de volta\s+)?(?:para|pra|na|no|ate)\s+(?:a\s+|o\s+)?(?:sua|seu)\s+(?:palma|mao|maos|bolsa|bolso|mochila|algibeira)\b/,
+    poeNaSuaMao: /\b(?:poe|pos|coloca\w*|deposit\w*|enfi\w*|apert\w*|deixa\w*|larg\w*|empurr\w*)\b[^.!?]{0,40}\b(?:na|no|nas|nos)\s+(?:sua|seu|suas|seus)\s+(?:mao|maos|palma|bolsa|bolso|mochila)\b/,
+    noSeuBolso: /\b(?:pesa\w*|esta|estava|guardad[oa]s?|escondid[oa]s?)\s+(?:no|na)\s+(?:seu|sua)\s+(?:bolso|bolsa|mochila|algibeira|alforje)\b/,
+    vocePega: /\bvoce\s+(?:ja\s+|entao\s+|agora\s+)?(?:pega|pegou|recebe|recebeu|guarda|guardou|embolsa|embolsou|apanha|apanhou|aceita|aceitou)\s+(?:(?:o|a|os|as|um|uma|uns|umas|meio|meia)\s+)?([a-z-]+)/,
+    daAVoce: /\b(?:entrega|entregou|da|deu|devolve|devolveu)-(?:lhe|lha|lho|te|to|ta)\b|\b(?:lhe|te)\s+(?:entrega|entregou|da|deu|devolve|devolveu)\b|\b(?:entrega|entregou|deu|devolve|devolveu)\b[^.!?]{0,30}\b(?:a|para)\s+voce\b/,
+    aDevolve: /(?:^|\be\s+|,\s*)(?:a|o|as|os)\s+(?:devolve|devolveu|entrega|entregou)\b/,
+    pediuDeVolta: /\bme\s+(?:devolve|devolva|entrega|entregue|da|de|passa|passe)\b/,
+    voceDa: /\bvoce\s+(?:entrega|entregou|da|deu|paga|pagou|larga|largou)\s+(?:(?:o|a|os|as|um|uma|suas|seus|sua|seu)\s+)?(?:(?:tres|duas|dois|cinco|dez|poucas|algumas)\s+)?([a-z-]+)/,
+    pegaAsMoedas: /\b(?:pega|pegou|recolhe|recolheu|embolsa|embolsou|guarda|guardou|aceita|aceitou|toma|tomou)\s+(?:as|os)\s+(?:[a-z]+\s+)?(?:moedas|coroas|pratas|cobres)\b|\b(?:pega|pegou|recolhe|recolheu|embolsa|embolsou)\s+as\s+(?:tres|duas|cinco|dez)\b/,
+    trava: Object.freeze(["quase", "talvez", "poderia", "quer", "queria", "oferece", "ofereceu", "mostra", "mostrou", "estende", "estendeu"]),
+    /* «se você der…», «se ele aceitar»: o condicional não é o gesto */
+    condicional: /\bse\s+(?:voce|ele|ela|eles|elas)\b/,
+    naoECoisa: Object.freeze(["mao", "maos", "caminho", "rumo", "folego", "palavra", "ar", "atencao", "olhar", "ombro", "braco", "lugar", "vez", "conversa", "ideia", "deixa", "sinal", "frio", "medo"]),
+    coisas: Object.freeze(["bolsa", "bolsinha", "chave", "chaves", "moeda", "moedas", "frasco", "elixir", "pocao", "tocha", "pao", "pederneira", "pano", "livro", "mapa", "carta", "anel", "colar", "faca", "adaga", "punhal", "corda", "racao", "odre", "cantil", "amuleto", "bilhete", "pergaminho", "garrafa", "vela", "lanterna", "dado", "pena"]),
+  }),
   /* o desafio da régua → a família do resultado (o mesmo mapa da régua,
      FAMILIA_DO_DESAFIO, só para os ids que o teste do turno guarda) */
   familiaDoDesafio: Object.freeze({
@@ -715,6 +740,55 @@ function oAusentePelaPosicao(texto, nome) {
   return { texto: remontar(texto, ps, fora, null), frases: ps.filter((p) => fora.has(p)).map((p) => p.texto.trim()) };
 }
 
+/* ============================================================
+   E1 · aMaoQueMudaNaProsa(nar, ctx) → "objeto" | "pagamento" | ""
+   A frase narrada que FECHA uma mudança de mão (o herói recebe, pega, fica
+   com; alguém lhe dá ou devolve; o herói dá ou paga; alguém pega as moedas
+   dele). ctx: { posses, doSistema: Set de raízes, moedaDaTroca, frase,
+   pessoas: [primeiro nome] }. Exportada para a suíte medir os falsos
+   positivos contra as prosas das sessões.
+   ============================================================ */
+const MF = C.maoFechada;
+const MF_TRAVA = new Set(MF.trava), MF_NAO = new Set(MF.naoECoisa), MF_COISAS = new Set(MF.coisas);
+export function aMaoQueMudaNaProsa(nar, ctx) {
+  try {
+    const c = obj(ctx) || {};
+    const s = sem(nar);
+    const w = ws(nar);
+    if (!w.length || negadoNa(w) || w.includes("quase") || MF.condicional.test(s)) return "";
+    /* oferecer, mostrar, estender: trava o lado de RECEBER (o herói ainda não pegou);
+       «Gareth estende a mão, pega as três» continua a ser alguém a pegar as moedas */
+    const oferta = w.some((x) => MF_TRAVA.has(x));
+    const doSistema = c.doSistema instanceof Set ? c.doSistema : new Set();
+    const nomes = new Set(arr(c.pessoas).map((x) => primeiro(x)).filter(Boolean));
+    const ehCoisaDaMao = (x) => !!x && x.length >= 3 && !MF_NAO.has(x) && !nomes.has(x) && (MF_COISAS.has(x) || MF_COISAS.has(raiz(x)) || ehCoisa(x));
+    const ehMoeda = (x) => MOEDA.has(x) || C.moedaDaTroca.includes(x);
+    const doSist = (x) => doSistema.has(raiz(x)) || (ehMoeda(x) && c.moedaDaTroca);
+    /* as coisas da frase narrada: as que não são do herói nem do sistema */
+    const coisas = w.filter((x) => ehCoisaDaMao(x) && !doSist(x) && !temNaPosse(x, c.posses));
+    const moedas = w.filter((x) => ehMoeda(x) && !doSist(x));
+    /* o herói recebe */
+    if (!oferta && (MF.paraASuaMao.test(s) || MF.poeNaSuaMao.test(s) || MF.daAVoce.test(s))) {
+      if (coisas.length) return "objeto";
+      if (moedas.length) return "pagamento";
+    }
+    if (!oferta && MF.comVoce.test(s)) {
+      const sujeito = s.slice(0, s.search(MF.comVoce));
+      const ws0 = ws(sujeito);
+      if (ws0.some((x) => ehCoisaDaMao(x) && !doSist(x) && !temNaPosse(x, c.posses)) && !ws0.some((x) => nomes.has(x) || ["ele", "ela"].includes(x))) return "objeto";
+    }
+    if (!oferta && MF.noSeuBolso.test(s) && coisas.length) return "objeto";
+    const mP = s.match(MF.vocePega);
+    if (mP && ehCoisaDaMao(mP[1]) && !doSist(mP[1]) && !temNaPosse(mP[1], c.posses)) return "objeto";
+    if (!oferta && MF.aDevolve.test(s) && MF.pediuDeVolta.test(sem(c.frase)) && coisas.length) return "objeto";
+    /* o herói dá ou paga */
+    const mD = s.match(MF.voceDa);
+    if (mD && (ehMoeda(mD[1]) ? !doSist(mD[1]) : ehCoisaDaMao(mD[1]) && !doSist(mD[1]))) return ehMoeda(mD[1]) ? "pagamento" : "objeto";
+    if (MF.pegaAsMoedas.test(s) && !c.moedaDaTroca && !/\bvoce\s+(?:pega|recolhe|embolsa|guarda|aceita|toma)/.test(s)) return "pagamento";
+    return "";
+  } catch { return ""; }
+}
+
 /* a família do resultado: a do desafio que rolou, senão a do veredito */
 export function linhaDoResultado(familia, sucesso, alvo) {
   const L = C.resultado[familia] || C.resultado.outro;
@@ -928,6 +1002,9 @@ export function conferirAProsa(narrativa, ctx) {
       if (!motivo && semTroca && !trocaAplicada && C.daAoHeroi.test(sem(p.nar)) && daACoisa(p.nar) && !negadoNa(ws(p.nar)) && ws(p.nar).some((x) => x.length >= 4 && ehCoisa(x) && !temNaPosse(x, c.posses))) motivo = "objeto";
       /* 21/11 (a oitava sessão, T33): o furto que não rendeu e a prosa que guarda moedas */
       if (!motivo && furtoNegado && C.guardaMoeda.test(sem(p.nar)) && !negadoNa(ws(p.nar))) motivo = "objeto";
+      /* E1 (a décima terceira sessão): o mundo fechado — o que o sistema não mudou de mão, a prosa não muda */
+      /* a coisa que a troca NEGOU não fica protegida por estar na linha do sistema («🤝 As tochas do grupo estão na sua mochila…», T24) */
+      if (!motivo && c.mundoFechado === true) motivo = aMaoQueMudaNaProsa(p.nar, { posses: c.posses, doSistema: coisaNegada.length ? new Set([...doSistema].filter((x) => !coisaNegada.includes(x))) : doSistema, frase, pessoas: pessoas.map((x) => x.nome), moedaDaTroca: moedaDaTroca.length > 0 || c.pagou === true || !!(bolsa && bolsa.ganhou) });
       if (motivo) { fora.add(p); razao.set(p, motivo); podadas.push({ motivo, frase: p.texto.trim() }); }
       cortouACoisa = motivo === "objeto" && coisaNegada.length > 0;
       anterior = p.nar;

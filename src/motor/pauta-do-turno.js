@@ -243,7 +243,9 @@ export const REFS_DA_PAUTA = Object.freeze({
    juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, { acabou, naoPode })`. */
 /* 21/11 (a nona sessão): e `fato` — a troca que o sistema decidiu, a primeira
    linha da pauta, de ferro (pauta.js, SECOES) */
-export const PAUTA_DE_UM_TURNO = Object.freeze({ secoes: Object.freeze(["fato", "acabou", "naoPode"]) });
+/* 22/11 (a décima terceira sessão, E1): e `maoFechada` — o mundo fechado, o
+   veto de todo turno do Mestre vivo em que nada mudou de mão (pauta.js) */
+export const PAUTA_DE_UM_TURNO = Object.freeze({ secoes: Object.freeze(["fato", "acabou", "naoPode", "maoFechada"]) });
 const linhasDe = (x) => (Array.isArray(x) ? x : typeof x === "string" && x.trim() ? [x] : []).filter((l) => typeof l === "string" && l.trim());
 export function juntarNaPautaDeUmTurno(atual, mais) {
   const a = atual && typeof atual === "object" && !Array.isArray(atual) ? atual : {};

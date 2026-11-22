@@ -438,7 +438,9 @@ sec("24. a fiação nova no App (a bolsa, as linhas do turno, o nome do achado, 
   const app = fs.readFileSync(path.join(dir, "..", "src", "App.jsx"), "utf8");
   t("o retrato da bolsa nasce com o conferente do turno, em calou", /bolsaC = aBolsaAgora\(/.test(app) && /calou\("Mestre vivo · a bolsa antes da frase"/.test(app) && /conferenteDoTurnoRef\.current = \{[^}]*bolsa: bolsaC/.test(app));
   const i = app.indexOf("conferirAProsa(resp.narrativa");
-  const bloco = app.slice(i - 2500, i + 2500);
+  /* 22/11 (a décima terceira sessão): a janela cresceu de 2500 para 3500 — a fiação do mundo fechado (E1) e do
+     ausente lido antes de mudar de lugar (T41) entrou na chamada, e o log ficou fora dos 2500; a intenção é a mesma */
+  const bloco = app.slice(i - 3500, i + 3500);
   t("o que entrou e as linhas do sistema do turno chegam à conferência", /entrouC = cf\.bolsa \? oQueEntrou\(cf\.bolsa, aBolsaAgora\(pC\)\)/.test(bloco) && /entrou: entrouC, doSistema: doSistemaC/.test(bloco));
   /* 21/11 (a oitava sessão): a asserção mudou — o testador não conseguia julgar
      os cortes 14 e 28 com 60 letras; o console guarda agora a frase cortada inteira */

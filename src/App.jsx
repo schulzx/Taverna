@@ -299,7 +299,7 @@ import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 /* 21/11 (a oitava sessão do Mestre vivo): a troca sai decidida antes do Narrador */
-import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA, oItemDaFrase, oFatoDaTroca, oDadoDaTrocaSemRolar, oCompradorDaFrase, aVendaSemComprador, oCompradorDito, oFatoDaTrocaFeita } from "./o-veredito-da-troca.js";
+import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado, oFiadoDaFrase, O_VEREDITO_DA_TROCA, oItemDaFrase, oFatoDaTroca, oDadoDaTrocaSemRolar, oCompradorDaFrase, aVendaSemComprador, oCompradorDito, oFatoDaTrocaFeita, oMundoFechadoDoTurno, aPortaFinalDaTroca, aIntencaoDoDadoDaTroca } from "./o-veredito-da-troca.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
@@ -5988,6 +5988,8 @@ export default function Taverna() {
   const pagoNaPropostaRef = useRef(null);
   const ladoDaPropostaRef = useRef(null);   // marca do "atacar mesmo assim" — não pergunta duas vezes
   const compradorDaVendaRef = useRef(null); // 22/11 (a décima sessão): quem a frase de vender diz que compra ({ item, rotulo }) — bilhete, nunca vai ao save
+  /* 22/11 (a décima terceira sessão, E1): a bolsa da última vez que o Narrador foi chamado — bilhete, nunca vai ao save */
+  const bolsaDoUltimoEnvioRef = useRef(null);
   const trocaDoTurnoRef = useRef(null);     // 21/11: o veredito da troca deste turno ({ frase, intencao, ctx, veredito }) — bilhete, nunca vai ao save
   const [crimeVereditoPendente, setCrimeVereditoPendente] = useState(null); // { texto, aoConfirmar, aoDeixar }
   const [npcs, setNpcs] = useState({});
@@ -6437,6 +6439,8 @@ export default function Taverna() {
     /* 22/11 (a décima segunda sessão): a luta da fera na furna abria no salão de uma taverna, e a
        da estrada por terra, no convés — o chão da rota e o covil do confronto dizem onde se pisa */
     try { ondeG = { ...ondeG, chao: (jornadaRef.current && jornadaRef.current.terreno) || "", covil: typeof confrontoEmLutaRef !== "undefined" && !!(confrontoEmLutaRef && confrontoEmLutaRef.current) }; } catch (e) { calou("o chão e o covil da planta", e); }
+    /* 22/11 (a décima terceira sessão): o tipo do sítio (o portal, a feira) diz o chão da luta antes do «covil é caverna» */
+    try { const lT = typeof lugarComOTipoDaBase === "function" ? lugarComOTipoDaBase() : null; if (lT && lT.tipoDoLocal) ondeG = { ...ondeG, lugar: lT }; } catch (e) { calou("o tipo do sítio da planta", e); }
     /* (o typeof: a planta é recortada à letra pela prova da luta, teste-motor-luta, que corre sem esta ref;
        no App ela existe sempre que a planta é chamada — numa luta, depois do render) */
     return {
@@ -7473,6 +7477,8 @@ export default function Taverna() {
       frase: String(frase || ""),
       lugar: lugarRef.current,
       antes: emCenaRef.current,
+      /* 22/11 (a décima terceira sessão, T30): quem morreu na luta desta sessão não fica «em cena» no turno seguinte */
+      mortos: Array.isArray(derrotadosDaSessaoRef.current) ? derrotadosDaSessaoRef.current : [],
       /* 13/10 (v9.461): a espinha diz quem a historia pos noutra cidade
          (longeDaHistoria), e os sitios daqui saem do texto antes de se
          procurar bicho nele (BICHO_DO_SITIO: a Serpente Rouca e uma casa) */
@@ -11409,6 +11415,19 @@ export default function Taverna() {
     } catch (e) { calou("foto do envio", e); }
     /* V6: a fala da entrada não tem desfeito — a luta já está posta */
     if (semDesfeitoRef.current) { semDesfeitoRef.current = false; fotoEnvio = null; fotoInicio = null; }
+    /* 22/11 (a décima terceira sessão do Mestre vivo, E1): O MUNDO FECHADO. Todo
+       turno em que o Mestre vivo fala (frase ou clique) leva «nada muda de mão»
+       quando o sistema não mudou nada; a bolsa que o sistema mudou sem fato de
+       troca (o preço de uma carta, o espólio, a quest) vira o fato do turno
+       (oMundoFechadoDoTurno). Uma linha do canal de um turno, nunca bloco estático. */
+    if (mestreVivoLigado()) {
+      try {
+        const bolsaE = aBolsaAgora(fichaViva() || persAtual || personagem);
+        const mf = oMundoFechadoDoTurno({ um: pautaDeUmTurnoRef.current, antes: bolsaDoUltimoEnvioRef.current, agora: bolsaE });
+        if (mf) porNaPautaDoTurno(mf);
+        bolsaDoUltimoEnvioRef.current = bolsaE;
+      } catch (e) { calou("Mestre vivo · o mundo fechado", e); }
+    }
     /* a sessão como arquivo: o que este turno vai gravar, juntado aqui */
     let turnoDaSessao = null;
     try { if (abrirASessaoSePreciso()) turnoDaSessao = { lugaresDaqui: lugaresDaqui(), conteudo }; } catch (e) { calou("a sessão (o envio)", e); turnoDaSessao = null; }
@@ -11544,7 +11563,10 @@ export default function Taverna() {
          frente. Sem chamada nova. Só com o Mestre vivo, fora da luta, e só
          no turno da frase que a ficha leu (a última frase do jogador). */
       try {
-        const cf = conferenteDoTurnoRef.current;
+        let cf = conferenteDoTurnoRef.current;
+        /* 22/11 (a décima terceira sessão, T41): a frase que leva a outro lugar foi lida no de antes — Freya, «ausente»
+           na Última Brasa, foi cortada no Arco, onde estava. Mudou de lugar: o ausente lido antes não corta */
+        try { if (cf && String(cf.lugarDaFrase || "") !== String((lugarRef.current && lugarRef.current.nome) || "")) cf = { ...cf, ausente: null, ausentes: [] }; } catch (e) { calou("Mestre vivo · o ausente de antes da ida", e); }
         if (mestreVivoLigado() && conferenteDoTurnoRef.current && !combateRef.current && resp && typeof resp.narrativa === "string" && resp.narrativa.trim()) {
           conferenteDoTurnoRef.current = null;
           const ultimaC = [...(mensagensRef.current || [])].reverse().find((x) => x && x.autor === "jogador");
@@ -11562,6 +11584,7 @@ export default function Taverna() {
             } catch (e) { calou("Mestre vivo · as linhas do sistema do turno", e); doSistemaC = []; }
             const cfr = conferirAProsa(resp.narrativa, {
               frase: cf.frase, cena: cf.cena, alvo: cf.alvo, aoGrupo: cf.aoGrupo, coisa: cf.coisa, ausente: cf.ausente || null, ausentes: cf.ausentes || [],
+              mundoFechado: true, /* E1 (a décima terceira sessão): o mundo fechado na rede */
               /* 21/11 (a nona sessão, T47): com quem o herói falava no turno anterior não fala «fora da vez» */
               fraseAnterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "",
               negados: semFolgaDoTurnoRef.current || [], teste: testeDoTurnoRef.current,
@@ -18688,8 +18711,18 @@ export default function Taverna() {
       }
     } catch (e) { calou("Q3 · o facto da carta", e); }
     try {
+      const moedasAntesQ = Number((personagemRef.current || personagem || {}).moedas);
       const pr = aplicarPrecoDoQuadro(estadoDasQuests(), vira.preco, { custo: vira.custo, pago: !!op.pago, ...(objeto ? { objeto } : {}) });
       if (pr) aplicarAsQuests(pr, "Q3 · o preço");
+      /* 22/11 (a décima terceira sessão, T19): o preço da carta saía da bolsa sem linha. Toda moeda que sai tem linha (para todos) e, com o Mestre vivo, fato */
+      try {
+        const moedasDepoisQ = Number((personagemRef.current || personagem || {}).moedas);
+        const saiuQ = Number.isFinite(moedasAntesQ) && Number.isFinite(moedasDepoisQ) ? moedasAntesQ - moedasDepoisQ : 0;
+        if (saiuQ > 0) {
+          pushMsgs([{ autor: "sistema", texto: O_VEREDITO_DA_TROCA.linhaDaMoedaQueSai.replace("{N}", String(saiuQ)) }]);
+          if (mestreVivoLigado()) porNaPautaDoTurno(oFatoDaTrocaFeita({ tipo: "pagamento", total: saiuQ }));
+        }
+      } catch (e) { calou("Q3 · a linha da moeda da carta", e); }
       const item = (pr && pr.objeto) || objeto;
       if (item) {
         const base = personagemRef.current || personagem;
@@ -18719,7 +18752,10 @@ export default function Taverna() {
       const pago = Math.max(0, Number(jaPagou) || 0);
       const presentes = presentesAgora();
       const ch = aPessoaChamada(frase, { conhecidos: [], presentes });
-      const g = aCartaDoGesto(qs, { frase, quem: ch && ch.nome ? ch.nome : "", moedas: (Number((fichaViva() || {}).moedas) || 0) + pago, ...(pago > 0 ? { pago } : {}) }, { ...ondeDoPasso(), emCena: presentes });
+      /* 22/11 (a décima terceira sessão, T19): a quem o sistema sabe noutro lugar o gesto não paga */
+      let ausentesG = [];
+      try { ausentesG = ausentesAgora().aus || []; } catch (e) { calou("Q3 · quem está longe do gesto", e); ausentesG = []; }
+      const g = aCartaDoGesto(qs, { frase, quem: ch && ch.nome ? ch.nome : "", moedas: (Number((fichaViva() || {}).moedas) || 0) + pago, ...(pago > 0 ? { pago } : {}) }, { ...ondeDoPasso(), emCena: presentes, ausentes: ausentesG });
       /* 28cd0cd: o motor decide o pagamento a menos (PAGAR_A_MENOS) — a essencial vira incompleta, a extra não vira. */
       if (!g) return false;
       const quadro = qs.find((q) => q.quest === g.quest);
@@ -18996,7 +19032,7 @@ export default function Taverna() {
       /* 21/11 (sessão 7): o retrato da bolsa agora — o conferente compara com o de depois da resposta */
       let bolsaC = null;
       try { bolsaC = aBolsaAgora(personagemRef.current || personagem); } catch (e) { calou("Mestre vivo · a bolsa antes da frase", e); bolsaC = null; }
-      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC, ausente: qn, bolsa: bolsaC,
+      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC, ausente: qn, bolsa: bolsaC, lugarDaFrase: (lugarRef.current && lugarRef.current.nome) || "",
         /* 22/11 (a décima primeira sessão, T34, T45, T47): quem o sistema sabe noutro lugar não fala aqui */
         ausentes: (aus || []).filter((a) => a && a.nome).map((a) => ({ nome: a.nome, onde: a.onde || "", morto: !!a.morto })) };
     } catch (e) { calou("Mestre vivo · o conferente do turno", e); conferenteDoTurnoRef.current = null; }
@@ -19024,7 +19060,24 @@ export default function Taverna() {
     if (!acao || acao.startsWith("/") || combateRef.current) return;
     const f0 = fichaViva() || personagem;
     if (!f0) return;
-    const it = aIntencaoDaTroca(acao, { grupo: f0.grupo || [], moeda: moedaDoMundo() });
+    let it = aIntencaoDaTroca(acao, { grupo: f0.grupo || [], moeda: moedaDoMundo() });
+    /* 22/11 (a décima terceira sessão, E2): A PORTA FINAL. A frase de troca que
+       nenhuma porta lia (o furto sem palavra de furto, «aceito o pão de Dagon»)
+       cai na porta mais próxima, ou sai negada com a linha de mesa — nunca sem
+       veredito. Só quando nenhuma outra porta pôs fato neste turno */
+    const portaFinal = () => {
+      try {
+        if (pautaDeUmTurnoRef.current && Array.isArray(pautaDeUmTurnoRef.current.fato) && pautaDeUmTurnoRef.current.fato.length) return null;
+        let presF = [];
+        try { presF = (pessoasDaCena() || []).map((p) => p && p.nome).filter(Boolean); } catch (e) { calou("a porta final · quem está", e); presF = []; }
+        return aPortaFinalDaTroca(acao, { ficha: f0, presentes: presF, moeda: moedaDoMundo() });
+      } catch (e) { calou("a porta final da troca", e); return null; }
+    };
+    if (!it) {
+      const pf = portaFinal();
+      if (pf && pf.intencao) it = pf.intencao;
+      else { if (pf && pf.estado) { trocaDoTurnoRef.current = { frase: acao, intencao: null, ctx: null, veredito: null }; aplicarOVereditoDaTroca(pf); } return; }
+    }
     /* a venda do que é de uso é do cartão «Vender» (o veredito antes do clique) */
     if (!it || it.tipo === "vendaDeUso") return;
     let pessoas = [];
@@ -19054,13 +19107,27 @@ export default function Taverna() {
       if (qd === "espera" || qd === "fora" || !qd) { if (!(ctx.ausente && qd !== "espera")) return; }
       ctx.dado = qd === "acontece" ? { acontece: true } : qd === "jaTentou" || qd === "jaFeito" ? { passou: false, repetida: qd } : { passou: false, semDado: true };
     }
-    aplicarOVereditoDaTroca(oVereditoDaTroca(acao, ctx));
+    const vF = oVereditoDaTroca(acao, ctx);
+    /* E2: o dar que o veredito não fechou (a coisa que não há, ninguém a quem) sai pela porta final */
+    if (!vF && it.tipo === "dar") { const pf = portaFinal(); if (pf && pf.estado) { aplicarOVereditoDaTroca(pf); return; } }
+    aplicarOVereditoDaTroca(vF);
   };
   /* o dado pousou: o furto e o de graça deste turno decidem-se pelo resultado.
      Devolve o veredito (a ficha nova vai para quem chamou, que a manda ao
      Narrador), ou null. */
   const resolverATrocaDoDado = (frase, passou, des, pers) => {
-    const tr = trocaDoTurnoRef.current;
+    let tr = trocaDoTurnoRef.current;
+    /* 22/11 (a décima terceira sessão, E2; T7 e T49): a mão leve rolou e passou
+       sem leitura de troca no turno — nenhuma linha, e a prosa pôs «a bolsa está
+       com você». O dado de troca que passa sempre aplica algo e diz o quê */
+    try {
+      if ((!tr || (!tr.intencao && !tr.veredito) || String(tr.frase || "").trim() !== String(frase || "").trim()) && des && des.id === "bater_carteira") {
+        const itD = aIntencaoDoDadoDaTroca(frase, des);
+        let presD = [];
+        try { presD = (pessoasDaCena() || []).map((p) => p && p.nome).filter(Boolean); } catch (e) { calou("o dado da troca · quem está", e); presD = []; }
+        if (itD) tr = { frase, intencao: itD, ctx: { alvo: null, lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "", presentes: presD }, veredito: null };
+      }
+    } catch (e) { calou("o dado da troca · a porta final", e); }
     if (!tr || tr.veredito || !tr.intencao || String(tr.frase || "").trim() !== String(frase || "").trim()) return null;
     const tipo = tr.intencao.tipo;
     if (tipo === "furto" ? !(des && des.id === "bater_carteira") : tipo === "deGraca" ? !(des && des.social) : tipo === "tomar" ? !(des && des.id === "forcar") : true) return null;
@@ -25378,7 +25445,7 @@ export default function Taverna() {
   };
   const porNaPautaDoTurno = (pa) => {
     try {
-      if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length && !(pa.fato || []).length)) return;
+      if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length && !(pa.fato || []).length && !(pa.maoFechada || []).length)) return;
       pautaDeUmTurnoRef.current = juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, pa);
     } catch (e) { calou("a pauta do encontro", e); }
   };
@@ -27466,7 +27533,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         const dias = (rota && Number(rota.dias)) || null;
         let falta = null;
         try { falta = faltaComidaParaPartir(p.suprimentos, 1 + ((p.grupo || []).length), dias || 1); } catch (e) { calou("a proposta: a comida da estrada", e); }
-        L.viagem = { destino: d.destino, dias, falta };
+        /* 22/11 (a décima terceira sessão, T52): a lei da forma diz no cartão, antes do clique, que não há caminho */
+        let impedidoV = "";
+        try { const tv = travaDaFormaDaqui(d.destino); if (tv) impedidoV = falaDaTrava(tv); } catch (e) { calou("a proposta: a trava da forma", e); impedidoV = ""; }
+        L.viagem = { destino: d.destino, dias, falta, ...(impedidoV ? { impedido: impedidoV } : {}) };
       }
     } catch (e) { calou("a proposta: a estrada", e); }
     try {
