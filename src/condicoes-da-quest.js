@@ -85,6 +85,8 @@ import { FASES, ARQUETIPOS } from "./vilao.js";
 import { garantirSaber } from "./antagonista.js";
 import { garantirElencoDoSave, VISTOS } from "./elenco.js";
 import { lacoDeAntes } from "./companheiro-inicial.js";
+/* etapa 4 da identidade: o homônimo da base e os apelidos de uma pessoa no livro */
+import { aliasDaPessoa, genteDaCidade, idsDaGente, palavrasDoNome } from "./quem-e-quem.js";
 
 /* ---------------- OS PAPÉIS ----------------
    O prefixo do argumento diz o tipo do papel: `papel:mentor` é uma pessoa,
@@ -333,6 +335,48 @@ const semArtigo = (s) => {
 const inteiro = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.floor(v) : null);
 const preencher = (modelo, valores) => contrair(String(modelo).replace(/\{(\w+)\}/g, (m, k) => (valores[k] != null ? String(valores[k]) : m)));
 const RX_ID_PESSOA = /^(npc\|.+|[^|]+\|gente\|.+)$/;
+
+/* ---------------- A PESSOA POR ID (etapa 4 da identidade, 23/11) ----------------
+   A gente da base de uma cidade, refeita pela semente (genteDaCidade), para
+   duas leituras: o papel que é de um HOMÔNIMO da base (duas Tabithas na
+   mesma cidade) ganha o id dele pela casa que o papel diz (`local`), e não o
+   do primeiro; e o fato gravado sob o apelido (`npc|Tabitha`, o registo)
+   conta para a pessoa do papel (`Cidade|gente|Tabitha`) pelo alias do
+   catálogo (aliasDaPessoa). Sem semente nem cidade: a lista vazia, e tudo
+   como antes. */
+function aGenteDe(E, mundo) {
+  const cache = new Map();
+  const m = obj(mundo) || obj(E.mundo) || {};
+  const semente = (typeof m.semente === "string" && m.semente) || `${(typeof E.nomeCampanha === "string" && E.nomeCampanha) || "aventura"}|${(obj(E.mundo) || {}).genero || ""}`;
+  return (cidade) => {
+    const nome = typeof cidade === "string" ? cidade.trim() : "";
+    if (!nome) return [];
+    if (!cache.has(nome)) {
+      let g = [];
+      try {
+        const cid = arr(obj(E.mapa) && E.mapa.cidades).find((x) => obj(x) && x.nome === nome);
+        g = cid ? genteDaCidade(semente, cid, { genero: m.genero || (obj(E.mundo) || {}).genero, molde: m.molde || null, lex: m.lex || m.lexico || null }) : [];
+      } catch { g = []; }
+      cache.set(nome, g);
+    }
+    return cache.get(nome);
+  };
+}
+/* o id do homônimo da base pela casa do papel: só quando o nome é de MAIS de
+   um na cidade (o caso que antes dava o id do primeiro, fosse quem fosse) */
+function idDoHomonimoDaBase(p, gente) {
+  const cidade = typeof p.cidade === "string" ? p.cidade.trim() : "";
+  const local = semAc(typeof p.local === "string" ? p.local : "").trim();
+  if (!cidade || !local) return "";
+  const ps = palavrasDoNome(p.nome).join(" ");
+  const g = arr(gente);
+  const mesmos = g.map((x, i) => [x, i]).filter(([x]) => obj(x) && palavrasDoNome(x.nome).join(" ") === ps);
+  if (mesmos.length < 2) return "";
+  const naCasa = mesmos.filter(([x]) => { const l = semAc(x.local).trim(); return !!l && (l === local || l.includes(local) || local.includes(l)); });
+  if (naCasa.length !== 1) return "";
+  const ids = idsDaGente(g, cidade);
+  return ids[naCasa[0][1]] || "";
+}
 /* o registo do vilão, cru (espinha.fio.vilao), com a régua de
    garantirRegistroDoVilao para o que aqui se lê: sem arquétipo que exista
    não há registo, e a camada torta é o rumor */
@@ -369,6 +413,7 @@ export function resolverPapeis(papeis, estado, opcoes) {
   const entrada = obj(papeis) || {};
   const out = {}, pendentes = [];
   let elenco = null;
+  const genteDe = aGenteDe(E, o.mundo);
   const doElenco = () => {
     if (!elenco) {
       try { elenco = elencoDoLivro(E, { mundo: obj(o.mundo) || obj(E.mundo) }); } catch { elenco = {}; }
@@ -384,6 +429,7 @@ export function resolverPapeis(papeis, estado, opcoes) {
     let mostra = rotulo;
     if (tipo === "pessoa") {
       if (!RX_ID_PESSOA.test(id)) id = "";
+      if (!id && rotulo) id = idDoHomonimoDaBase(p, genteDe(p.cidade));
       if (!id && rotulo) {
         const r = idDaPessoa(rotulo, doElenco());
         if (r.id) { id = r.id; mostra = rotulo || r.nome; }
@@ -586,14 +632,40 @@ function montar(contexto) {
   const r = resolverPapeis(k.papeis, E, { mundo: k.mundo });
   let el = {};
   try { el = elencoDoLivro(E, { mundo: obj(k.mundo) || obj(E.mundo) }) || {}; } catch { el = {}; }
+  const genteDe = aGenteDe(E, k.mundo);
+  const aliases = new Map();
+  /* os apelidos de uma pessoa (aliasDaPessoa): a gente da cidade do id, o registo e o grupo */
+  const alias = (id) => {
+    if (!aliases.has(id)) {
+      const cid = id.includes("|gente|") ? id.split("|")[0] : (typeof E.cidadeAtual === "string" ? E.cidadeAtual : "");
+      aliases.set(id, aliasDaPessoa(id, { gente: genteDe(cid), npcs: obj(E.npcs) || {}, grupo: arr((obj(E.personagem) || {}).grupo).filter((g) => obj(g) && !g.invocada), cidade: cid, pessoas: E.pessoas }));
+    }
+    return aliases.get(id);
+  };
   return {
-    E, el, papeis: r.papeis,
+    E, el, papeis: r.papeis, alias,
     factos: obj(E.factos) || {},
     base: obj(E.baseMundo) || {},
     npcs: obj(E.npcs) || {},
     grupo: arr((obj(E.personagem) || {}).grupo),
     quest: obj(k.quest),
   };
+}
+/* a pessoa do papel lida pelo apelido (etapa 4): o id do papel sem fato no
+   livro, e um apelido dele com fato (pessoaDoLivro com o alias) ou com ficha
+   no registo — a leitura usa o apelido; o «o que falta» continua a dizer o
+   id do papel. O fato gravado sob o id do papel ganha sempre. */
+function peloApelido(c, p) {
+  try {
+    const pessoas = obj(c.factos.pessoas) || {};
+    if (obj(pessoas[p.id]) || typeof c.alias !== "function") return p;
+    const al = c.alias(p.id);
+    const meus = Object.keys(al).filter((k) => al[k] === p.id);
+    if (!meus.length) return p;
+    const doLivro = pessoaDoLivro(c.factos, p.id, { alias: al });
+    const k = (doLivro && meus.includes(doLivro) && doLivro) || meus.find((x) => x.startsWith("npc|") && obj(c.npcs[x.slice(4)])) || "";
+    return k ? { ...p, id: k } : p;
+  } catch { return p; }
 }
 function argumentos(c, def, args) {
   const out = [], mostrar = [], dados = [];
@@ -614,11 +686,12 @@ function argumentos(c, def, args) {
     }
     const m = typeof v === "string" ? v.match(RX_ARGUMENTO) : null;
     const papel = m && TIPO_DO_PREFIXO[m[1]] === a.tipo ? c.papeis[m[2]] : null;
-    const ok = papel && papel.tipo === a.tipo ? papel : null;
+    const ok0 = papel && papel.tipo === a.tipo ? papel : null;
+    const ok = ok0 && ok0.tipo === "pessoa" && ok0.id ? peloApelido(c, ok0) : ok0;
     if (!ok || !ok.id) semId = true;
     out.push(ok || { id: "", nome: "" });
     mostrar.push((ok && ok.nome) || PAPEIS_DA_CONDICAO[m ? m[1] : Object.keys(TIPO_DO_PREFIXO).find((x) => TIPO_DO_PREFIXO[x] === a.tipo)].semNome);
-    dados.push({ papel: m ? m[2] : null, tipo: a.tipo, id: (ok && ok.id) || "", nome: (ok && ok.nome) || "" });
+    dados.push({ papel: m ? m[2] : null, tipo: a.tipo, id: (ok0 && ok0.id) || "", nome: (ok0 && ok0.nome) || "" });
   });
   return { out, mostrar, dados, semId, torto };
 }

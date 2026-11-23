@@ -125,6 +125,7 @@ import { comEm } from "../lugar.js";
 import { oficioNoGenero } from "../nomes.js";
 import { osPassosDasQuests } from "../a-quest-manda.js";
 import { MISSAO_DA_QUEST } from "../biblioteca-de-quests.js";
+import { idsDaGente } from "../quem-e-quem.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -404,7 +405,9 @@ function asMissoesDasQuests(e) {
     const l0 = arr(p.lugares).find((l) => ehObj(l) && limpo(l.nome));
     for (const c of arr(ehObj(p.candidatos) ? p.candidatos.pessoa : [])) {
       const nome = ehObj(c) ? limpo(c.nome) : "";
-      if (!nome || etapas.some((x) => mesmo(x.alvo, nome))) continue;
+      /* etapa 4 da identidade: o papel leva o id (`alvoId`); duas homônimas com ids são duas etapas */
+      const alvoId = ehObj(c) ? limpo(c.id) : "";
+      if (!nome || etapas.some((x) => (alvoId && x.alvoId ? x.alvoId === alvoId : mesmo(x.alvo, nome)))) continue;
       if (c.predicado && !A_PESSOA_DO_PASSO.daQuest.includes(c.predicado)) continue;
       /* quem o passo pede AO LADO está em casa dela (não no destino da escolta,
          nem no desvio: lá só chega com o herói) */
@@ -418,7 +421,7 @@ function asMissoesDasQuests(e) {
       const [casa, cid] = l0 && c.predicado !== "acompanha" && noLugar ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
       if (!casa && cid && limpo(e.cidadeAtual) && sem(cid) !== sem(e.cidadeAtual)) continue;
       etapas.push({ tipo: "falar_com", alvo: nome, onde: casa ? (cid ? `${casa}, em ${cid}` : casa) : "", feito: false,
-        rotulo: limpo(c.rotulo), depois: limpo(p.depois) });
+        rotulo: limpo(c.rotulo), depois: limpo(p.depois), ...(alvoId ? { alvoId } : {}) });
     }
     /* uma missão por pessoa: a régua anda pela etapa de agora de cada uma */
     for (const et of etapas) out.push({ id: `${MISSAO_DA_QUEST.prefixo}${limpo(p.quest)}`, titulo: limpo(p.texto), tipo: MISSAO_DA_QUEST.tipo[1], status: "ativa", dador: "", etapas: [et] });
@@ -462,7 +465,17 @@ export function aPessoaDoPasso(estado) {
     const l = locais.find((x) => tipos.includes(str(x.tipo)) && semArtigo(x.nome) !== semArtigo(moradaDe(posto).lugar));
     return l ? { nome: limpo(l.nome) } : { nome: "" };
   };
-  const daBase = (nome) => aBase().find((p) => ehObj(p) && mesmo(p.nome, nome)) || null;
+  /* etapa 4 da identidade: com o id do papel (`Cidade|gente|Nome~2`), a pessoa da base é a desse id
+     (idsDaGente: o homônimo pela ordem da base), e não a primeira de mesmo nome */
+  let idsBase = null;
+  const daBase = (nome, id) => {
+    if (id && id.includes("|gente|")) {
+      if (!idsBase) { try { idsBase = idsDaGente(aBase().map((p) => (ehObj(p) ? p : { nome: p })), str(e.cidadeAtual)); } catch { idsBase = []; } }
+      const i = idsBase.indexOf(id);
+      if (i >= 0 && ehObj(base[i])) return base[i];
+    }
+    return aBase().find((p) => ehObj(p) && mesmo(p.nome, nome)) || null;
+  };
   /* quem guarda o sítio: o que a cena da batida diz, senão o primeiro da
      gente da casa (o mesmo que batidas.js põe «à guarda») — a casa só com o
      herói nela: a gente da base é a DESTA cidade */
@@ -496,16 +509,17 @@ export function aPessoaDoPasso(estado) {
         nome = oGuarda(et.alvo, true);
         if (!nome) continue;
       } else nome = limpo(et.alvo);
-      if (grupo.some((g) => mesmo(g.nome, nome)) || mesmo(nome, H) || out.some((x) => mesmo(x.nome, nome))) continue;
+      const idEt = !ehGuarda ? limpo(et.alvoId) : "";
+      if (grupo.some((g) => mesmo(g.nome, nome)) || mesmo(nome, H) || out.some((x) => (idEt && x.id ? x.id === idEt : mesmo(x.nome, nome)))) continue;
       const ehPista = !ehGuarda && daAbertura && mesmo(nome, a.pista.nome);
       const ehAlvo = !ehGuarda && !a.legado && mesmo(nome, a.alvo.quem);
       const ehDador = !ehGuarda && limpo(m.dador) && mesmo(nome, m.dador) && m.tipo !== "principal";
-      const regK = Object.keys(npcs).find((x) => mesmo(x, nome));
+      const regK = (idEt.startsWith("npc|") && ehObj(npcs[idEt.slice(4)]) ? idEt.slice(4) : "") || Object.keys(npcs).find((x) => mesmo(x, nome));
       const reg = regK && ehObj(npcs[regK]) ? npcs[regK] : null;
       let pb = null, noPosto = ehGuarda, veio = false, ondeVe = onde;
       if (!ehGuarda) {
         onde = limpo(et.onde) || (ehPista ? a.pista.local : "") || (ehAlvo ? a.alvo.onde : "") || (reg ? oSitioDoRegisto(reg.local, e) : "");
-        if (!onde) { pb = daBase(nome); onde = pb ? limpo(pb.local) : ""; }
+        if (!onde) { pb = daBase(nome, idEt); onde = pb ? limpo(pb.local) : ""; }
         if (!onde) continue;
         /* O POSTO SEM CIDADE É NA CIDADE DA ABERTURA (04/11, os sítios como
            cartões). A pista mora «n'O Descanso do Carroceiro», sem cidade, e
@@ -523,7 +537,7 @@ export function aPessoaDoPasso(estado) {
         /* na rua só está quem veio ter com o herói */
         if (semLugar && !veio) continue;
       }
-      if (!pb) pb = daBase(nome);
+      if (!pb) pb = daBase(nome, idEt);
       const papel = (ehPista && limpo(a.pista.papel)) || (reg && limpo(reg.papel)) || (pb && limpo(oficioNoGenero(pb.papel, pb.genero_pessoa))) || "";
       /* a rotina: a hora dela, pela semente (gente-por-dentro.js) */
       let rot = null, familia = "";
@@ -579,6 +593,8 @@ export function aPessoaDoPasso(estado) {
            cartão, a-pista-como-cartao.js); -1 quando não há passo a seguir */
         missao: m.id, seguinte: ehObj(prox) ? k + 1 : -1,
         rotulo: daQuest ? limpo(et.rotulo) : "",
+        /* etapa 4 da identidade: o id do papel, que quemEstaAqui guarda (comId) */
+        ...(idEt ? { id: idEt } : {}),
       });
     }
   }

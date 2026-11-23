@@ -185,8 +185,10 @@ export function oPassoDaQuest(ficha, registo, contexto) {
       if (a0.tipo === "pessoa") {
         const n = String(a0.nome || "").trim();
         const pp = obj(papeis[a0.papel]) || {};
-        if (n && (!doFio(a0.papel) || viuOPapel(a0.papel)) && !quem.some((x) => semArtigo(x.nome) === semArtigo(n))) {
-          quem.push(Object.freeze({ nome: n, papel: String(a0.papel || ""), predicado: at.predicado,
+        /* etapa 4 da identidade: a pessoa leva o id do papel; duas homônimas com ids são duas */
+        const idQ = String(a0.id || "");
+        if (n && (!doFio(a0.papel) || viuOPapel(a0.papel)) && !quem.some((x) => (idQ && x.id ? x.id === idQ : semArtigo(x.nome) === semArtigo(n)))) {
+          quem.push(Object.freeze({ nome: n, papel: String(a0.papel || ""), predicado: at.predicado, ...(idQ ? { id: idQ } : {}),
             ...(typeof pp.local === "string" && pp.local.trim() ? { onde: pp.local.trim() } : {}),
             ...(typeof pp.cidade === "string" && pp.cidade.trim() ? { cidade: pp.cidade.trim() } : {}) }));
         }

@@ -44,7 +44,7 @@
    semente do mundo; o estado recebido nunca é mutado; o `null` e o lixo
    dão o vazio, nunca uma exceção.
    ============================================================ */
-import { HOMONIMO, ESTADO_SEM_VOLTA } from "./npcs.js";
+import { HOMONIMO, ESTADO_SEM_VOLTA, familiasDoOficio } from "./npcs.js";
 import { idDaGente, locaisDaCidade, genteDoLocal } from "./mundo-base.js";
 import { elencoDaCena } from "./cena.js";
 
@@ -672,6 +672,58 @@ export function oNomeDitoDiz(dito, catalogo, presencaDada) {
   const org = obj(cat.origem) || {};
   const deLista = cs.filter((c) => org[c.id] !== "conhecido");
   return { ...aReguaDoDito(deLista.length ? deLista : cs, dito), cands: cs };
+}
+
+/* ============================================================
+   ETAPA 4 — OS APELIDOS DE UMA PESSOA, PARA LER O LIVRO (23/11/2026)
+
+   O livro escreve com o elenco SEM a gente da base (livro-do-turno.js, de
+   propósito): a conversa com a Tabitha da base fica gravada como
+   `npc|Tabitha` (a chave do registo), e o papel da quest diz
+   `Rio|gente|Tabitha`. Eram a mesma pessoa e a condição não fechava.
+
+   aliasDaPessoa(id, ctx) → { idDeBaixo: id }
+   Os ids que são ESTA pessoa, prontos para `pessoaDoLivro({ alias })`:
+     · os que o catálogo funde nela (a régua do nome, catalogoDoElenco);
+     · quando a régua não funde porque o nome é de mais de um (o homônimo
+       da base: duas Tabithas na mesma cidade), a ficha do registo de nome
+       igual que o que a pessoa TEM separa das outras, pela ordem de
+       ALIAS_DA_PESSOA.desempate: o `local` da ficha nomeia o posto dela, ou
+       o ofício é da mesma família. Um só a passar, é ele; nenhum ou dois,
+       ninguém — não se escolhe calado.
+   ctx: { gente (a da base da cidade do id, na ordem dela), npcs, grupo,
+   cidade, pessoas (o campo do save) }. A escrita do livro não muda.
+   ============================================================ */
+export const ALIAS_DA_PESSOA = Object.freeze({
+  desempate: Object.freeze(["local", "oficio"]),
+});
+export function aliasDaPessoa(id, ctx) {
+  const out = {};
+  try {
+    const c = obj(ctx) || {};
+    const alvo = typeof id === "string" ? id.trim() : "";
+    if (!alvo) return out;
+    const cat = catalogoDoElenco({ gente: arr(c.gente), npcs: obj(c.npcs) || {}, grupo: arr(c.grupo), cidade: c.cidade }, c.pessoas);
+    const fim = fimDe(cat, alvo);
+    for (const x of cat.entradas) if (x.id !== alvo && fimDe(cat, x.id) === fim && x.para) out[x.id] = alvo;
+    if (fim !== alvo && !temChave(out, fim)) out[fim] = alvo;
+    const eu = cat.porId[fim];
+    if (!eu || eu.fonte !== "gente") return out;
+    /* o homônimo: os do registo com o nome igual que a régua deixou soltos */
+    const soltos = cat.entradas.filter((x) => x.fonte === "registo" && !x.para && casaExato(x.ps, eu.ps));
+    if (!soltos.length) return out;
+    const outros = cat.entradas.filter((x) => x.fonte === "gente" && x.id !== fim && casaExato(x.ps, eu.ps));
+    if (!outros.length) return out;
+    const DESEMPATA = {
+      local: (r, p) => !!p.local && !!frase(r.local).trim() && frase(r.local).includes(frase(p.local)),
+      oficio: (r, p) => { const a = familiasDoOficio(r.oficio), b = familiasDoOficio(p.oficio); return a.length > 0 && a.some((f) => b.includes(f)); },
+    };
+    for (const k of ALIAS_DA_PESSOA.desempate) {
+      const meus = soltos.filter((r) => DESEMPATA[k](r, eu) && !outros.some((o) => DESEMPATA[k](r, o)));
+      if (meus.length === 1) { out[meus[0].id] = alvo; break; }
+    }
+  } catch { /* o apelido nunca derruba a leitura */ }
+  return out;
 }
 
 /* idNaPresenca(nome, catalogo, { prefere, usados }) → id | ""
