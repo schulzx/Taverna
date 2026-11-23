@@ -7438,6 +7438,16 @@ export default function Taverna() {
      que a pauta do Narrador faz no motor (pauta-do-turno.js#quemAgora) e que
      a fogueira lê. A tela deixou de ter a sua lista: o que o chip «Em cena»
      mostra e o que o Narrador recebe saem daqui. Cada fonte num calou. */
+  /* 23/11 (a 17.ª sessão): o botão de partir lê a trava da lei (propostas-da-abertura.js, aPartida) */
+  const aPartidaAgora = () => {
+    try { return { molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current, forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), dia: diaRef.current }; }
+    catch (e) { calou("a trava da partida no rumo", e); return null; }
+  };
+  /* idem: com o Mestre vivo, quem está noutro sítio daqui também é ausente (poda-do-ausente.js) */
+  const semSitioAgora = () => {
+    try { return mestreVivoLigado() ? { tambemSemSitio: true, lugares: lugaresDaqui() } : {}; }
+    catch (e) { calou("o ausente noutro sítio", e); return {}; }
+  };
   const quemAgora = () => {
     const p0 = personagemRef.current || personagem || {};
     const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
@@ -7448,6 +7458,7 @@ export default function Taverna() {
       masmorra: masmorraRef.current, jornada: jornadaRef.current, lugar: lugarRef.current,
       lugares: vale("QUEM ESTÁ · os lugares", () => lugaresDaqui(), []),
       doPasso: passo.filter((x) => x.aqui),
+      passos: vale("QUEM ESTÁ · os passos das quests", () => passosDasQuestsAgora(), []),
       /* S4d: quem o passo sabe fora da hora, e a hora de quem o posto põe — a mesma conta da pauta */
       ausentes: passo.filter((x) => !x.aqui).map((x) => x.nome),
       relogio: vale("QUEM ESTÁ · o relógio", () => ({ semente: sementeMundo(), dia: diaRef.current, minuto: minutoRef.current, cidade: String(cidadeAtualRef.current || ""), mapa: mapaRef.current, npcs: npcsRef.current, base: baseMundoRef.current }), null),
@@ -11547,7 +11558,7 @@ export default function Taverna() {
           const pP = personagemRef.current || personagem || {};
           const cidadeP = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
           const genteP = cidadeP ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeP, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
-          const ausP = osAusentes(qP, { gente: genteP, npcs: npcsRef.current, heroi: pP, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
+          const ausP = osAusentes(qP, { gente: genteP, npcs: npcsRef.current, heroi: pP, lugar: lugarRef.current, ...semSitioAgora(), protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
           const fraseP = (() => { try { const pb = lerOPedido(conteudo); return pb && pb.doJogador ? pb.texto : ""; } catch { return ""; } })();
           const pacP = pecaDoTurnoRef.current;
           const conhecP = pacP ? [...Object.keys(npcsRef.current || {}), ...genteP.map((g) => g && g.nome).filter(Boolean)] : [];
@@ -18140,7 +18151,7 @@ export default function Taverna() {
             try {
               const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
               const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
-              aus = osAusentes(quemAgora(), { gente: genteA, npcs: npcsRef.current, heroi: personagemRef.current || personagem, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
+              aus = osAusentes(quemAgora(), { gente: genteA, npcs: npcsRef.current, heroi: personagemRef.current || personagem, lugar: lugarRef.current, ...semSitioAgora(), protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
             } catch (e) { calou("Mestre vivo · os ausentes do espontâneo", e); aus = []; }
             const envE = envelopeDoEspontaneo(des, percebeu);
             if (envE) {
@@ -18636,7 +18647,7 @@ export default function Taverna() {
     try {
       const cid = cidadeAtualRef.current || "";
       if (!l || !l.nome || !cid) return l;
-      const loc = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico).find((x) => x && semNome(x.nome) === semNome(l.nome));
+      const loc = locaisDaCidade(sementeMundo(), cidadeSobOsPes(), generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico).find((x) => x && semNome(x.nome) === semNome(l.nome));
       return loc && loc.tipo ? { ...l, tipoDoLocal: loc.tipo } : l;
     } catch (e) { calou("Mestre vivo · o tipo do local", e); return l; }
   };
@@ -19019,7 +19030,7 @@ export default function Taverna() {
       const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
       const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
       protegidos = [divindadeRef.current && divindadeRef.current.nome].filter(Boolean);
-      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, protegidos });
+      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, ...semSitioAgora(), protegidos });
       conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
     } catch (e) { calou("quem o sistema sabe noutro lugar", e); }
     return { aus, conhecidos, protegidos };
@@ -19033,7 +19044,7 @@ export default function Taverna() {
       const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
       const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
       protegidos = [divindadeRef.current && divindadeRef.current.nome].filter(Boolean);
-      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, protegidos });
+      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, ...semSitioAgora(), protegidos });
       conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
     } catch (e) { calou("Mestre vivo · quem o sistema sabe noutro lugar", e); }
     try { return quemNaoEstaNaCena(acao, cena, { ausentes: aus, conhecidos, protegidos, presentes: presentesDaTela() }); } catch (e) { calou("Mestre vivo · quem não está", e); return null; }
@@ -19049,7 +19060,7 @@ export default function Taverna() {
       const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
       const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
       protegidos = [divindadeRef.current && divindadeRef.current.nome].filter(Boolean);
-      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, protegidos });
+      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, ...semSitioAgora(), protegidos });
       conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
     } catch (e) { calou("Mestre vivo · quem o sistema sabe noutro lugar", e); }
     let qn = m.ausente || null;
@@ -19146,7 +19157,7 @@ export default function Taverna() {
     try {
       const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
       const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
-      ausentes = osAusentes(quemAgora(), { gente: genteA, npcs: npcsRef.current, heroi: f0, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) }) || [];
+      ausentes = osAusentes(quemAgora(), { gente: genteA, npcs: npcsRef.current, heroi: f0, lugar: lugarRef.current, ...semSitioAgora(), protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) }) || [];
     } catch (e) { calou("o ouvido · quem está noutro lugar", e); ausentes = []; }
     /* quem o sistema conhece (o registo, a gente da cidade, a pessoa que o passo da quest nomeia): «dou duas
        moedas pra Constance» com ela fora é «não está aqui», nunca «a quem?» (frase 40) */
@@ -27067,7 +27078,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          Some ao chegar. */
       try {
         const jogou = (mensagens || []).some((m) => m && m.autor === "jogador");
-        const rumo = jogou ? oRumoDaBusca({ passos: passosDasQuestsAgora(), aqui: (lugarRef.current && lugarRef.current.nome) || "", cidade: cidadeAtualRef.current || "", grupo: (personagemRef.current || personagem || {}).grupo || [], emLuta: !!combate, naEstrada: !!jornada }) : null;
+        const rumo = jogou ? oRumoDaBusca({ passos: passosDasQuestsAgora(), aqui: (lugarRef.current && lugarRef.current.nome) || "", cidade: cidadeAtualRef.current || "", grupo: (personagemRef.current || personagem || {}).grupo || [], emLuta: !!combate, naEstrada: !!jornada, presentes: presentesDaTela(), partida: aPartidaAgora() }) : null;
         if (rumo) {
           lista.push({
             id: rumo.id, verbo: rumo.verbo, tom: "convite", precisaDoNarrador: true,

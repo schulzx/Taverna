@@ -295,6 +295,20 @@ sec("5 · o ofício que a tela mostra: no gênero, e o papel da quest");
   t("o registo não muda (o estado é substituído, nunca mutado)", npcs["Brannoc Filho da Névoa"].papel === "catador de espólios");
 }
 
+/* ============================================================
+   A FIAÇÃO NO App.jsx (23/11): os quatro pontos em que a tela passa a entregar aos
+   módulos acima o que eles pedem. Lido como texto do App, como as outras suítes de
+   fiação da casa: a conta está provada acima, aqui só se prova que o fio existe. */
+{
+  const { readFileSync } = await import("node:fs");
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  console.log("\nA fiação no App");
+  t("o rumo da tela recebe quem está presente e a trava da partida", /oRumoDaBusca\(\{[^\n]*presentes: presentesDaTela\(\), partida: aPartidaAgora\(\)/.test(app));
+  t("a trava da partida é montada num calou", /const aPartidaAgora = \(\) => \{\s*try \{ return \{ molde: moldeMundo\(\)[^\n]*\}\s*catch \(e\) \{ calou\(/.test(app));
+  t("todo `osAusentes` do App leva o ausente noutro sítio (só com o Mestre vivo)", (app.match(/osAusentes\([^\n]*\.\.\.semSitioAgora\(\)/g) || []).length === (app.match(/osAusentes\(/g) || []).length && /mestreVivoLigado\(\) \? \{ tambemSemSitio: true, lugares: lugaresDaqui\(\) \} : \{\}/.test(app));
+  t("quem está aqui recebe os passos das quests (o rótulo do papel)", /passos: vale\("QUEM ESTÁ · os passos das quests", \(\) => passosDasQuestsAgora\(\), \[\]\)/.test(app));
+  t("o tipo do sítio pede os locais à cidade (o objeto), e não ao nome dela", /const loc = locaisDaCidade\(sementeMundo\(\), cidadeSobOsPes\(\),/.test(app));
+}
 /* ============================================================ */
 console.log(`\na história depois da 17: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);
