@@ -14,7 +14,9 @@ export function casa(a, b) {
 
 const IGNORA = /^(📖|📍|✧|▸|✓|◐|🗺|🎲|⚔|🔊|↯|🔎|★|✦|☆)/;
 const DINHEIRO = /◉\s*[−\-–+]\s*\d/;
-const APLICA = /agora é de|passa a você|\bVendido\b|\bComprad[oa]\b|\bVocê (devolve|recolhe|entrega|compra|vende)\b|^🤲|^🤝\s*\d+ .* para /i;
+/* 23/11 (defeito do juiz, não do jogo): «🤝 X fica emprestado com Y», «🤝 Você troca X por Y» e «🤝 Lavinia lhe
+   passa X» são trocas aplicadas (a ficha muda) — o juiz as lia como negativa pelo 🤝 e contava duas respostas (B71, Q08) */
+const APLICA = /agora é de|passa a você|\bVendido\b|\bComprad[oa]\b|\bVocê (devolve|recolhe|entrega|compra|vende|troca|deixa)\b|fica emprestad[oa] com|\blhe passa\b|^🤲|^🤝\s*\d+ .* para /i;
 const PERGUNTA = /^✋|Qual delas|Diga o que você dá ou pede|^A quem você|^O que você faz com|\?\s*1\.\s/;
 const DADO = /^🎯|Precisa de \d+/;
 

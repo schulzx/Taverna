@@ -31,7 +31,7 @@
 
     { "id": "B30", "estado": "balanca", "frase": "pago duas moedas ao Cornelius", "tipo": ["aplica", "cartao"], "ficha": { "moedas": -2 }, "ouvido": { "familia": "trocar", "subtipo": "pagar", "quem": "Cornelius", "quantia": 2 }, "defeito": "debito-duplo" },
     { "id": "B31", "estado": "balanca", "frase": "deixo seis moedas no bolso da Prudence", "tipo": ["aplica", "cartao"], "ficha": { "moedas": -6 }, "ouvido": { "familia": "trocar", "quem": "Prudence", "quantia": 6 }, "defeito": "debito-duplo" },
-    { "id": "B32", "estado": "balanca", "frase": "pago o que devo do pão: duas moedas", "tipo": ["aplica", "cartao"], "ficha": { "moedas": -2 }, "ouvido": { "familia": "trocar", "subtipo": "pagar", "quantia": 2 }, "defeito": "debito-duplo" },
+    { "id": "B32", "estado": "balanca", "frase": "pago o que devo do pão: duas moedas", "tipo": ["aplica", "cartao", "pergunta"], "ficha": { "moedas": -2 }, "fichaPorTipo": { "pergunta": {} }, "revisto": "o sistema não tem dívida de pão com ninguém e há três pessoas em cena: um mestre real pergunta «a quem?» antes de a moeda sair", "ouvido": { "familia": "trocar", "subtipo": "pagar", "quantia": 2 }, "defeito": "debito-duplo" },
     { "id": "B33", "estado": "balanca", "frase": "pago cem moedas ao Cornelius", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "pagar", "quem": "Cornelius", "quantia": 100 }, "diz": ["chega"] },
     { "id": "B34", "estado": "balanca", "frase": "pago o que devo", "tipo": "pergunta", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "pagar" } },
 
@@ -116,7 +116,7 @@
     { "id": "L19", "estado": "lampada", "frase": "Charity, me dá um pedaço desse pão", "tipo": ["dado", "nega", "cartao"], "ficha": {}, "ouvido": { "familia": "trocar", "quem": "Charity", "coisaNao": ["pedaço", "desse"] }, "defeito": "coisa-pronome" },
 
     { "id": "X01", "estado": "fenda", "frase": "compro uma tocha", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "comprar", "coisa": "tocha" }, "diz": ["vende"] },
-    { "id": "X02", "estado": "fenda", "frase": "dou cinco moedas a Lavinia", "tipo": ["aplica", "cartao"], "ficha": { "moedas": -5 }, "ouvido": { "familia": "trocar", "subtipo": "dar", "quem": "Lavinia", "quantia": 5 }, "defeito": "debito-duplo" },
+    { "id": "X02", "estado": "fenda", "frase": "dou cinco moedas a Lavinia", "tipo": ["aplica", "cartao", "nega"], "ficha": { "moedas": -5 }, "fichaPorTipo": { "nega": {} }, "revisto": "Lavinia é companheira e a bolsa do grupo é uma só (regra da casa, darMoedaAoGrupo): dizer que o dinheiro fica na bolsa comum é a resposta de mestre, e nada muda de mão", "ouvido": { "familia": "trocar", "subtipo": "dar", "quem": "Lavinia", "quantia": 5 }, "defeito": "debito-duplo" },
     { "id": "X03", "estado": "fenda", "frase": "dou o símbolo sagrado riscado a Lavinia", "tipo": ["aplica", "cartao"], "ficha": { "inv": { "-": ["Símbolo sagrado riscado"] }, "grupo": { "Lavinia Sallow": { "+": ["Símbolo sagrado riscado"] } } }, "ouvido": { "familia": "trocar", "subtipo": "dar", "quem": "Lavinia", "coisa": "símbolo" } },
     { "id": "X04", "estado": "fenda", "frase": "dou cinco moedas ao mendigo", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "dar", "quantia": 5 } },
     { "id": "X05", "estado": "fenda", "frase": "dou duas moedas à Mercy Quintus", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "dar", "quem": "Mercy", "quantia": 2 }, "diz": ["não está"] },
