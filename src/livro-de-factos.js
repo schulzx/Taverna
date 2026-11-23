@@ -661,6 +661,15 @@ export function pessoaDoLivro(livro, nome0, opcoes) {
   const nome = typeof nome0 === "string" ? nome0.trim() : nomeDe(nome0).trim();
   if (!nome) return "";
   if (obj(pessoas[nome])) return nome;
+  /* 23/11 (identidade · etapa 2): com o `alias` do catálogo (quem-e-quem.js), o id cujo fato foi gravado
+     sob o apelido — `npc|Nome` antes de a gente da base entrar no catálogo como `Cidade|gente|Nome` — é
+     achado pelo apelido, e o apelido pelo dono: a leitura passa pelo alias e não perde fatos */
+  const alias = obj(obj(opcoes) && opcoes.alias);
+  if (alias) {
+    if (typeof alias[nome] === "string" && obj(pessoas[alias[nome]])) return alias[nome];
+    const baixo = Object.keys(alias).find((k) => alias[k] === nome && obj(pessoas[k]));
+    if (baixo) return baixo;
+  }
   const ps = palavrasDoNome(nome);
   if (!ps.length) return "";
   const cands = Object.keys(pessoas).map((id) => ({ id, ps: palavrasDoNome(limpo((obj(pessoas[id]) || {}).nome) || id.split("|").pop()) }));

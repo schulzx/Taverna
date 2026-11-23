@@ -148,7 +148,7 @@ const F = QUEM_E_QUEM.formas;
    a base lhe dá (`Cidade|tipo|i`), senão o local e o nome */
 const quemNaBase = (o, cid) => (typeof o.id === "string" && o.id && !o.id.includes(`|${F.gente}|`) ? o.id : `${cid}|${limpo(o.local, QUEM_E_QUEM.id)}|${limpo(nomeDe(o))}`);
 /* os ids da lista da gente, na ordem dela: o homônimo ganha o número */
-function idsDaGente(lista, cidadePadrao) {
+export function idsDaGente(lista, cidadePadrao) {
   const grupos = new Map();
   return arr(lista).map((g) => {
     const o = obj(g) || { nome: g };
@@ -506,8 +506,10 @@ export function rotuloDe(id, catalogo, cena) {
    o herói não é gente da cena). `estado`: aqui, longe ou morto, pela
    presença (a do catálogo, se quem chama não der outra). `daCidade`: a
    «onde» dele nomeia a cidade do herói. `rotulo`: o que o distingue dos
-   outros candidatos. Vazio: ninguém tem o nome. */
-export function candidatos(dito, catalogo, presencaDada) {
+   outros candidatos. Vazio: ninguém tem o nome.
+   `opcoes.niveis` (etapa 2): os níveis a usar — os do nome dito (CASA_O_DITO)
+   ou os do livro; sem eles, os do livro (RESOLVER_NOME.niveis). */
+export function candidatos(dito, catalogo, presencaDada, opcoes) {
   const cat = obj(catalogo) || {};
   const porId = obj(cat.porId) || {};
   const nome = typeof dito === "string" ? dito.trim() : nomeDe(dito).trim();
@@ -525,8 +527,11 @@ export function candidatos(dito, catalogo, presencaDada) {
   const aqui = new Set(arr(pr && pr.aqui)), mortos = new Set(arr(pr && pr.mortos));
   const [ESTA, LONGE, MORTO] = QUEM_E_QUEM.estados;
   const entradas = arr(cat.entradas);
-  for (const nivel of RESOLVER_NOME.niveis) {
-    const ids = [...new Set(entradas.filter((x) => CASA_O_NOME[nivel](ps, x.ps)).map((x) => x.para || x.id))].filter((id) => temChave(porId, id));
+  /* etapa 2: quem chama pode pedir outros níveis (os do nome DITO, CASA_O_DITO);
+     sem pedir, os do livro — e o livro não muda */
+  const niveis = arr(obj(opcoes) && opcoes.niveis).filter((n) => temChave(NIVEIS_DE_TODOS, n));
+  for (const nivel of niveis.length ? niveis : RESOLVER_NOME.niveis) {
+    const ids = [...new Set(entradas.filter((x) => NIVEIS_DE_TODOS[nivel](ps, x.ps)).map((x) => x.para || x.id))].filter((id) => temChave(porId, id));
     if (!ids.length) continue;
     return ids.map((id) => {
       const d = porId[id];
@@ -536,9 +541,158 @@ export function candidatos(dito, catalogo, presencaDada) {
         estado: morto ? MORTO : aqui.has(id) ? ESTA : LONGE,
         rotulo: rotuloDe(id, cat, ids),
         porque: nivel,
-        daCidade: !!cat.cidade && naCidade(d.onde, cat.cidade),
+        /* a lista que já sabe dizê-lo (catalogoDasListas) o diz; senão, a «onde» nomeia a cidade */
+        daCidade: d.daCidade === true || (!!cat.cidade && naCidade(d.onde, cat.cidade)),
       };
     });
   }
   return [];
+}
+
+/* ============================================================
+   ETAPA 2 — A PRESENÇA POR ID E O NOME DITO (23/11/2026)
+
+   Até aqui cada leitor de «quem a frase diz» tinha a sua régua por nome
+   (quemONomeDiz, aCasaNaBase, mesmaPessoa, nomeProcurado, quemDaFrase), e
+   dois fulanos de mesmo nome eram um só. Agora o nome dito vira CANDIDATOS
+   uma vez (`candidatos`, com os níveis do nome dito), e uma régua só escolhe
+   (`aReguaDoDito`). Os leitores de antes ficam com a assinatura deles e
+   delegam aqui; quem já tem os ids (a presença do jogo) passa-os, e o
+   homônimo deixa de se fundir no outro.
+
+   Os níveis do nome DITO (CASA_O_DITO) não entram em RESOLVER_NOME — o livro
+   continua com os dele, byte a byte:
+     · `dito`: as palavras ditas (sem as partículas de QUEM_E_QUEM_DITO) estão
+       todas no nome, e o primeiro nome é o mesmo — «Ulric» é Ulric
+       Coração-de-Ferro, «Ulric Coração-de-Ferro» não é Ulric Olho-de-Corvo;
+     · `primeiro`: o primeiro nome igual (a régua de `mesmaPessoa`).
+   ============================================================ */
+export const QUEM_E_QUEM_DITO = Object.freeze({
+  /* as partículas que vivem dentro de um nome («Falk da Foz», «Merek o Exilado») */
+  particulas: Object.freeze(["de", "do", "da", "dos", "das", "o", "a"]),
+  /* o primeiro nome mais curto que isto não procura ninguém */
+  primeiroMinimo: 3,
+  /* os níveis que o nome dito usa, e a ordem da régua que o decide (a da planta) */
+  niveis: Object.freeze(["dito"]),
+  regua: Object.freeze(["inteiro", "presente", "cidade", "unico"]),
+  /* o prefixo do id de quem só chega por nome numa lista (sem ficha) */
+  daLista: "npc|",
+});
+const semParticulas = (ps) => ps.filter((w) => !QUEM_E_QUEM_DITO.particulas.includes(w));
+export const CASA_O_DITO = Object.freeze({
+  dito: (said, nome) => {
+    const W = semParticulas(said), N = semParticulas(nome);
+    return W.length > 0 && N.length > 0 && W[0] === N[0] && W[0].length >= QUEM_E_QUEM_DITO.primeiroMinimo && W.every((w) => N.includes(w));
+  },
+  primeiro: (said, nome) => said.length > 0 && nome.length > 0 && said[0] === nome[0] && said[0].length >= QUEM_E_QUEM_DITO.primeiroMinimo,
+});
+const NIVEIS_DE_TODOS = Object.freeze({ ...CASA_O_NOME, ...CASA_O_DITO });
+
+/* o nome dito, palavra a palavra, sem partículas: é o que «inteiro» compara */
+const ditas = (s) => semParticulas(palavrasDoNome(s));
+const inteiroDe = (W) => (c) => { const N = ditas(c.nome); return N.length === W.length && N.every((w) => W.includes(w)); };
+
+/* catalogoDasListas({ aqui, longe, conhecidos }) → um catálogo (a forma de
+   catalogoDoElenco) feito das listas que um leitor já tem.
+   Cada entrada é um nome ou { nome, id?, oficio?, onde?, morto?, daCidade?,
+   local? }. QUEM TRAZ O ID É UMA PESSOA: dois «Tabitha» com dois ids são duas.
+   Quem chega só pelo nome leva `npc|<as palavras do nome>` — e por isso o
+   mesmo nome escrito duas vezes continua a ser um (o que as listas de antes
+   já faziam). A presença vem das listas: o primeiro balde que diz o id
+   manda (aqui, depois longe, depois conhecidos). */
+export function catalogoDasListas(listas) {
+  const L = obj(listas) || {};
+  const entradas = [], porId = {}, porNome = {}, origem = {};
+  const aqui = [], mortos = [], longe = [];
+  const por = (x, balde) => {
+    const o = obj(x) || { nome: typeof x === "string" ? x : "" };
+    const nome = limpo(nomeDe(o));
+    const ps = palavrasDoNome(nome);
+    if (!ps.length) return;
+    const id = typeof o.id === "string" && o.id.trim() ? o.id.trim().slice(0, QUEM_E_QUEM.id) : `${QUEM_E_QUEM_DITO.daLista}${ps.join(" ")}`.slice(0, QUEM_E_QUEM.id);
+    if (temChave(porId, id)) return;
+    const e = {
+      fonte: balde, nome, id, onde: typeof o.onde === "string" ? o.onde : "", ps, rank: 0, para: null,
+      oficio: limpo(o.oficio || o.papel || o.rotulo, QUEM_E_QUEM.id), local: limpo(o.local, QUEM_E_QUEM.id), cidade: "",
+      status: o.morto ? ESTADO_SEM_VOLTA.finais[0] || "" : "", daCidade: !!o.daCidade,
+    };
+    entradas.push(e);
+    porId[id] = e;
+    origem[id] = balde;
+    (porNome[ps[0]] = porNome[ps[0]] || []).push(id);
+    if (balde === "aqui") aqui.push(id);
+    else if (o.morto) mortos.push(id);
+    else longe.push(id);
+  };
+  for (const x of arr(L.aqui)) por(x, "aqui");
+  for (const x of arr(L.longe)) por(x, "longe");
+  for (const x of arr(L.conhecidos)) por(x, "conhecido");
+  return { entradas, porId, porNome, alias: {}, cidade: "", heroi: [], heroiNome: "", origem, presenca: { aqui, longe, grupo: [], doSitio: [], doPasso: [], mortos } };
+}
+
+/* aReguaDoDito(cands, dito) → { estado: "aqui"|"qual"|"longe"|"ninguem",
+     um: candidato | null, opcoes: [candidato], morto? }
+   A régua da planta (QUEM_E_QUEM_DITO.regua), sobre os candidatos de um nome:
+     1. o nome INTEIRO — quando o dito vai além do primeiro nome, quem tem
+        exatamente as palavras ditas ganha dos outros;
+     2. quem está PRESENTE ganha de quem não está; dois presentes que o dito
+        não separa (nem pelo nome inteiro) não se escolhem: «qual»;
+     3. entre os de fora, quem é DA CIDADE do herói;
+     4. o ÚNICO; senão, o de nome inteiro; senão, os de fora em aberto. */
+export function aReguaDoDito(cands, dito) {
+  const nada = { estado: "ninguem", um: null, opcoes: [] };
+  let C = arr(cands).filter((c) => obj(c) && c.id);
+  if (!C.length) return nada;
+  const W = ditas(typeof dito === "string" ? dito : nomeDe(dito));
+  const inteiro = inteiroDe(W);
+  const [ESTA, , MORTO] = QUEM_E_QUEM.estados;
+  if (W.length > 1) { const I = C.filter(inteiro); if (I.length) C = I; }
+  const aqui = C.filter((c) => c.estado === ESTA);
+  if (aqui.length === 1) return { estado: "aqui", um: aqui[0], opcoes: [] };
+  if (aqui.length > 1) {
+    const I = aqui.filter(inteiro);
+    if (I.length === 1) return { estado: "aqui", um: I[0], opcoes: [] };
+    return { estado: "qual", um: null, opcoes: aqui };
+  }
+  let fora = C;
+  if (fora.length > 1) { const D = fora.filter((c) => c.daCidade); if (D.length) fora = D; }
+  if (fora.length === 1) return { estado: "longe", um: fora[0], opcoes: [] };
+  const I = fora.filter(inteiro);
+  if (I.length === 1) return { estado: "longe", um: I[0], opcoes: [] };
+  return { estado: "longe", um: null, opcoes: fora, morto: fora.every((c) => c.estado === MORTO) };
+}
+
+/* oNomeDitoDiz(dito, catalogo, presenca) → a régua sobre os candidatos do
+   nome dito (os níveis de QUEM_E_QUEM_DITO), com `cands` junto. Quem só
+   chega pelos conhecidos (catalogoDasListas) entra quando ninguém das
+   listas de presença responde — a ordem de antes. */
+export function oNomeDitoDiz(dito, catalogo, presencaDada) {
+  const cat = obj(catalogo) || {};
+  const cs = candidatos(dito, cat, presencaDada, { niveis: QUEM_E_QUEM_DITO.niveis });
+  const org = obj(cat.origem) || {};
+  const deLista = cs.filter((c) => org[c.id] !== "conhecido");
+  return { ...aReguaDoDito(deLista.length ? deLista : cs, dito), cands: cs };
+}
+
+/* idNaPresenca(nome, catalogo, { prefere, usados }) → id | ""
+   O id de quem uma lista do jogo diz pelo nome: os candidatos do livro
+   (exato, depois prefixo); um só, é ele; vários (o homônimo), o primeiro de
+   `prefere` (os ids presentes) que `usados` ainda não deu, depois o primeiro
+   livre — dois «Tabitha» numa lista dão os dois ids, pela ordem do catálogo,
+   que é a da semente. Ninguém: o id de quem só tem nome (`npc|<nome>`). */
+export function idNaPresenca(nome, catalogo, opcoes) {
+  const o = obj(opcoes) || {};
+  const n = limpo(nomeDe(nome));
+  if (!n) return "";
+  const cs = candidatos(n, catalogo).filter((c) => c.porque !== "heroi");
+  const usados = o.usados instanceof Set ? o.usados : new Set();
+  const prefere = new Set(arr(o.prefere));
+  let id = "";
+  if (cs.length === 1) id = cs[0].id;
+  else if (cs.length > 1) {
+    const livres = cs.filter((c) => !usados.has(c.id));
+    id = (livres.find((c) => prefere.has(c.id)) || livres[0] || cs[0]).id;
+  } else id = idDe(n, "batizado");
+  usados.add(id);
+  return id;
 }

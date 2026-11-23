@@ -177,11 +177,24 @@ function aPerguntaValida(o, cena, frase, vezes) {
     campo = "coisa";
     valores = arr(r.pergunta.opcoes).filter(Boolean);
   }
-  valores = [...new Set(valores.map(str))];
+  /* 23/11 (identidade · etapa 2): quem traz o id é uma pessoa — dois homônimos são duas opções, e
+     a escolha leva o id junto (completar). Sem ids, as opções de sempre (uma por nome). */
+  const idsDoQual = motivo === "dois_com_o_nome" && arr(l.opcoesIdsDeQuem).length === arr(r.pergunta.opcoes).length ? arr(l.opcoesIdsDeQuem) : [];
+  const idDoValor = (n, k) => (campo !== "quem" ? "" : motivo === "dois_com_o_nome" ? str(idsDoQual[arr(r.pergunta.opcoes).indexOf(n, k)] || "") : str((arr(cena.pessoas).filter((p) => nomeDe(p) === n)[k] || {}).id || ""));
+  const vistos = new Map();
+  const itens = [];
+  for (const v of valores.map(str)) {
+    const k = vistos.get(v) || 0;
+    vistos.set(v, k + 1);
+    const id = idDoValor(v, k);
+    if (itens.some((x) => (id && x.id ? x.id === id : x.v === v))) continue;
+    itens.push({ v, id });
+  }
+  valores = itens.map((x) => x.v);
   if (!valores.length) return { nenhum: true, campo };
-  if (valores.length === 1) return { um: valores[0], campo };
+  if (valores.length === 1) return { um: valores[0], umId: itens[0].id, campo };
   const rotulo = (v) => (campo === "subtipo" ? R.acao[v] : maiuscula(semAposto(v)));
-  const opcoes = valores.map((v) => Object.freeze({ rotulo: rotulo(v), valor: v }));
+  const opcoes = itens.map((x) => Object.freeze({ rotulo: rotulo(x.v), valor: x.v, ...(x.id ? { id: x.id } : {}) }));
   const lista = opcoes.map((x, i) => tpl(R.tela.opcao, { n: i + 1, rotulo: x.rotulo })).join(R.tela.separador);
   return {
     texto: r.pergunta.texto,
@@ -192,8 +205,11 @@ function aPerguntaValida(o, cena, frase, vezes) {
 }
 
 /* a leitura completada pela escolha (a estrutura, nunca o texto) */
-function completar(l, campo, valor, cena) {
+function completar(l0, campo, valor, cena, id) {
   const comp = obj(cena.heroi) ? str(cena.heroi.companheiro) : "";
+  /* o id de quem a escolha deu substitui o da leitura (que era de ninguém, ou da pergunta) */
+  const { quemId: _q, opcoesIdsDeQuem: _o, ...semId } = obj(l0) || {};
+  const l = campo === "quem" ? { ...semId, ...(id ? { quemId: id } : {}) } : l0;
   if (campo === "quem") {
     if (valor === comp) return Object.freeze({ ...l, quem: null, companheiro: comp, quemEstado: "aqui", opcoesDeQuem: Object.freeze([]), quemPronomeSemDono: false, quemDito: true });
     return Object.freeze({ ...l, quem: valor, companheiro: null, quemEstado: "aqui", opcoesDeQuem: Object.freeze([]), quemPronomeSemDono: false, quemDito: true });
@@ -217,15 +233,16 @@ function aFraseDaLeitura(l) {
 }
 
 /* a resposta à pergunta pendente: o número, o nome inteiro ou o primeiro nome da opção */
-function aEscolha(pendente, opcoes, texto) {
+/* a opção escolhida inteira (com o id, quando a tem) */
+function aOpcaoEscolhida(pendente, opcoes, texto) {
   const ops = arr(opcoes);
   const t = sem(texto).replace(/[.!?]+$/, "").trim();
   if (!ops.length || !t) return null;
-  if (/^\d+$/.test(t)) { const k = Number(t) - 1; return ops[k] ? ops[k].valor : null; }
+  if (/^\d+$/.test(t)) { const k = Number(t) - 1; return ops[k] || null; }
   const exato = ops.filter((o) => sem(o.rotulo) === t || sem(o.valor) === t);
-  if (exato.length === 1) return exato[0].valor;
+  if (exato.length === 1) return exato[0];
   const peloPrimeiro = ops.filter((o) => sem(o.rotulo).split(" ").includes(t) || (t.length >= 3 && sem(o.rotulo).startsWith(t)));
-  return peloPrimeiro.length === 1 ? peloPrimeiro[0].valor : null;
+  return peloPrimeiro.length === 1 ? peloPrimeiro[0] : null;
 }
 
 /* o nome próprio a quem a frase entrega e que a cena não tem (o desconhecido, o que só a quest nomeia) */
@@ -332,9 +349,10 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
     let o = null, fraseDoTurno = f, vezes = 0;
     if (pend && obj(pend.leitura)) {
       const ops = arr(obj(c.pendente) && c.pendente.opcoes);
-      const v = aEscolha(pend, ops, f);
+      const op = aOpcaoEscolhida(pend, ops, f);
+      const v = op ? op.valor : null;
       if (v != null) {
-        const l2 = completar(pend.leitura, pend.campo, v, cena);
+        const l2 = completar(pend.leitura, pend.campo, v, cena, op && op.id);
         o = oVereditoDoOuvido(l2, cena, aFraseDaLeitura(l2));
         fraseDoTurno = aFraseDaLeitura(l2);
         vezes = (Number(pend.vezes) || 0) + 1;
@@ -390,7 +408,7 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
       if (pq.nenhum) return sai({ caminho: "nao", veredito: negada("ninguem_aqui", tpl(A_CENA_DO_OUVIDO.tela.nao.ninguem_aqui, {}), tpl(A_CENA_DO_OUVIDO.fato.nao.ninguem_aqui, { gesto: oGesto(l) })) });
       if (pq.um) {
         /* um candidato só: não há pergunta — a leitura completa-se com ele */
-        const l2 = completar(l, pq.campo, pq.um, cena);
+        const l2 = completar(l, pq.campo, pq.um, cena, pq.umId);
         const o2 = oVereditoDoOuvido(l2, cena, f);
         if (o2.caminho === "pergunta") return desiste();
         return decidir(o2, sai, ctxT, cena, r0, R);

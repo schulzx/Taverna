@@ -261,10 +261,16 @@ function palavrasDaFrase(frase) {
 function arrumarCena(cena) {
   const c = cena && typeof cena === "object" ? cena : {};
   const h = c.heroi && typeof c.heroi === "object" ? c.heroi : {};
-  const pessoas = arr(c.pessoas).filter((p) => p && str(p.nome).trim()).map((p) => ({ nome: str(p.nome), oficio: str(p.oficio), vende: arr(p.vende).filter((v) => v && str(v.item).trim()).map((v) => ({ item: str(v.item), preco: Number(v.preco) || 0 })) }));
+  /* 23/11 (identidade · etapa 2): a cena do jogo traz o `id` de quem está (`pessoas[].id`) e os de
+     quem não está (`ids.ausentes`, `ids.mortos`, paralelos aos nomes). Com eles, dois homônimos são
+     dois, e o estado (aqui, longe, morto) é o do id. A cena de exame não os traz: nada muda nela. */
+  const ids = c.ids && typeof c.ids === "object" ? c.ids : {};
+  const pessoas = arr(c.pessoas).filter((p) => p && str(p.nome).trim()).map((p) => ({ nome: str(p.nome), ...(p.id ? { id: str(p.id) } : {}), oficio: str(p.oficio), vende: arr(p.vende).filter((v) => v && str(v.item).trim()).map((v) => ({ item: str(v.item), preco: Number(v.preco) || 0 })) }));
   const companheiro = str(h.companheiro).trim() || null;
   const ausentes = arr(c.ausentes).map(str).filter(Boolean);
   const mortos = arr(c.mortos).map(str).filter(Boolean);
+  const idsAusentes = arr(c.ausentes).map((_, i) => str(arr(ids.ausentes)[i])).filter((_, i) => str(arr(c.ausentes)[i]));
+  const idsMortos = arr(c.mortos).map((_, i) => str(arr(ids.mortos)[i])).filter((_, i) => str(arr(c.mortos)[i]));
   const carrega = arr(h.carrega).map(str).filter(Boolean);
   const coisas = arr(c.coisas).map(str).filter(Boolean);
   const moeda = Number.isFinite(Number(h.moeda)) ? Math.max(0, Number(h.moeda)) : 0;
@@ -286,7 +292,7 @@ function arrumarCena(cena) {
   const temFoco = Object.prototype.hasOwnProperty.call(c, "foco");
   const foco = temFoco ? str(c.foco).trim() || null : null;
   const doCompanheiro = arr(h.companheiroCarrega).map(str).filter(Boolean);
-  return { pessoas, companheiro, ausentes, mortos, carrega, coisas, moeda, catalogo, tipo: str(c.tipo), lugar: str(c.lugar), bancas, temFoco, foco, doCompanheiro };
+  return { pessoas, companheiro, ausentes, mortos, idsAusentes, idsMortos, carrega, coisas, moeda, catalogo, tipo: str(c.tipo), lugar: str(c.lugar), bancas, temFoco, foco, doCompanheiro };
 }
 const palavrasDoNome2 = (n) => sem(n).replace(/[^a-z0-9-]+/g, " ").trim().split(" ").filter(Boolean);
 
@@ -299,10 +305,10 @@ function pessoaEm(toks, i, cn) {
   const t = toks[i].s;
   if (t.length < 3 && !Object.prototype.hasOwnProperty.call(O_OUVIDO.pronomes, t)) return null;
   const todos = [
-    ...cn.pessoas.map((p) => ({ nome: p.nome, onde: "aqui" })),
-    ...(cn.companheiro ? [{ nome: cn.companheiro, onde: "aqui", companheiro: true }] : []),
-    ...cn.ausentes.map((n) => ({ nome: n, onde: "longe" })),
-    ...cn.mortos.map((n) => ({ nome: n, onde: "morto" })),
+    ...cn.pessoas.map((p) => ({ nome: p.nome, onde: "aqui", id: p.id || "" })),
+    ...(cn.companheiro ? [{ nome: cn.companheiro, onde: "aqui", companheiro: true, id: "" }] : []),
+    ...cn.ausentes.map((n, k) => ({ nome: n, onde: "longe", id: (cn.idsAusentes || [])[k] || "" })),
+    ...cn.mortos.map((n, k) => ({ nome: n, onde: "morto", id: (cn.idsMortos || [])[k] || "" })),
   ];
   /* o nome: a palavra é o primeiro nome (ou o nome depois do título) de alguém */
   let melhor = null;
@@ -319,17 +325,18 @@ function pessoaEm(toks, i, cn) {
     const ditas = toks.slice(i, melhor.j).map((x) => x.s).filter((w) => !PART.includes(w));
     const dito = (melhor.k === 1 ? [melhor.W[0], ...ditas] : ditas).join(" ");
     const r = quemONomeDiz(dito, {
-      aqui: todos.filter((x) => x.onde === "aqui").map((x) => x.nome),
-      longe: todos.filter((x) => x.onde !== "aqui").map((x) => ({ nome: x.nome, morto: x.onde === "morto" })),
+      aqui: todos.filter((x) => x.onde === "aqui").map((x) => (x.id ? { nome: x.nome, id: x.id } : x.nome)),
+      longe: todos.filter((x) => x.onde !== "aqui").map((x) => ({ nome: x.nome, morto: x.onde === "morto", ...(x.id ? { id: x.id } : {}) })),
     });
     /* quem está ganha também pelo ofício («o capitão» do navio e não o Capitão Sorrel ausente) */
     if (r.estado === "longe" && i > 0) {
       const of = oficioEm(toks, i, cn);
       if (of) return of;
     }
-    if (r.estado === "aqui") return { j: melhor.j, estado: "aqui", nome: r.nome, opcoes: [] };
-    if (r.estado === "qual") return { j: melhor.j, estado: "qual", nome: null, opcoes: [...r.opcoes] };
-    if (r.estado === "longe" && !r.opcoes.length) return { j: melhor.j, estado: r.morto ? "morto" : "longe", nome: r.nome, opcoes: [] };
+    const comId = (o, id) => (id && todos.some((x) => x.id) ? { ...o, id } : o);
+    if (r.estado === "aqui") return comId({ j: melhor.j, estado: "aqui", nome: r.nome, opcoes: [] }, r.id);
+    if (r.estado === "qual") return { j: melhor.j, estado: "qual", nome: null, opcoes: [...r.opcoes], ...(todos.some((x) => x.id) ? { ids: [...(r.ids || [])] } : {}) };
+    if (r.estado === "longe" && !r.opcoes.length) return comId({ j: melhor.j, estado: r.morto ? "morto" : "longe", nome: r.nome, opcoes: [] }, r.id);
   }
   const of = oficioEm(toks, i, cn);
   if (of) return of;
@@ -395,7 +402,7 @@ export function ligarACena(frase, cena) {
       if (!cs.length && !ehVerbo) { marcas.push({ i, j: i + 1, tipo: "MOEDA" }); i++; continue; }
     }
     const p = Object.prototype.hasOwnProperty.call(O_OUVIDO.pronomes, t) ? null : pessoaEm(toks, i, cn);
-    if (p) { marcas.push({ i, j: p.j, tipo: "PESSOA", estado: p.estado, nome: p.nome, opcoes: p.opcoes }); i = p.j; continue; }
+    if (p) { marcas.push({ i, j: p.j, tipo: "PESSOA", estado: p.estado, nome: p.nome, opcoes: p.opcoes, ...(p.id ? { id: p.id } : {}), ...(p.ids ? { ids: p.ids } : {}) }); i = p.j; continue; }
     if (Object.prototype.hasOwnProperty.call(O_OUVIDO.pronomes, t)) { marcas.push({ i, j: i + 1, tipo: "PRONOME", genero: O_OUVIDO.pronomes[t] }); i++; continue; }
     const cs = coisasEm(toks, i, cn);
     if (cs.length) {
@@ -537,7 +544,9 @@ function ler(L, frase) {
 
   const base = { marcada: L.marcada, fala, pergunta, negada: false, condicional: false, direcao: null, regateio: false, propostaDeEmTroca: null };
   const todasPessoas = marcas.filter((m) => m.tipo === "PESSOA");
-  const quemDe = (m) => (m ? { quem: m.estado === "qual" ? null : m.nome, quemEstado: m.estado, opcoesDeQuem: m.opcoes || [], quemDito: true } : { quem: null, quemEstado: null, opcoesDeQuem: [], quemDito: false });
+  /* 23/11 (identidade · etapa 2): o `quemId` vai com o `quem` quando a cena traz ids — é por ele que
+     a porta única confere presença, ausência e morte dali em diante */
+  const quemDe = (m) => (m ? { quem: m.estado === "qual" ? null : m.nome, quemEstado: m.estado, opcoesDeQuem: m.opcoes || [], quemDito: true, ...(m.id && m.estado !== "qual" ? { quemId: m.id } : {}), ...(m.ids ? { opcoesIdsDeQuem: m.ids } : {}) } : { quem: null, quemEstado: null, opcoesDeQuem: [], quemDito: false });
   const primeiraPessoa = (ks) => { for (const k of ks) { const m = marcaEm(k); if (m && m.tipo === "PESSOA" && m.i === k) return m; } return null; };
 
   /* o pronome: o único candidato, o mesmo gênero, ou quem vende a coisa dita */
@@ -560,13 +569,13 @@ function ler(L, frase) {
       /* o único do gênero dito não é adivinhar */
       const fem0 = (n) => /a$/.test(palavrasDoNome(n).filter((w) => !TITULOS.includes(w))[0] || "");
       const doGenero0 = cn.pessoas.filter((p) => (pr.genero === "f" ? fem0(p.nome) : pr.genero === "m" ? !fem0(p.nome) : false));
-      if (doGenero0.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: doGenero0[0].nome, opcoes: [] };
+      if (doGenero0.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: doGenero0[0].nome, opcoes: [], ...(doGenero0[0].id ? { id: doGenero0[0].id } : {}) };
       /* sem foco e com mais de um candidato, ninguém se adivinha (a frase 19 deu o símbolo ao Mordecai) */
-      if (cn.pessoas.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: cn.pessoas[0].nome, opcoes: [] };
+      if (cn.pessoas.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: cn.pessoas[0].nome, opcoes: [], ...(cn.pessoas[0].id ? { id: cn.pessoas[0].id } : {}) };
       return null;
     }
     const gente = cn.pessoas;
-    if (gente.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: gente[0].nome, opcoes: [] };
+    if (gente.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: gente[0].nome, opcoes: [], ...(gente[0].id ? { id: gente[0].id } : {}) };
     const fem = (n) => /a$/.test(palavrasDoNome(n).filter((w) => !TITULOS.includes(w))[0] || "");
     const doGenero = gente.filter((p) => (pr.genero === "f" ? fem(p.nome) : pr.genero === "m" ? !fem(p.nome) : true));
     /* quem tira (pegar, furtar) só retoma o único candidato: «pego o que ele deixou» com dois em cena → pergunta.
@@ -574,7 +583,7 @@ function ler(L, frase) {
        (Em 22/11 o rígido valeu para toda troca por uma corrida, e o selado o desmentiu em agregado:
        o veredito da armadilha «pronome» caiu de 71% para 43%. Voltou a ser só de quem tira.) */
     if (rigido) return null;
-    if (doGenero.length >= 1) return { tipo: "PESSOA", estado: "aqui", nome: doGenero[0].nome, opcoes: [] };
+    if (doGenero.length >= 1) return { tipo: "PESSOA", estado: "aqui", nome: doGenero[0].nome, opcoes: [], ...(doGenero[0].id ? { id: doGenero[0].id } : {}) };
     return null;
   };
 
@@ -757,7 +766,7 @@ function ler(L, frase) {
       const pede = ks.find((k) => { const v = verboDe(toks[k].s); return v && v.fam === "trocar" && k === ks[comeca(ks)] && /o$/.test(toks[k].s); });
       if (ehPreco) {
         let coisa = coisaDe(todos, 0, "dele");
-        if (!coisa && m && m.estado === "aqui") { const p = cn.pessoas.find((x) => x.nome === m.nome); if (p && p.vende.length === 1) coisa = { nome: p.vende[0].item, tipo: "dele", dono: p.nome, preco: p.vende[0].preco }; }
+        if (!coisa && m && m.estado === "aqui") { const p = cn.pessoas.find((x) => (m.id && x.id ? x.id === m.id : x.nome === m.nome)); if (p && p.vende.length === 1) coisa = { nome: p.vende[0].item, tipo: "dele", dono: p.nome, preco: p.vende[0].preco }; }
         return sai({ familia: "falar", ...quemDe(m), coisa, quantia: quantiaDe(todos), confianca: C.falaOuPergunta });
       }
       if (pede == null) {
@@ -1158,7 +1167,7 @@ function ler(L, frase) {
       if (!r) base.quemPronomeSemDono = true;
     }
     if (subtipo === "escambo" && m && base.propostaDeEmTroca && base.propostaDeEmTroca.tipo === "dele" && m.nome && base.propostaDeEmTroca.dono && base.propostaDeEmTroca.dono !== m.nome) {
-      const p = cn.pessoas.find((x) => x.nome === m.nome);
+      const p = cn.pessoas.find((x) => (m.id && x.id ? x.id === m.id : x.nome === m.nome));
       if (p) { const it = p.vende.find((x) => sem(x.item) === sem(base.propostaDeEmTroca.nome)); if (it) base.propostaDeEmTroca = { nome: it.item, tipo: "dele", dono: p.nome, preco: it.preco }; }
     }
   } else {

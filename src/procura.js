@@ -40,6 +40,7 @@ import { rumoEntre, formatarDistancia, coordDe, garantirCoord, kmEntre } from ".
 import { caminhoNaRegiao, origemDoHeroi, tempoDoCaminho } from "./marcha.js";
 /* 9.ª sessão (12/10): o elo procura-se pelo papel do passado do herói */
 import { PROCURA_DO_ELO } from "./nucleo.js";
+import { candidatos, catalogoDasListas } from "./quem-e-quem.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -96,7 +97,14 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
     const nl = norm(l).replace(/^(o|a|os|as)\s+/, "");
     if (nl.length >= ALCUNHA_DE_LUGAR.nomeMinimo) t = t.split(nl).join(" ".repeat(nl.length));
   }
-  const perto = new Set((Array.isArray(o.perto) ? o.perto : []).map((x) => norm(x && typeof x === "object" ? x.nome : x)).filter(Boolean));
+  /* 23/11 (identidade · etapa 2): quem está perto é um catálogo (quem-e-quem.js) — o
+     nome procurado é dele quando os candidatos do catálogo o dão presente; quem traz
+     o `id` (na lista e no perto) é comparado pelo id, e o homônimo de longe não é o
+     de perto */
+  const pertoL = (Array.isArray(o.perto) ? o.perto : []).filter((x) => x && (typeof x === "string" || typeof x.nome === "string"));
+  const catPerto = catalogoDasListas({ aqui: pertoL });
+  const idsPerto = new Set(pertoL.map((x) => (x && typeof x === "object" && typeof x.id === "string" ? x.id : "")).filter(Boolean));
+  const estaPerto = (n, id) => (id && idsPerto.size ? idsPerto.has(id) : candidatos(n, catPerto, null, { niveis: ["exato"] }).some((c) => c.estado === "aqui"));
   let achado = "", melhor = null;
   /* onde começa a procura: o primeiro verbo dela na frase (-1 = nenhum) */
   const mv = VERBOS.exec(t);
@@ -105,8 +113,11 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
     for (const k of PLACAR_DA_PROCURA) if (a[k] !== b[k]) return a[k] > b[k];
     return false;
   };
-  for (const n of Array.isArray(nomes) ? nomes : []) {
-    if (typeof n !== "string") continue;
+  for (const n0 of Array.isArray(nomes) ? nomes : []) {
+    const n = typeof n0 === "string" ? n0 : n0 && typeof n0 === "object" && typeof n0.nome === "string" ? n0.nome : null;
+    if (!n) continue;
+    const idN = n0 && typeof n0 === "object" && typeof n0.id === "string" ? n0.id : "";
+    const pertoN = estaPerto(n, idN) ? 1 : 0;
     const nn = norm(n);
     if (nn.length < ALCUNHA_DE_LUGAR.nomeMinimo) continue;
     /* o nome inteiro, ou um pedaço dele — a mesa chama Ione Vantel de Ione,
@@ -127,7 +138,7 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
         naoOuve: ouvinte ? 0 : 1,
         aposVerbo: apos,
         junto: apos ? -(Math.min(...depois) - verbo) : 0,
-        dito: p.length, perto: perto.has(nn) ? 1 : 0, exato: p === nn ? 1 : 0, longo: n.length,
+        dito: p.length, perto: pertoN, exato: p === nn ? 1 : 0, longo: n.length,
       };
       if (!melhor || ganha(placar, melhor)) { melhor = placar; achado = n; }
     }

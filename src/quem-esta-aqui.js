@@ -57,6 +57,8 @@ import { elencoDaCena, masmorraAberta } from "./cena.js";
 import { fichaDaPessoa } from "./gente-por-dentro.js";
 import { quemAtende } from "./elenco-do-lugar.js";
 import { oficioNoGenero } from "./nomes.js";
+import { ESTADO_SEM_VOLTA } from "./npcs.js";
+import { catalogoDasListas, oNomeDitoDiz, candidatos, catalogoDoElenco, idDe, idNaPresenca, idsDaGente, QUEM_E_QUEM_DITO } from "./quem-e-quem.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -147,9 +149,15 @@ export function pessoasDasCartas(quadros, ctx) {
      `aqui`/`longe`: o formato de `elencoDaCena` (o mesmo que todos já leem);
      `doPasso`: [{ nome, rotulo, sabe, aqui, deOnde }] para `montarEmCena`;
      `fora`: fora dos muros (o núcleo da cidade não é «daqui»).
+   23/11 (identidade · etapa 2): toda entrada leva o `id` do catálogo
+   (quem-e-quem.js) — aditivo: quem lê o nome continua a ler o nome. Com
+   `porId: true` (o Mestre vivo), quem é igual a quem decide-se pelo id: o
+   segundo homônimo no mesmo sítio fica, e não se funde no primeiro. Sem a
+   chave, as listas de sempre, byte a byte (só com o `id` a mais).
    ============================================================ */
 export function quemEstaAqui(estado) {
   const e = ehObj(estado) ? estado : {};
+  const porId = e.porId === true;
   const pers = ehObj(e.personagem) ? e.personagem : {};
   const grupo = arr(e.grupo || pers.grupo).filter((g) => ehObj(g) && nomeDe(g));
   const noGrupo = new Set(grupo.map((g) => sem(g.nome)));
@@ -161,6 +169,30 @@ export function quemEstaAqui(estado) {
   /* os outros sítios conhecidos da cidade (não este, nem o prédio de que este é cômodo) */
   const outros = arr(e.lugares).filter((l) => ehObj(l) && nomeDe(l) && str(l.onde) !== QUEM_ESTA_AQUI_TABELA.ondeArredor
     && (!L || (semArtigo(l.nome) !== semArtigo(L.nome) && semArtigo(l.nome) !== semArtigo(L.dentroDe))));
+  /* o catálogo desta cena: a gente da base, o registo, o grupo — os ids saem dele */
+  let cat = null;
+  try { cat = catalogoDoElenco({ gente: arr(e.gente), npcs: ehObj(e.npcs) ? e.npcs : {}, grupo, cidade, heroi: nomeDe(pers) }, e.pessoas); } catch { cat = null; }
+  const fim = (id) => (id && cat && cat.alias && cat.alias[id]) || id;
+  let idsG = [];
+  try { idsG = idsDaGente(arr(e.gente).map((g) => (ehObj(g) ? g : { nome: g })), cidade); } catch { idsG = []; }
+  const idDaGenteEm = (p) => { const i = arr(e.gente).indexOf(p); return i >= 0 ? fim(idsG[i] || "") : ""; };
+  const idNaGente = (gid) => { const p = arr(e.gente).find((g) => ehObj(g) && g.id === gid); return p ? idDaGenteEm(p) : ""; };
+  /* a chave do registo de quem elencoDaCena devolveu (a ficha espalhada): a ficha de
+     mesmo nome que mais campos partilha — o homônimo do registo (Hilda e Hilda~2) dá
+     cada um a sua */
+  const npcsE = ehObj(e.npcs) ? e.npcs : {};
+  const chaveCache = new WeakMap(), chavesUsadas = new Set();
+  const idDoRegisto = (n) => {
+    if (!ehObj(n)) return "";
+    if (chaveCache.has(n)) return chaveCache.get(n);
+    const ks = Object.keys(npcsE).filter((k) => ehObj(npcsE[k]) && npcsE[k].nome === n.nome && !chavesUsadas.has(k));
+    const nota = (k) => ["local", "cidade", "papel", "status", "semente", "genero"].filter((c) => str(npcsE[k][c]) === str(n[c])).length;
+    const k = ks.sort((a, b) => nota(b) - nota(a))[0];
+    let id = "";
+    if (k) { chavesUsadas.add(k); id = fim(idDe({ chave: k, id: npcsE[k].id }, "registo")); }
+    chaveCache.set(n, id);
+    return id;
+  };
   const aqui = [], longe = [...arr(el.longe)];
   /* 22/11 (a décima segunda sessão, «Quorin» em todo lugar): quem a base põe
      num posto tem a casa da base, diga o registo o que disser (aCasaNaBase);
@@ -238,14 +270,15 @@ export function quemEstaAqui(estado) {
     };
     /* «Quorin» do registo e «Quorin Barba-Ruiva» da base são uma pessoa só (aCasaNaBase) */
     const ident = (nome) => { let c = null; try { c = aCasaNaBase(nome, e.gente); } catch { c = null; } return sem(c ? c.nome : nome); };
-    const por = (nome, rotulo, genero, local) => {
-      if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => mesmo(x.nome, nome) || ident(x.nome) === ident(nome)) || doSitio.some((x) => mesmo(x.nome, nome) || ident(x.nome) === ident(nome))) return;
+    const igual = (x, nome, id) => (porId && id && x.id ? x.id === id : mesmo(x.nome, nome) || ident(x.nome) === ident(nome));
+    const por = (nome, rotulo, genero, local, id) => {
+      if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => igual(x, nome, id)) || doSitio.some((x) => igual(x, nome, id))) return;
       if (ausentes.some((a) => mesmo(a, nome)) || !deTurno(nome, rotulo, local)) return;
       if (doSitio.length >= QUEM_ESTA_AQUI_TABELA.doSitio.max) return;
-      doSitio.push({ nome, rotulo: oficioNoGenero(str(rotulo).trim(), str(genero).trim()), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde });
+      doSitio.push({ nome, rotulo: oficioNoGenero(str(rotulo).trim(), str(genero).trim()), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde, ...(id ? { id } : {}) });
     };
-    for (const n of aqui) if (ehObj(n) && ali(localDe(n))) { const c = casaDe(n); por(c ? c.nome : nomeDe(n), n.papel, n.genero, localDe(n)); }
-    for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero, p.local);
+    for (const n of aqui) if (ehObj(n) && ali(localDe(n))) { const c = casaDe(n); por(c ? c.nome : nomeDe(n), n.papel, n.genero, localDe(n), (c && c.id && idNaGente(c.id)) || idDoRegisto(n)); }
+    for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero, p.local, idDaGenteEm(p));
     /* S4e: o posto vazio num lugar com função, à hora do expediente — o
        sistema escala quem o atende (elenco-do-lugar.js). Antes a estalagem
        antes das 11h e no dia da folga de todos ficava sem ninguém, e a prosa
@@ -259,14 +292,30 @@ export function quemEstaAqui(estado) {
     }
   }
   /* quem entra pelo passo, pela carta ou pelo posto não fica no longe */
-  const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)) && !doSitio.some((x) => mesmo(x.nome, n && n.nome)));
+  const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)) && !doSitio.some((x) => (porId && x.id && idDoRegisto(n) ? x.id === idDoRegisto(n) : mesmo(x.nome, n && n.nome))));
   /* 22/11 (a décima segunda sessão): a gente da base com posto NOUTRO sítio (com o
      herói num sítio ou fora dos muros) — o nome dela que a prosa trouxer não
      fica «em cena» (em-cena.js, ehLonge) */
   const postosLonge = (noSitio || fora) ? arr(e.gente).filter((p) => ehObj(p) && nomeDe(p) && str(p.local).trim() && !/morto/i.test(str(p.status))
     && !(L && nomeiaSitio(p.local, L.nome)) && !noGrupo.has(sem(p.nome)) && !doPasso.some((x) => mesmo(x.nome, p.nome)) && !doSitio.some((x) => mesmo(x.nome, p.nome)))
     .map((p) => ({ nome: nomeDe(p), onde: str(p.local).trim() })) : [];
-  return { aqui, longe: longe2, doPasso, doSitio, noSitio, fora, grupo: grupo.map((g) => nomeDe(g)), postosLonge };
+  /* o id de quem ainda não o tem (o registo, o passo, a carta, o figurante): pelo
+     catálogo; o homônimo que o catálogo não separa leva o primeiro id livre */
+  const usados = new Set();
+  const comId = (x, id0) => {
+    if (!ehObj(x)) return x;
+    if (typeof x.id === "string" && x.id) { usados.add(x.id); return x; }
+    const id = id0 || idNaPresenca(nomeDe(x), cat, { usados });
+    usados.add(id);
+    return { ...x, id };
+  };
+  const aquiI = aqui.map((n) => comId(n, idDoRegisto(n)));
+  for (const n of aquiI) if (ehObj(n) && n.id) usados.add(n.id);
+  return {
+    aqui: aquiI, longe: longe2.map((n) => comId(n, idDoRegisto(n))), doPasso: doPasso.map((x) => comId(x)), doSitio: doSitio.map((x) => comId(x)),
+    noSitio, fora, grupo: grupo.map((g) => nomeDe(g)), postosLonge, porId,
+    gruposIds: grupo.map((g) => fim(idDe(g, "grupo"))),
+  };
 }
 
 /* QUEM ESTÁ NOUTRO SÍTIO DAQUI (23/11/2026, a décima sétima sessão, frases 1 a 4)
@@ -317,8 +366,105 @@ export function quemAgeAqui(q) {
   const grupo = new Set(arr(x.grupo).map(sem));
   const base = x.noSitio ? arr(x.aqui).filter((n) => ehObj(n) && grupo.has(sem(n.nome))) : arr(x.aqui).filter(ehObj);
   const out = [...base];
-  for (const p of [...arr(x.doSitio), ...arr(x.doPasso)]) if (ehObj(p) && nomeDe(p) && !out.some((n) => mesmo(n.nome, p.nome))) out.push({ nome: nomeDe(p), papel: oficioNoGenero(str(p.rotulo), str(p.genero)), deOnde: p.deOnde });
+  /* etapa 2: com a chave (`porId`), o mesmo é o mesmo id — o segundo homônimo fica; o id vai junto, sempre */
+  const jaTem = (p) => (x.porId === true && p.id ? out.some((n) => n.id === p.id) : out.some((n) => mesmo(n.nome, p.nome)));
+  for (const p of [...arr(x.doSitio), ...arr(x.doPasso)]) if (ehObj(p) && nomeDe(p) && !jaTem(p)) out.push({ nome: nomeDe(p), papel: oficioNoGenero(str(p.rotulo), str(p.genero)), deOnde: p.deOnde, ...(p.id ? { id: p.id } : {}) });
   return out;
+}
+
+/* ============================================================
+   A PRESENÇA ÚNICA (23/11/2026, identidade · etapa 2)
+
+   O App calculava «quem está em cena» de quatro jeitos (pessoasDaCena,
+   presentesAgora, presentesDaTela, ausentesAgora), todos por nome, e o
+   retrato do ouvido juntava os resultados à mão: «Mercy» lida como a
+   homônima que estava longe com a outra à vista, a pessoa que a tela mostra
+   e o leitor da frase não via, quem está noutro sítio a falar na cena.
+
+   aPresencaUnica(q, ctx) → { aqui, age, tela, grupo, doPasso, doSitio,
+     noutroSitio, longe, mortos, conhecidos, naCidade, ausentes, catalogo }
+   UMA conta, toda por id (o do catálogo, quem-e-quem.js), com o nome como
+   rótulo. Cada pessoa aparece num balde só, pela ordem: aqui (quem age aqui
+   e quem a tela mostra), noutro sítio daqui, longe, morta; o resto do
+   catálogo é «conhecido» (existe, e não está aqui).
+     q   — o de quemEstaAqui (já com os ids);
+     ctx — { npcs, gente (a base da cidade), grupo, cidade, heroi, pessoas
+           (o campo do save), ausentes (osAusentes: [{ nome, onde, morto,
+           sitio }]), tela ([nome | { nome, id }]: o «Em cena»), conhecidos
+           ([nome]: quem mais o sistema nomeia — o passo da quest),
+           naCidade ([nome]: o registo pela régua da cidade), factos (o livro:
+           quem caiu morto, lido pelo alias do catálogo) }.
+   `age` e `ausentes` são as listas de antes, intactas, para quem as lê. */
+export function aPresencaUnica(q, ctx) {
+  const x = ehObj(q) ? q : {};
+  const c = ehObj(ctx) ? ctx : {};
+  const grupoObj = arr(c.grupo).filter((g) => ehObj(g) && nomeDe(g) && !g.invocada);
+  let cat;
+  try { cat = catalogoDoElenco({ gente: arr(c.gente), npcs: ehObj(c.npcs) ? c.npcs : {}, grupo: grupoObj, cidade: str(c.cidade), heroi: nomeDe(c.heroi) }, c.pessoas); } catch { cat = catalogoDoElenco({}); }
+  const conhece = (id) => !!id && (Object.prototype.hasOwnProperty.call(cat.porId, id) || Object.prototype.hasOwnProperty.call(cat.alias, id));
+  const fim = (id) => (id && cat.alias[id]) || id;
+  const usados = new Set();
+  const vistos = new Set();
+  const aquiIds = [];
+  /* o id de uma entrada: o que ela traz (se é deste catálogo, ou veio de quemEstaAqui), senão o do nome */
+  const idDaEntrada = (n, confia) => {
+    const dado = ehObj(n) && typeof n.id === "string" ? n.id.trim() : "";
+    const id = dado && (confia || conhece(dado)) ? fim(dado) : idNaPresenca(nomeDe(n), cat, { prefere: aquiIds, usados });
+    usados.add(id);
+    return id;
+  };
+  const balde = (lista, confia, extra) => {
+    const out = [];
+    for (const n of arr(lista)) {
+      const nome = nomeDe(n);
+      if (!nome) continue;
+      const id = idDaEntrada(n, confia);
+      if (!id || vistos.has(id)) continue;
+      vistos.add(id);
+      out.push(Object.freeze({ id, nome, ...(extra ? extra(n) : {}) }));
+    }
+    return out;
+  };
+  /* o morto é morto pelo id: o estado sem volta da ficha (ESTADO_SEM_VOLTA) e o morto de osAusentes —
+     nunca entra no «aqui», ainda que uma lista de nomes o traga */
+  const aus = arr(c.ausentes).filter(ehObj);
+  const mortosCat = Object.keys(cat.porId).filter((id) => ESTADO_SEM_VOLTA.finais.includes(sem(cat.porId[id].status))).map((id) => ({ id, nome: cat.porId[id].nome }));
+  /* e o livro de fatos (caiu morto), lido PELO ALIAS: o fato gravado como `npc|Nome` é da pessoa da base
+     que o catálogo funde nele (`Cidade|gente|Nome`), e não se perde */
+  const fp = ehObj(c.factos) && ehObj(c.factos.pessoas) ? c.factos.pessoas : {};
+  const caiuMorto = (k) => ehObj(fp[k]) && ehObj(fp[k].derrotado) && fp[k].derrotado.como === "morto";
+  const mortosDoLivro = arr(cat.entradas).filter((en) => caiuMorto(en.id) || caiuMorto(fim(en.id))).map((en) => ({ id: fim(en.id), nome: en.nome }));
+  mortosCat.push(...mortosDoLivro.filter((m) => !mortosCat.some((y) => y.id === m.id)));
+  const idsMortos = new Set([...mortosCat.map((m) => m.id), ...aus.filter((a) => a.morto).map((a) => idNaPresenca(nomeDe(a), cat))]);
+  for (const id of idsMortos) vistos.add(id);
+  let age = [];
+  try { age = quemAgeAqui(x); } catch { age = []; }
+  const aqui = balde(age, true, (n) => ({ papel: str(n.papel), deOnde: str(n.deOnde || "") }));
+  for (const p of aqui) aquiIds.push(p.id);
+  const daTela = balde(arr(c.tela), false, (n) => ({ papel: str(ehObj(n) ? n.papel || n.rotulo : ""), deOnde: "tela" }));
+  aqui.push(...daTela);
+  for (const p of daTela) aquiIds.push(p.id);
+  /* a tela inteira, também com quem já estava (a leitura de presentesDaTela) */
+  const tela = arr(c.tela).map((n) => { const nome = nomeDe(n); const a = aqui.find((p) => p.nome === nome); return nome ? Object.freeze({ id: a ? a.id : idDaEntrada(n, false), nome }) : null; }).filter(Boolean);
+  const grupo = grupoObj.map((g, i) => Object.freeze({ id: fim(arr(x.gruposIds)[i] || idDe(g, "grupo")), nome: nomeDe(g) }));
+  for (const g of grupo) vistos.add(g.id);
+  const comIdDe = (lista) => arr(lista).filter((n) => ehObj(n) && nomeDe(n)).map((n) => Object.freeze({ id: n.id ? fim(n.id) : idDaEntrada(n, false), nome: nomeDe(n) }));
+  const noutroSitio = balde(aus.filter((a) => a.sitio && !a.morto), false, (a) => ({ onde: str(a.onde) }));
+  const longe = balde(aus.filter((a) => !a.sitio && !a.morto), false, (a) => ({ onde: str(a.onde) }));
+  for (const id of idsMortos) vistos.delete(id);
+  const mortos = balde([...mortosCat, ...aus.filter((a) => a.morto).map((a) => ({ nome: nomeDe(a), id: idNaPresenca(nomeDe(a), cat) }))], true);
+  /* o resto do catálogo existe e não está aqui: conhecido (o ouvido o lê como longe) */
+  const conhecidos = [
+    ...balde(Object.keys(cat.porId).filter((id) => id !== idDe({}, "heroi")).map((id) => ({ id, nome: cat.porId[id].nome })), true),
+    ...balde(arr(c.conhecidos), false),
+  ];
+  const naCidade = arr(c.naCidade).map((n) => nomeDe(n)).filter(Boolean).map((nome) => Object.freeze({ id: idNaPresenca(nome, cat), nome }));
+  return Object.freeze({
+    aqui: Object.freeze(aqui), age, tela: Object.freeze(tela), grupo: Object.freeze(grupo),
+    doPasso: Object.freeze(comIdDe(x.doPasso)), doSitio: Object.freeze(comIdDe(x.doSitio)),
+    noutroSitio: Object.freeze(noutroSitio), longe: Object.freeze(longe), mortos: Object.freeze(mortos),
+    conhecidos: Object.freeze(conhecidos), naCidade: Object.freeze(naCidade), ausentes: aus, catalogo: cat,
+  });
 }
 
 /* S4c · QUEM NÃO ESTÁ E A PROSA CITOU: o longe do registo, e a gente da base
@@ -438,26 +584,25 @@ export function quemONomeDiz(dito, quem) {
     const W = palavrasDoNomeDito(dito);
     if (!W.length || W[0].length < QUEM_O_NOME_DIZ.primeiroMinimo) return nada;
     const q = ehObj(quem) ? quem : {};
-    const cabe = (nome) => { const N = palavrasDoNomeDito(nome); return N.length > 0 && N[0] === W[0] && W.every((w) => N.includes(w)); };
-    const inteiro = (nome) => { const N = palavrasDoNomeDito(nome); return N.length === W.length && N.every((w) => W.includes(w)); };
-    const unicos = (lista) => lista.filter((x, i) => lista.findIndex((y) => palavrasDoNomeDito(nomeDe(y)).join(" ") === palavrasDoNomeDito(nomeDe(x)).join(" ")) === i);
-    const aqui = unicos(arr(q.aqui).filter((x) => cabe(nomeDe(x))));
-    if (aqui.length === 1) return Object.freeze({ estado: "aqui", nome: nomeDe(aqui[0]), onde: "", morto: false, opcoes: Object.freeze([]) });
-    if (aqui.length > 1) {
-      const exato = aqui.filter((x) => inteiro(nomeDe(x)));
-      if (exato.length === 1) return Object.freeze({ estado: "aqui", nome: nomeDe(exato[0]), onde: "", morto: false, opcoes: Object.freeze([]) });
-      return Object.freeze({ estado: "qual", nome: "", onde: "", morto: false, opcoes: Object.freeze(aqui.map((x) => nomeDe(x).split(",")[0].trim())) });
-    }
-    const longe = unicos(arr(q.longe).filter((x) => ehObj(x) && cabe(nomeDe(x))));
-    if (longe.length) {
-      const um = longe.length === 1 ? longe[0] : longe.find((x) => inteiro(nomeDe(x))) || null;
-      if (um) return Object.freeze({ estado: "longe", nome: nomeDe(um), onde: um.morto ? "" : str(um.onde).trim(), morto: !!um.morto, opcoes: Object.freeze([]) });
-      return Object.freeze({ estado: "longe", nome: str(dito).trim(), onde: "", morto: false, opcoes: Object.freeze(longe.map((x) => nomeDe(x))) });
-    }
-    const conh = unicos(arr(q.conhecidos).filter((x) => cabe(nomeDe(x))));
-    if (conh.length) {
-      const um = conh.length === 1 ? conh[0] : conh.find((x) => inteiro(nomeDe(x))) || null;
-      return Object.freeze({ estado: "longe", nome: um ? nomeDe(um) : str(dito).trim(), onde: "", morto: false, opcoes: Object.freeze(um ? [] : conh.map((x) => nomeDe(x))) });
+    /* 23/11 (identidade · etapa 2): a régua mora no catálogo (quem-e-quem.js). As
+       listas viram um catálogo — quem traz `id` é uma pessoa, e dois homônimos com
+       dois ids são dois —, o nome dito vira candidatos uma vez, e aReguaDoDito
+       escolhe: o nome inteiro, quem está, a cidade, o único. Daqui só sai a forma
+       de sempre, agora com o `id` (e `ids` das opções). */
+    const cat = catalogoDasListas({ aqui: q.aqui, longe: arr(q.longe).filter(ehObj), conhecidos: q.conhecidos });
+    const r = oNomeDitoDiz(dito, cat);
+    const ent = (c) => cat.porId[c.id] || {};
+    const fz = (o) => Object.freeze({ ...o, opcoes: Object.freeze(o.opcoes || []), ids: Object.freeze(o.ids || []) });
+    if (r.estado === "aqui") return fz({ estado: "aqui", nome: r.um.nome, id: r.um.id, onde: "", morto: false });
+    if (r.estado === "qual") return fz({ estado: "qual", nome: "", id: "", onde: "", morto: false, opcoes: r.opcoes.map((c) => c.nome.split(",")[0].trim()), ids: r.opcoes.map((c) => c.id) });
+    if (r.estado === "longe") {
+      const doLonge = (c) => arr(q.longe).find((x) => ehObj(x) && ((x.id && x.id === c.id) || (!x.id && cat.origem[c.id] === "longe" && palavrasDoNomeDito(nomeDe(x)).join(" ") === palavrasDoNomeDito(c.nome).join(" ")))) || null;
+      if (r.um) {
+        const x = cat.origem[r.um.id] === "longe" ? doLonge(r.um) : null;
+        const morto = !!(x && x.morto);
+        return fz({ estado: "longe", nome: r.um.nome, id: r.um.id, onde: morto || !x ? "" : str(x.onde).trim(), morto });
+      }
+      return fz({ estado: "longe", nome: str(dito).trim(), id: "", onde: "", morto: false, opcoes: r.opcoes.map((c) => ent(c).nome || c.nome), ids: r.opcoes.map((c) => c.id) });
     }
     return nada;
   } catch { return nada; }
@@ -488,13 +633,21 @@ export function aCasaNaBase(nome, gente) {
   try {
     const W = palavrasDoNomeDito(nome);
     if (!W.length || W[0].length < QUEM_O_NOME_DIZ.primeiroMinimo) return null;
-    const comPosto = arr(gente).filter((p) => ehObj(p) && nomeDe(p) && str(p.local).trim() && !/morto/i.test(str(p.status)));
-    const inteiro = comPosto.filter((p) => palavrasDoNomeDito(nomeDe(p)).join(" ") === W.join(" "));
-    if (inteiro.length === 1) return { nome: nomeDe(inteiro[0]), local: str(inteiro[0].local).trim() };
+    /* 23/11 (identidade · etapa 2): os candidatos saem do catálogo. Cada pessoa da
+       base é uma (o id que a base lhe dá, ou a posição na lista): dois homônimos
+       com posto nunca viram um só, e o nome que não separa ninguém não dá casa */
+    const toda = arr(gente).map((p, i) => (ehObj(p) && nomeDe(p) ? { p, id: str(p.id).trim() || `gente#${i}` } : null)).filter(Boolean);
+    const comPosto = toda.filter(({ p }) => str(p.local).trim() && !/morto/i.test(str(p.status)));
+    const casa = (x) => ({ nome: nomeDe(x.p), local: str(x.p.local).trim(), id: x.id });
+    const catPosto = catalogoDasListas({ conhecidos: comPosto.map(({ p, id }) => ({ nome: nomeDe(p), id })) });
+    const inteiro = candidatos(nome, catPosto, null, { niveis: QUEM_E_QUEM_DITO.niveis }).filter((c) => palavrasDoNomeDito(c.nome).join(" ") === W.join(" "));
+    if (inteiro.length === 1) return casa(comPosto.find((x) => x.id === inteiro[0].id));
     if (W.length !== 1) return null;
-    const mesmoPrimeiro = arr(gente).filter((p) => ehObj(p) && palavrasDoNomeDito(nomeDe(p))[0] === W[0]);
-    if (mesmoPrimeiro.length !== 1 || !str(mesmoPrimeiro[0].local).trim()) return null;
-    return { nome: nomeDe(mesmoPrimeiro[0]), local: str(mesmoPrimeiro[0].local).trim() };
+    const catToda = catalogoDasListas({ conhecidos: toda.map(({ p, id }) => ({ nome: nomeDe(p), id })) });
+    const mesmoPrimeiro = candidatos(nome, catToda, null, { niveis: ["primeiro"] });
+    const um = mesmoPrimeiro.length === 1 ? toda.find((x) => x.id === mesmoPrimeiro[0].id) : null;
+    if (!um || !str(um.p.local).trim()) return null;
+    return casa(um);
   } catch { return null; }
 }
 

@@ -194,10 +194,15 @@ const semAposto = (n) => str(n).split(",")[0].trim();
    aCenaDoOuvido(retrato) → cena (o formato do exame)
    retrato: {
      lugar    — { nome, tipo } | nome;
-     pessoas  — [{ nome, papel, ehCompanheiro }] (pessoasDaCena);
+     pessoas  — [{ nome, papel, ehCompanheiro, id? }] (pessoasDaCena, ou a presença única);
      grupo    — [{ nome }] (o primeiro é o companheiro);
      bancas   — [{ nome, tipo, oficio, estoque: [{ nome, preco }] }] (bancasDaCena, o balcão);
-     ausentes — [{ nome, morto }] (osAusentes);
+     ausentes — [{ nome, morto, id? }] (osAusentes, ou a presença única);
+     conhecidos — [nome | { nome, id }];
+   23/11 (identidade · etapa 2): quem traz o `id` é uma pessoa — dois homônimos
+   são dois (um aqui, outro longe), e é pelo id que se diz quem está, quem não
+   está e quem morreu. A cena leva os ids (`pessoas[].id`, `ids.ausentes`,
+   `ids.mortos`); o retrato sem ids dá a cena de sempre, byte a byte.
      chao     — [nome | { nome }] (pertoDaqui);
      ficha    — { moedas, inventario, equipamento, equipados, suprimentos }
    }
@@ -211,12 +216,14 @@ export function aCenaDoOuvido(retrato) {
   const nomesDeBanca = new Set(arr(r.bancas).map(nomeDe).filter(Boolean).map(sem));
   const pessoas = [];
   const ja = new Set();
+  const idDe = (p) => (obj(p) && typeof p.id === "string" ? p.id.trim() : "");
   for (const p of arr(r.pessoas)) {
     const nome = nomeDe(p).trim();
+    const id = idDe(p);
     /* a loja que alguma lista pôs entre a gente não é gente (a sessão 16: «A Âncora do Sul» nas opções de «a quem») */
-    if (!nome || doGrupo.has(sem(nome)) || (obj(p) && p.ehCompanheiro) || ja.has(sem(nome)) || (nomesDeBanca.has(sem(nome)) && !(obj(p) && p.papel))) continue;
-    ja.add(sem(nome));
-    pessoas.push({ nome, oficio: str(obj(p) ? p.papel || p.oficio : ""), vende: null });
+    if (!nome || doGrupo.has(sem(nome)) || (obj(p) && p.ehCompanheiro) || ja.has(id || sem(nome)) || (nomesDeBanca.has(sem(nome)) && !(obj(p) && p.papel))) continue;
+    ja.add(id || sem(nome));
+    pessoas.push({ nome, ...(id ? { id } : {}), oficio: str(obj(p) ? p.papel || p.oficio : ""), vende: null });
   }
   /* 23/11 (a décima sexta sessão): A BANCA VENDE E NÃO É GENTE. «A Âncora do Sul», «O Sino
      Rachado» e o «Balcão» entravam como pessoas — nas opções de «a quem», e um «dela» virava a
@@ -247,10 +254,14 @@ export function aCenaDoOuvido(retrato) {
     if (!quem.length && A_CENA_DO_OUVIDO.lugarDeCasa.test(sem(`${str(lugar.tipo)} ${str(lugar.nome)}`))) bancas.push({ nome: str(lugar.nome) || A_CENA_DO_OUVIDO.aCasa, vende: casa });
   }
   const presentes = new Set([...pessoas.map((p) => sem(p.nome)), ...doGrupo]);
+  const idsAqui = new Set(pessoas.map((p) => p.id).filter(Boolean));
+  /* com ids, quem está e quem não está decide-se pelo id; sem eles, pelo nome (o de sempre) */
+  const estaAqui = (a) => (idDe(a) && idsAqui.size ? idsAqui.has(idDe(a)) || doGrupo.has(sem(nomeDe(a))) : presentes.has(sem(nomeDe(a))));
+  const mesmoQue = (a, b) => (idDe(a) && idDe(b) ? idDe(a) === idDe(b) : sem(nomeDe(a)) === sem(nomeDe(b)));
   /* quem o sistema conhece e não está à vista (o passo da quest, o registo) também é ausente:
      «dou duas moedas pra Constance» é «ela não está aqui», não «a quem?» (frase 40) */
-  const conhecidos = arr(r.conhecidos).map(nomeDe).filter(Boolean).filter((n) => !arr(r.ausentes).some((a) => sem(nomeDe(a)) === sem(n))).map((nome) => ({ nome }));
-  const longe = [...arr(r.ausentes), ...conhecidos].filter((a) => nomeDe(a) && !presentes.has(sem(nomeDe(a))));
+  const conhecidos = arr(r.conhecidos).filter((n) => nomeDe(n)).map((n) => (idDe(n) ? { nome: nomeDe(n), id: idDe(n) } : { nome: nomeDe(n) })).filter((n) => !arr(r.ausentes).some((a) => mesmoQue(a, n)));
+  const longe = [...arr(r.ausentes), ...conhecidos].filter((a) => nomeDe(a) && !estaAqui(a));
   const sup = obj(f.suprimentos) || {};
   const carrega = [];
   for (const raw of [...arr(f.inventario), ...arr(f.equipamento), ...Object.values(obj(f.equipados) || {})]) {
@@ -266,6 +277,7 @@ export function aCenaDoOuvido(retrato) {
     pessoas,
     ausentes: longe.filter((a) => !(obj(a) && a.morto)).map(nomeDe),
     mortos: longe.filter((a) => obj(a) && a.morto).map(nomeDe),
+    ...(longe.some((a) => idDe(a)) || idsAqui.size ? { ids: { ausentes: longe.filter((a) => !(obj(a) && a.morto)).map(idDe), mortos: longe.filter((a) => obj(a) && a.morto).map(idDe) } } : {}),
     coisas: arr(r.chao).map(curto).filter(Boolean),
     heroi: { moeda: Math.max(0, Number(f.moedas) || 0), carrega, companheiro: grupo[0] || null, companheiroCarrega },
     bancas,

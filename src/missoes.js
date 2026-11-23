@@ -60,6 +60,7 @@ import { comEm, contrair } from "./lugar.js";
 /* BQ2 (08/11): a porta a mais das etapas de antes — o livro de factos,
    lido por id (o nome da etapa procura-se uma vez entre quem o livro tem) */
 import { pessoaDoLivro, conversou, idDoLugar, descobriu } from "./livro-de-factos.js";
+import { candidatos, catalogoDasListas } from "./quem-e-quem.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -898,9 +899,17 @@ export function assuntoDe(m) {
 }
 /* "Braam (n'A Cabra Dançante)" e "Braam, o taverneiro" são o mesmo Braam */
 const primeiroNome = (s) => (soLetras(s).trim().split(/\s+/)[0] || "");
+/* 23/11 (identidade · etapa 2): a régua mora no catálogo (quem-e-quem.js). Quem
+   traz o `id` ({ nome, id }) é comparado pelo id — dois homônimos são dois; o
+   nome sozinho delega a `candidatos`, no nível do primeiro nome (o de sempre:
+   «Marl» é «Marl de Osso»). */
 export function mesmaPessoa(a, b) {
-  const x = primeiroNome(a), y = primeiroNome(b);
-  return !!x && x.length > 2 && x === y;
+  const ia = a && typeof a === "object" && typeof a.id === "string" ? a.id : "";
+  const ib = b && typeof b === "object" && typeof b.id === "string" ? b.id : "";
+  if (ia && ib) return ia === ib;
+  const na = a && typeof a === "object" ? a.nome : a, nb = b && typeof b === "object" ? b.nome : b;
+  if (!primeiroNome(na) || !primeiroNome(nb)) return false;
+  return candidatos(String(na), catalogoDasListas({ conhecidos: [String(nb)] }), null, { niveis: ["primeiro"] }).length > 0;
 }
 /* Para onde a missão APONTA: o que as etapas mandam achar, derrotar, levar
    ou visitar. É o único pedaço de uma missão que não depende de estilo — a

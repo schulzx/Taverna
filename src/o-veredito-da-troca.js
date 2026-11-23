@@ -813,7 +813,12 @@ export function quemDaFrase(frase, presentes) {
   try {
     const t = sem(frase);
     if (!t) return null;
-    const ps = arr(presentes).map(nomeDe).filter(Boolean);
+    /* 23/11 (identidade · etapa 2): quem está pode trazer o `id` ({ nome, id }) — dois
+       homônimos presentes são dois, e quem decide entre eles é a régua do catálogo
+       (quemONomeDiz delega a quem-e-quem.js); a resposta leva o `id` de quem é */
+    const ents = arr(presentes).map((x) => ({ nome: nomeDe(x), id: x && typeof x === "object" && typeof x.id === "string" ? x.id : "" })).filter((x) => x.nome);
+    const ps = ents.map((x) => x.nome);
+    const comId = (nome, id) => (id ? { nome, id } : { nome });
     /* a décima terceira sessão (T56, T60): «tomo a atenção de Freya… para ela não
        ver o que Dagon faz» virou Dagon — a lista era lida na ordem de quem está,
        e o primeiro dela que a frase dizia ganhava. Quem a frase aponta é o
@@ -827,14 +832,14 @@ export function quemDaFrase(frase, presentes) {
       if (w.length < 3 || !new RegExp(`\\b${w}\\b`).test(t)) continue;
       /* a décima segunda sessão (o homônimo): dois que estão com o mesmo primeiro
          nome — o nome dito inteiro decide (quemONomeDiz); sem como decidir, `qual` */
-      const iguais = ps.filter((x) => primeiro(x) === w);
-      if (iguais.length < 2) return { nome: p };
+      const iguais = ents.filter((x) => primeiro(x.nome) === w);
+      if (iguais.length < 2) return comId(p, (ents.find((x) => x.nome === p) || {}).id);
       /* o pedaço da frase pode chegar sem caixa (doOriginal): o nome inteiro, lido nela */
-      const inteiros = iguais.filter((x) => t.includes(sem(x).split(",")[0].trim()));
-      if (inteiros.length === 1) return { nome: inteiros[0] };
-      const r = quemONomeDiz(oNomeDito(frase, w) || w, { aqui: iguais });
-      if (r.estado === "aqui") return { nome: r.nome };
-      return { nome: p, qual: r.opcoes };
+      const inteiros = iguais.filter((x) => t.includes(sem(x.nome).split(",")[0].trim()));
+      if (inteiros.length === 1) return comId(inteiros[0].nome, inteiros[0].id);
+      const r = quemONomeDiz(oNomeDito(frase, w) || w, { aqui: iguais.map((x) => (x.id ? x : x.nome)) });
+      if (r.estado === "aqui") return comId(r.nome, r.id);
+      return { nome: p, qual: r.opcoes, ...(r.ids && r.ids.some(Boolean) && iguais.some((x) => x.id) ? { quais: r.ids } : {}) };
     }
     const orig = str(frase).normalize("NFC");
     for (const m of t.matchAll(V.papelNaFrase)) {
