@@ -1,0 +1,948 @@
+{
+ "_leia": [
+  "60 frases inéditas (série T), escritas sem olhar o código e sem rodar antes. Mesmo formato de frases.json. discutivel: true marca onde um mestre razoável responderia de dois jeitos."
+ ],
+ "frases": [
+  {
+   "id": "T01",
+   "estado": "balanca",
+   "frase": "Cornelius, quero levar uma racao pra viagem",
+   "tipo": "cartao",
+   "ficha": {
+    "moedas": -7,
+    "sup": {
+     "rac": 1
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar"
+   }
+  },
+  {
+   "id": "T02",
+   "estado": "balanca",
+   "frase": "fecha comigo três tochas, td bem?",
+   "tipo": "cartao",
+   "ficha": {
+    "moedas": -3,
+    "sup": {
+     "toc": 3
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar"
+   }
+  },
+  {
+   "id": "T03",
+   "estado": "balanca",
+   "frase": "bota a corda no meu saco aí que eu levo",
+   "tipo": "cartao",
+   "ficha": {
+    "moedas": -50,
+    "inv": {
+     "+": [
+      "Corda que sempre volta enrolada"
+     ]
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar"
+   }
+  },
+  {
+   "id": "T04",
+   "estado": "balanca",
+   "frase": "vendo o símbolo pro Cornelius, quanto ele dá?",
+   "tipo": "cartao",
+   "ficha": {
+    "moedas": "+",
+    "inv": {
+     "-": [
+      "Símbolo sagrado riscado"
+     ]
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "vender"
+   }
+  },
+  {
+   "id": "T05",
+   "estado": "balanca",
+   "frase": "— Prudence, empurro esse símbolo riscado pra vc. Aceita? — digo, estendendo a mão",
+   "tipo": [
+    "cartao",
+    "nega"
+   ],
+   "ficha": {
+    "moedas": "+",
+    "inv": {
+     "-": [
+      "Símbolo sagrado riscado"
+     ]
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "vender"
+   },
+   "fichaPorTipo": {
+    "nega": {}
+   }
+  },
+  {
+   "id": "T06",
+   "estado": "balanca",
+   "frase": "pago uma moeda pela água ao Cornelius",
+   "tipo": [
+    "aplica",
+    "cartao",
+    "nega"
+   ],
+   "ficha": {
+    "moedas": -1
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Cornelius",
+    "quantia": 1
+   },
+   "fichaPorTipo": {
+    "nega": {}
+   },
+   "revisto": "Cornelius não vende água: um mestre real recusa a compra, e nada muda de mão"
+  },
+  {
+   "id": "T07",
+   "estado": "balanca",
+   "frase": "pago mil moedas à Prudence",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "pagar",
+    "quem": "Prudence"
+   },
+   "diz": [
+    "chega"
+   ]
+  },
+  {
+   "id": "T08",
+   "estado": "balanca",
+   "frase": "— Lavinia, leva o símbolo contigo, vai que precisa",
+   "tipo": [
+    "aplica",
+    "cartao"
+   ],
+   "ficha": {
+    "inv": {
+     "-": [
+      "Símbolo sagrado riscado"
+     ]
+    },
+    "grupo": {
+     "Lavinia Sallow": {
+      "+": [
+       "Símbolo sagrado riscado"
+      ]
+     }
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Lavinia"
+   }
+  },
+  {
+   "id": "T09",
+   "estado": "balanca",
+   "frase": "dou metade das minhas moedas pra Prudence",
+   "tipo": [
+    "aplica",
+    "cartao",
+    "pergunta"
+   ],
+   "ficha": {
+    "moedas": "-"
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Prudence"
+   },
+   "fichaPorTipo": {
+    "pergunta": {}
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T10",
+   "estado": "balanca",
+   "frase": "Cornelius, me dá um dente de graça, vai",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Cornelius"
+   }
+  },
+  {
+   "id": "T11",
+   "estado": "balanca",
+   "frase": "enquanto os dois discutem o preço do dente, meto uma tocha no bolso e saio sem pagar",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar"
+   }
+  },
+  {
+   "id": "T12",
+   "estado": "balanca",
+   "frase": "afano a bolsa da Prudence quando ela olhar pro lado",
+   "tipo": "dado",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Prudence"
+   }
+  },
+  {
+   "id": "T13",
+   "estado": "balanca",
+   "frase": "Cornelius, me cede a corda emprestada até amanhã",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Cornelius"
+   }
+  },
+  {
+   "id": "T14",
+   "estado": "balanca",
+   "frase": "devolvo o símbolo à Prudence",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "devolver"
+   }
+  },
+  {
+   "id": "T15",
+   "estado": "balanca",
+   "frase": "Prudence, aqui vão dez moedas, finge que não me viu",
+   "tipo": [
+    "dado",
+    "cartao",
+    "aplica"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Prudence",
+    "quantia": 10
+   },
+   "fichaPorTipo": {
+    "cartao": {
+     "moedas": -10
+    },
+    "aplica": {
+     "moedas": -10
+    }
+   }
+  },
+  {
+   "id": "T16",
+   "estado": "balanca",
+   "frase": "Cornelius, topa trocar meu símbolo por duas tochas?",
+   "tipo": [
+    "cartao",
+    "dado",
+    "pergunta"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Cornelius"
+   },
+   "fichaPorTipo": {
+    "cartao": {
+     "moedas": "?",
+     "inv": {
+      "-": [
+       "Símbolo sagrado riscado"
+      ]
+     },
+     "sup": {
+      "toc": 2
+     }
+    }
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T17",
+   "estado": "balanca",
+   "frase": "Prudence, quero as moedas que vc me deve",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Prudence"
+   }
+  },
+  {
+   "id": "T18",
+   "estado": "balanca",
+   "frase": "dou duas moedas pra Prudence e outras duas pro Cornelius",
+   "tipo": [
+    "cartao",
+    "aplica",
+    "pergunta"
+   ],
+   "ficha": {
+    "moedas": -4
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar"
+   },
+   "fichaPorTipo": {
+    "pergunta": {}
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T19",
+   "estado": "balanca",
+   "frase": "compro uma ração e vendo o símbolo, Cornelius",
+   "tipo": "cartao",
+   "ficha": null,
+   "ouvido": {
+    "familia": "trocar"
+   }
+  },
+  {
+   "id": "T20",
+   "estado": "balanca",
+   "frase": "Tabitha, me vende uma ração",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Tabitha"
+   },
+   "diz": [
+    "vende"
+   ]
+  },
+  {
+   "id": "T21",
+   "estado": "balanca",
+   "frase": "Cornelius, me vende uma espada longa",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar"
+   },
+   "diz": [
+    "vende"
+   ]
+  },
+  {
+   "id": "T22",
+   "estado": "balanca",
+   "frase": "dou meu anel de ouro à Prudence",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar"
+   }
+  },
+  {
+   "id": "T23",
+   "estado": "balanca",
+   "frase": "ontem eu paguei caro por uma corda dessas",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T24",
+   "estado": "balanca",
+   "frase": "Cornelius, essa balança é a mais honesta que já vi",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T25",
+   "estado": "balanca",
+   "frase": "se eu vender esse símbolo será que me arrependo?",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T26",
+   "estado": "balanca",
+   "frase": "não vou pagar sessenta moedas por um dente, esquece",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T27",
+   "estado": "balanca",
+   "frase": "Prudence, um dia eu ainda roubo esta banca inteira, brincadeira ein",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T28",
+   "estado": "balanca",
+   "frase": "Prudence, quanto vc cobraria por uma ração?",
+   "tipo": [
+    "nada",
+    "cartao"
+   ],
+   "ficha": {},
+   "ouvido": {}
+  },
+  {
+   "id": "T29",
+   "estado": "balanca-pobre",
+   "frase": "Prudence, empurro essa corda pra você, quanto dá?",
+   "tipo": [
+    "cartao",
+    "nega"
+   ],
+   "ficha": {
+    "moedas": "+",
+    "inv": {
+     "-": [
+      "Corda que sempre volta enrolada"
+     ]
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "vender"
+   },
+   "fichaPorTipo": {
+    "nega": {}
+   }
+  },
+  {
+   "id": "T30",
+   "estado": "balanca-pobre",
+   "frase": "acerto trinta moedas com a Prudence",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "pagar"
+   },
+   "diz": [
+    "chega"
+   ]
+  },
+  {
+   "id": "T31",
+   "estado": "balanca-pobre",
+   "frase": "Cornelius, três rações, anota aí",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar"
+   },
+   "diz": [
+    "chega"
+   ]
+  },
+  {
+   "id": "T32",
+   "estado": "balanca-pobre",
+   "frase": "Cornelius, toma a corda de volta, vc que sabe",
+   "tipo": [
+    "aplica",
+    "cartao"
+   ],
+   "ficha": {
+    "moedas": "?",
+    "inv": {
+     "-": [
+      "Corda que sempre volta enrolada"
+     ]
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "devolver",
+    "quem": "Cornelius"
+   }
+  },
+  {
+   "id": "T33",
+   "estado": "balanca-pobre",
+   "frase": "dou o resto do meu dinheiro pra Lavinia",
+   "tipo": [
+    "aplica",
+    "cartao",
+    "nega"
+   ],
+   "ficha": {
+    "moedas": -13
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Lavinia"
+   },
+   "fichaPorTipo": {
+    "nega": {}
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T34",
+   "estado": "balanca-pobre",
+   "frase": "levo uma tocha e deixo uns trocados",
+   "tipo": [
+    "cartao",
+    "aplica"
+   ],
+   "ficha": {
+    "moedas": "-",
+    "sup": {
+     "toc": 1
+    }
+   },
+   "ouvido": {
+    "familia": "trocar"
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T35",
+   "estado": "balanca-pobre",
+   "frase": "Cornelius, se eu tivesse mais moedas levava tudo isso",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T36",
+   "estado": "balanca-pobre",
+   "frase": "não vendo a corda nem por cem moedas",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T37",
+   "estado": "lampada",
+   "frase": "Charity, manda uma cerveja bem gelada pra mim",
+   "tipo": "cartao",
+   "ficha": {
+    "moedas": "-"
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Charity"
+   }
+  },
+  {
+   "id": "T38",
+   "estado": "lampada",
+   "frase": "Tabitha, aqui vão três moedas pelo susto",
+   "tipo": [
+    "aplica",
+    "cartao"
+   ],
+   "ficha": {
+    "moedas": -3
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "quem": "Tabitha",
+    "quantia": 3
+   }
+  },
+  {
+   "id": "T39",
+   "estado": "lampada",
+   "frase": "Mercy, toma esse símbolo, vc merece",
+   "tipo": [
+    "aplica",
+    "cartao"
+   ],
+   "ficha": {
+    "inv": {
+     "-": [
+      "Símbolo sagrado riscado"
+     ]
+    }
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Mercy"
+   }
+  },
+  {
+   "id": "T40",
+   "estado": "lampada",
+   "frase": "Mercy, me dá o seu alaúde de presente",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Mercy"
+   }
+  },
+  {
+   "id": "T41",
+   "estado": "lampada",
+   "frase": "enfio o prato de cobre na mochila e vou saindo",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar"
+   }
+  },
+  {
+   "id": "T42",
+   "estado": "lampada",
+   "frase": "passo a mão no bolso do casaco da Tabitha",
+   "tipo": "dado",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Tabitha"
+   }
+  },
+  {
+   "id": "T43",
+   "estado": "lampada",
+   "frase": "Charity, me adianta cinco moedas que eu devolvo amanhã",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Charity"
+   }
+  },
+  {
+   "id": "T44",
+   "estado": "lampada",
+   "frase": "Tabitha, vim devolver o seu lenço",
+   "tipo": [
+    "nega",
+    "nada"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "devolver"
+   },
+   "discutivel": true,
+   "revisto": "a heroína não tem lenço nenhum e a Tabitha só responde falando: sem mecânica é resposta de mestre"
+  },
+  {
+   "id": "T45",
+   "estado": "lampada",
+   "frase": "Tabitha, quinze moedas e vc esquece o que viu aqui hoje",
+   "tipo": [
+    "dado",
+    "cartao",
+    "aplica"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "subornar",
+    "quem": "Tabitha",
+    "quantia": 15
+   },
+   "fichaPorTipo": {
+    "cartao": {
+     "moedas": -15
+    },
+    "aplica": {
+     "moedas": -15
+    }
+   }
+  },
+  {
+   "id": "T46",
+   "estado": "lampada",
+   "frase": "Mercy, vc me deve uma canção e duas moedas, paga logo",
+   "tipo": [
+    "dado",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "cobrar",
+    "quem": "Mercy"
+   }
+  },
+  {
+   "id": "T47",
+   "estado": "lampada",
+   "frase": "troco o símbolo riscado por uma rodada, Charity",
+   "tipo": [
+    "cartao",
+    "dado",
+    "pergunta",
+    "nega"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Charity"
+   },
+   "fichaPorTipo": {
+    "cartao": {
+     "moedas": "?",
+     "inv": {
+      "-": [
+       "Símbolo sagrado riscado"
+      ]
+     }
+    }
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T48",
+   "estado": "lampada",
+   "frase": "dou uma moeda pra Mercy e outra pra Tabitha",
+   "tipo": [
+    "cartao",
+    "aplica",
+    "pergunta"
+   ],
+   "ficha": {
+    "moedas": -2
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar"
+   },
+   "fichaPorTipo": {
+    "pergunta": {}
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T49",
+   "estado": "lampada",
+   "frase": "Mercy, que voz linda, vale cada moeda do mundo",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T50",
+   "estado": "lampada",
+   "frase": "se eu pagasse uma rodada pra todo mundo, Charity, vc cantava?",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T51",
+   "estado": "lampada",
+   "frase": "lembro de quando paguei três moedas por um pão duro naquela estrada",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T52",
+   "estado": "lampada",
+   "frase": "Tabitha, vou te cobrar caro se mentir pra mim, hein",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T53",
+   "estado": "fenda",
+   "frase": "Lavinia, segura essas dez moedas pra emergência",
+   "tipo": [
+    "aplica",
+    "cartao",
+    "nega"
+   ],
+   "ficha": {
+    "moedas": -10
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Lavinia",
+    "quantia": 10
+   },
+   "fichaPorTipo": {
+    "nega": {}
+   }
+  },
+  {
+   "id": "T54",
+   "estado": "fenda",
+   "frase": "Lavinia, me vende uma poção?",
+   "tipo": [
+    "nega",
+    "nada"
+   ],
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "comprar"
+   }
+  },
+  {
+   "id": "T55",
+   "estado": "fenda",
+   "frase": "Lavinia, me dá uma moeda, faz favor",
+   "tipo": [
+    "nega",
+    "dado",
+    "aplica"
+   ],
+   "ficha": {
+    "moedas": "?"
+   },
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Lavinia"
+   },
+   "discutivel": true
+  },
+  {
+   "id": "T56",
+   "estado": "fenda",
+   "frase": "ofereço vinte moedas ao mendigo pra ele sumir",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar"
+   }
+  },
+  {
+   "id": "T57",
+   "estado": "fenda",
+   "frase": "vendo meu símbolo pro primeiro que passar",
+   "tipo": "nega",
+   "ficha": {},
+   "ouvido": {
+    "familia": "trocar",
+    "subtipo": "vender"
+   }
+  },
+  {
+   "id": "T58",
+   "estado": "fenda",
+   "frase": "Lavinia, vc lembra da estalagem que paguei caro?",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T59",
+   "estado": "fenda",
+   "frase": "essa estrada ameaça roubar até a minha sombra",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  },
+  {
+   "id": "T60",
+   "estado": "fenda",
+   "frase": "Lavinia, vc é a melhor sócia do mundo, cobra o que quiser",
+   "tipo": "nada",
+   "ficha": {},
+   "ouvido": {
+    "familiaNao": "trocar"
+   }
+  }
+ ]
+}
