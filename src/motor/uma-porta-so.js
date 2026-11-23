@@ -53,6 +53,8 @@ export const UMA_PORTA_SO = Object.freeze({
     desiste: "🤝 Fica assim: nada muda de mão.",
     semTroco: "◉ Não há troco: nada foi pago aqui.",
     naoHa: "✋ Não há {coisa} aqui que se leve.",
+    /* a bancada da troca (B64): o que está à venda numa banca não se leva da banca sem pagar */
+    daBanca: "🛒 {Coisa} é de {Nome}: só sai da banca pago.",
     ausente: "🤝 {Nome} não está aqui.",
     semCaminho: "🤝 Nada muda de mão.",
   }),
@@ -60,6 +62,7 @@ export const UMA_PORTA_SO = Object.freeze({
     desiste: "Não respondi ao que o Mestre perguntou: a troca não aconteceu, e nada mudou de mão.",
     semTroco: "Quis ficar com um troco, e não houve pagamento aqui que deixasse troco: nada mudou de mão.",
     naoHa: "Quis pegar «{coisa}», e não há tal coisa aqui que se leve: nada entrou na minha mochila.",
+    daBanca: "Quis levar {Coisa} da banca de {Nome} sem pagar: não levei, e nada mudou de mão.",
     ausente: "{Nome} não está aqui: não houve com quem trocar, e nada mudou de mão.",
     semCaminho: "Quis {gesto}: nada mudou de mão.",
     preco: "O preço é do sistema: {Coisa} custa ◉ {Preco} ({Quem}). É este o preço; não diga outro.",
@@ -72,7 +75,9 @@ export const UMA_PORTA_SO = Object.freeze({
   /* o que o caminho do dado de hoje rola por si (oVereditoDaTroca espera a rolagem) */
   dadoDeHoje: Object.freeze(["furto", "deGraca", "tomar", "suborno", "pegar"]),
   /* a quem se entrega (o nome próprio depois da preposição) — para quem o sistema não conhece */
-  aQuem: /\b(?:a|ao|à|pra|pro|para)\s+((?:[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)(?:\s+(?:(?:de|da|do|dos|das)\s+)?[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)*)/gu,
+  /* a bancada da troca (B80): o «\b» antes de «à» nunca casava (o «à» não é letra para o \b do JS) — e
+     «devolvo o símbolo à Mercy», com a Mercy longe, perguntava «a quem?» em vez de dizer que ela não está */
+  aQuem: /(?<![\p{L}\p{N}])(?:a|ao|à|pra|pro|para)\s+((?:[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)(?:\s+(?:(?:de|da|do|dos|das)\s+)?[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)*)/gu,
   /* quem precisa de alguém do outro lado, para a negativa do nome desconhecido */
   precisaDeQuem: Object.freeze(["dar", "pagar", "emprestar", "devolver", "vender", "subornar", "escambo", "cobrar", "pedir"]),
 });
@@ -115,7 +120,9 @@ export function oFocoDaConversa(anteriores, cena) {
       const ditos = [...new Set(L.marcas.filter((m) => m.tipo === "PESSOA" && m.estado === "aqui" && m.nome).map((m) => m.nome))];
       if (ditos.length === 1) return ditos[0];
       if (ditos.length > 1) return null;
-      const dele = L.marcas.filter((m) => m.tipo === "COISA").flatMap((m) => m.leituras).find((x) => x && x.tipo === "dele" && x.dono);
+      /* a bancada da troca (Q10): a coisa da banca é da banca, ainda que o mercador da praça a atenda */
+      const deles = L.marcas.filter((m) => m.tipo === "COISA").flatMap((m) => m.leituras).filter((x) => x && x.tipo === "dele" && x.dono);
+      const dele = deles.find((x) => arr(c.bancas).some((b) => sem(nomeDe(b)) === sem(x.dono))) || deles[0];
       if (dele) return dele.dono;
     }
     const m = str(a.mestre);
@@ -250,8 +257,10 @@ export function aPortaUnica(frase, retrato, ctx) {
     const cena = aCenaDoOuvido(ret);
     const ficha = { ...(obj(r0.ficha) || {}), grupo: arr((obj(r0.ficha) || {}).grupo).length ? r0.ficha.grupo : arr(r0.grupo) };
     /* as bancas para aplicar: as do retrato (com o estoque inteiro e o id) e a casa, como banca de quem a serve */
-    const quemServe = arr(cena.pessoas).find((p) => A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)));
-    const casaBanca = arr(r0.casa).length ? [{ nome: quemServe ? quemServe.nome : str(cena.lugar) || A_CENA_DO_OUVIDO.aCasa, estoque: arr(r0.casa).map((x) => ({ nome: x.nome, preco: x.preco, consumo: true })) }] : [];
+    /* a bancada da troca (L01): a casa é de TODOS os que servem (a taverneira e a serviçal) — uma banca por quem serve */
+    const quemServe = arr(cena.pessoas).filter((p) => A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)));
+    const estoqueDaCasa = arr(r0.casa).map((x) => ({ nome: x.nome, preco: x.preco, consumo: true }));
+    const casaBanca = !estoqueDaCasa.length ? [] : quemServe.length ? quemServe.map((p) => ({ nome: p.nome, estoque: estoqueDaCasa })) : [{ nome: str(cena.lugar) || A_CENA_DO_OUVIDO.aCasa, estoque: estoqueDaCasa }];
     const ctxT = { ficha, bancas: [...arr(r0.bancas), ...casaBanca], porta: "", vaiAoCorpo: arr(c.vaiAoCorpo), ofertaDe: c.ofertaDe, ofertaDoUso: c.ofertaDoUso, confirmado: obj(c.confirmado) ? str(c.confirmado.chave) : str(c.confirmado) };
 
     /* 1. A PERGUNTA PENDENTE: a resposta completa a leitura (a estrutura), e não se cola ao texto */
@@ -273,6 +282,14 @@ export function aPortaUnica(frase, retrato, ctx) {
     const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null };
     const sai = (x) => Object.freeze({ ...base, ...x });
 
+    /* a bancada da troca (L07): «peço à Tabitha o nome do homem de manto cinza» — o pedido sem coisa nenhuma
+       que mude de mão (o nome, a ajuda, a informação) é conversa, e nenhuma porta de troca abre (antes, o
+       pedido de graça do caminho de hoje inventava um item: «Tabitha lhe dá: Fita de couro»). A leitura do
+       ouvido fica como está (o exame a mede); é a porta que não a trata como troca. */
+    if (l.familia === "trocar" && l.subtipo === "pedir" && !str(l.coisa) && l.quantia == null && !l.companheiro && !l.pedidoDirigido && !pend) {
+      return sai({ caminho: null, troca: false, leitura: Object.freeze({ ...l, familia: "falar", subtipo: null }) });
+    }
+
     /* não é troca: o preço que o sistema sabe vai ao Narrador como fato (frase 43) */
     if (l.familia !== "trocar") {
       if (l.familia === "falar" && l.coisaTipo === "dele" && Number(l.preco) > 0) {
@@ -293,6 +310,12 @@ export function aPortaUnica(frase, retrato, ctx) {
       if (fora) return sai({ caminho: "nao", veredito: negada("ausente", tpl(R.tela.ausente, { Nome: fora }), tpl(R.fato.ausente, { Nome: fora })) });
     }
 
+    /* a bancada da troca (B45 B65 L15 X05): o ausente da ponte vem sem linha (ela contava com a ficha da cena,
+       que não roda quando a troca já fechou) — e a frase ficava sem resposta nenhuma. A linha é a desta porta. */
+    if (o.caminho === "nao" && o.negada && o.negada.motivo === "ausente" && !str(o.negada.linha)) {
+      const quemFora = semAposto(str(l.quem || l.quemDito || arr(l.opcoesDeQuem)[0] || "")) || A_CENA_DO_OUVIDO.alguem;
+      return sai({ caminho: "nao", veredito: Object.freeze({ ...o.negada, linha: tpl(R.tela.ausente, { Nome: quemFora }) }) });
+    }
     if (o.caminho === "pergunta") {
       const pq = aPerguntaValida(o, cena, f, vezes);
       if (pq.nenhum) return sai({ caminho: "nao", veredito: negada("ninguem_aqui", tpl(A_CENA_DO_OUVIDO.tela.nao.ninguem_aqui, {}), tpl(A_CENA_DO_OUVIDO.fato.nao.ninguem_aqui, { gesto: oGesto(l) })) });
@@ -369,6 +392,11 @@ function decidir(o, sai, ctxT, cena, r0, R) {
     const chao = arr(r0.chao).filter((x) => obj(x) && x.id && x.nome);
     const achado = l.coisaTipo === "solta" ? chao.find((x) => sem(x.nome) === sem(l.coisa) || sem(x.nome).startsWith(sem(l.coisa))) : null;
     if (achado) return sai({ caminho: "recolher", recolher: Object.freeze([achado.id]) });
+    /* a bancada da troca (B64): «pego a corda da banca» — a coisa está à venda, e da banca só sai paga */
+    if (l.coisaTipo === "dele" && l.dono) {
+      const o2 = { Coisa: maiuscula(str(l.coisa)), Nome: semAposto(l.dono) };
+      return sai({ caminho: "nao", veredito: negada("daBanca", tpl(R.tela.daBanca, o2), tpl(R.fato.daBanca, o2)) });
+    }
     if (l.coisaTipo !== "solta") return sai({ caminho: "nao", veredito: negada("naoHa", tpl(R.tela.naoHa, { coisa: str(l.coisa) || "isso" }), tpl(R.fato.naoHa, { coisa: str(l.coisa) || "isso" })) });
   }
   /* o dado: o caminho de hoje rola o furto, o pedido de graça, o tomar, o suborno e o pegar de alguém */

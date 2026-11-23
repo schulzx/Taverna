@@ -60,6 +60,12 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
   dadoDeHoje: Object.freeze(["furtar", "pedir", "pegar", "subornar"]),
   /* a coisa que faz do gesto sem verbo uma troca a perguntar (a confiança é a semVerbo do ouvido) */
   gestoSemVerbo: Object.freeze(["dele", "minha", "moeda"]),
+  /* a bancada da troca (B41, B110): o gesto sem verbo da tabela que a frase diz pelo jeito — a coisa
+     minha «de presente» / «fica com» é dar; a moeda que «me deve» / «estou cobrando» é cobrar */
+  jeitoDoGesto: Object.freeze([
+    Object.freeze({ subtipo: "dar", coisaTipo: "minha", rx: /\b(de presente|e um presente|fica com|pode ficar|e seu|e sua|guarda pra voce|pra voce)\b/ }),
+    Object.freeze({ subtipo: "cobrar", coisaTipo: "moeda", rx: /\b(me deve|me devem|esta me devendo|estao me devendo|cobrando|venho cobrar|quero cobrar)\b/ }),
+  ]),
   /* as palavras que guardam o lugar da coisa que faltou («dou isso pro Ivo») */
   lugarDaCoisa: /\b(isso|isto|aquilo|algo|alguma coisa)\b/i,
   pronomes: /\b(dele|dela|ele|ela|lhe)\b/i,
@@ -133,7 +139,10 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
   /* quem não tem nome na frase: a palavra que a linha usa */
   alguem: "alguém",
   /* quem serve a casa (o ofício, sem acento): a ela vão a sopa e a caneca */
-  quemServe: /(tavern|estalaj|pousad|cozinh|copeir|servent|garcon|garcom|hospedeir|dono da|dona da)/,
+  quemServe: /(tavern|estalaj|pousad|cozinh|copeir|servent|servical|criad|atendent|empregad|camareir|garcon|garcom|hospedeir|dono da|dona da)/,
+  /* a bancada da troca (B03, B11): quem tem ofício de vender e está na praça atende as bancas dela —
+     «Cornelius, me vende a corda» com o mercador ao lado d'O Sino Rachado é a corda do armazém */
+  quemVende: /(mercad|vendedor|vendeir|comercian|lojist|feirant|tendeir|merceeir|armazen|negociant|mascate|regat)/,
   /* a casa sem quem a sirva leva o nome do lugar; sem lugar, este */
   aCasa: "a casa",
   /* o lugar que tem casa (o tipo ou o nome, sem acento) */
@@ -216,12 +225,16 @@ export function aCenaDoOuvido(retrato) {
   /* A CASA (23/11, frases 48, 57, 59): o que a taverna serve (a sopa, a caneca) tem preço de tabela
      (`retrato.casa`, de osPratosDaCasa); quem serve é quem tem o ofício da casa, e sem ele a casa
      é uma banca com o nome do lugar */
+  /* a quem atende a praça: o estoque das bancas (sem a casa), quando a própria pessoa não tem banca */
+  const daPraca = bancas.flatMap((b) => arr(b.vende));
+  if (daPraca.length) for (let i = 0; i < pessoas.length; i++) if (!arr(pessoas[i].vende).length && A_CENA_DO_OUVIDO.quemVende.test(sem(pessoas[i].oficio))) pessoas[i] = { ...pessoas[i], vende: daPraca.map((v) => ({ ...v })), atende: true };
   const casa = arr(r.casa).filter((x) => obj(x) && str(x.nome).trim()).map((x) => ({ item: str(x.nome), preco: Math.max(0, Number(x.preco) || 0) }));
   if (casa.length) {
-    const i = pessoas.findIndex((p) => A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)));
-    if (i >= 0) pessoas[i] = { ...pessoas[i], vende: [...arr(pessoas[i].vende), ...casa] };
+    /* a bancada da troca (L01): a casa é de todos os que servem (a taverneira e a serviçal) */
+    const quem = pessoas.map((p, i) => (A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)) ? i : -1)).filter((i) => i >= 0);
+    for (const i of quem) pessoas[i] = { ...pessoas[i], vende: [...arr(pessoas[i].vende), ...casa] };
     /* sem quem sirva, só onde há casa (a taverna, a estalagem): na capela não se vende sopa */
-    else if (A_CENA_DO_OUVIDO.lugarDeCasa.test(sem(`${str(lugar.tipo)} ${str(lugar.nome)}`))) bancas.push({ nome: str(lugar.nome) || A_CENA_DO_OUVIDO.aCasa, vende: casa });
+    if (!quem.length && A_CENA_DO_OUVIDO.lugarDeCasa.test(sem(`${str(lugar.tipo)} ${str(lugar.nome)}`))) bancas.push({ nome: str(lugar.nome) || A_CENA_DO_OUVIDO.aCasa, vende: casa });
   }
   const presentes = new Set([...pessoas.map((p) => sem(p.nome)), ...doGrupo]);
   /* quem o sistema conhece e não está à vista (o passo da quest, o registo) também é ausente:
@@ -365,7 +378,21 @@ export function oOuvidoNaTroca(frase, cena) {
        baixa do ouvido, e o Mestre pergunta o que se faz com ela em vez de calar.
        Medido: nenhuma frase do treino nem do corpus cai aqui (os números não mudam) */
     const semVerbo = !["trocar", "usar"].includes(lida.familia) && Number(lida.confianca) <= O_OUVIDO.confianca.semVerbo && R.gestoSemVerbo.includes(lida.coisaTipo);
-    const leitura = semVerbo ? Object.freeze({ ...lida, familia: "trocar", subtipo: null }) : lida;
+    let leitura = semVerbo ? Object.freeze({ ...lida, familia: "trocar", subtipo: null }) : lida;
+    /* a bancada da troca (Q07): o mercador que atende a praça só é o dono quando a frase fala com ele — sem
+       ele nomeado, a coisa é da banca que a vende (o escambo e a compra com a banca seguem o caminho dela) */
+    {
+      const atende = new Set(arr(obj(cena) && cena.pessoas).filter((p) => obj(p) && p.atende).map((p) => sem(p.nome)));
+      const daBanca = (nome) => (arr(obj(cena) && cena.bancas).find((b) => arr(b.vende).some((v) => mesmaCoisa(v.item, nome))) || {}).nome || "";
+      const troca = (x) => (obj(x) && x.tipo === "dele" && x.dono && atende.has(sem(x.dono)) && sem(leitura.quem || "") !== sem(x.dono) && daBanca(x.nome || x.coisa) ? { ...x, dono: daBanca(x.nome || x.coisa) } : x);
+      if (atende.size && leitura.coisaTipo === "dele") { const d = troca({ tipo: "dele", dono: leitura.dono, nome: leitura.coisa }); if (d.dono !== leitura.dono) leitura = Object.freeze({ ...leitura, dono: d.dono }); }
+      if (atende.size && obj(leitura.propostaDeEmTroca)) { const d = troca(leitura.propostaDeEmTroca); if (d !== leitura.propostaDeEmTroca) leitura = Object.freeze({ ...leitura, propostaDeEmTroca: Object.freeze(d) }); }
+    }
+    if (leitura.familia === "trocar" && !leitura.subtipo) {
+      const fs0 = sem(f);
+      const j = R.jeitoDoGesto.find((x) => x.coisaTipo === leitura.coisaTipo && x.rx.test(fs0));
+      if (j) leitura = Object.freeze({ ...leitura, subtipo: j.subtipo });
+    }
     return oVereditoDoOuvido(leitura, cena, f);
   } catch {
     return vazio;
@@ -558,6 +585,8 @@ export function aTrocaDoOuvido(o, ctx) {
         const it = arr(b.estoque).find((e) => mesmaCoisa(curto(e), coisa));
         if (it) return { banca: b, item: it };
       }
+      /* quem atende a praça (o mercador sem banca com o nome dele) vende da banca que tem a coisa */
+      if (dono && !arr(c.bancas).some((b) => obj(b) && sem(semAposto(nomeDe(b))) === sem(semAposto(dono)))) return doEstoque(coisa, null);
       return null;
     };
     const entrar = (f0, achado, nomeItem, vezes) => {
