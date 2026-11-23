@@ -58,7 +58,7 @@ import { fichaDaPessoa } from "./gente-por-dentro.js";
 import { quemAtende } from "./elenco-do-lugar.js";
 import { oficioNoGenero } from "./nomes.js";
 import { ESTADO_SEM_VOLTA } from "./npcs.js";
-import { catalogoDasListas, oNomeDitoDiz, candidatos, catalogoDoElenco, idDe, idNaPresenca, idsDaGente, QUEM_E_QUEM_DITO } from "./quem-e-quem.js";
+import { catalogoDasListas, oNomeDitoDiz, candidatos, catalogoDoElenco, idDe, idNaPresenca, idsDaGente, QUEM_E_QUEM_DITO, rotuloDe, palavrasDoNome } from "./quem-e-quem.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -337,23 +337,55 @@ export function quemEstaNoutroSitio(q, ctx) {
     const c = ehObj(ctx) ? ctx : {};
     if (x.fora) return [];
     const grupo = new Set(arr(x.grupo).map((g) => sem(nomeDe(g))));
-    const dentro = [...arr(x.doPasso), ...arr(x.doSitio)].map(nomeDe);
-    const fica = (nome) => !nome || grupo.has(sem(nome)) || dentro.some((d) => mesmo(d, nome));
+    const dentro = [...arr(x.doPasso), ...arr(x.doSitio)].filter((d) => nomeDe(d));
+    /* etapa 3 (identidade): com a chave (`porId`), quem é igual a quem decide-se
+       pelo id (oMesmoPorId) — a homônima que o sítio põe aqui não leva a outra,
+       que tem posto noutro sítio; sem a chave, o nome de sempre */
+    const porId = x.porId === true;
+    const igual = oMesmoPorId(porId);
+    const fica = (nome, id) => !nome || grupo.has(sem(nome)) || dentro.some((d) => igual(d, { nome, id }));
     const out = [];
-    const por = (nome, onde) => { if (!fica(nome) && str(onde).trim() && !out.some((y) => mesmo(y.nome, nome))) out.push(Object.freeze({ nome, onde: str(onde).trim() })); };
-    for (const n of arr(x.longe)) if (ehObj(n) && Number(n.dias) === 0 && str(n.laFora).trim() && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora);
+    const por = (nome, onde, id) => {
+      if (!fica(nome, id) && str(onde).trim() && !out.some((y) => igual(y, { nome, id }))) out.push(Object.freeze({ nome, onde: str(onde).trim(), ...(porId && id ? { id } : {}) }));
+    };
+    for (const n of arr(x.longe)) if (ehObj(n) && Number(n.dias) === 0 && str(n.laFora).trim() && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora, str(n.id));
     if (!x.noSitio) {
       const sitios = arr(c.lugares).filter((l) => ehObj(l) && nomeDe(l) && str(l.onde) !== QUEM_ESTA_AQUI_TABELA.ondeArredor);
+      const naBase = aGenteDoId(c.gente, c.cidade);
       for (const n of arr(x.aqui)) {
         if (!ehObj(n) || /companheir/i.test(str(n.relacao)) || /morto/i.test(str(n.status))) continue;
-        let casa = null;
-        try { casa = aCasaNaBase(nomeDe(n), c.gente); } catch { casa = null; }
+        /* a casa: pelo id da base, com a chave (o homônimo tem a dele); senão pelo nome */
+        let casa = porId ? naBase(str(n.id)) : null;
+        if (!casa) { try { casa = aCasaNaBase(nomeDe(n), c.gente); } catch { casa = null; } }
         const posto = casa && str(casa.local).trim() ? casa.local : (sitios.find((l) => nomeiaSitio(n.local, l.nome)) || {}).nome;
-        if (posto) por(nomeDe(n), posto);
+        if (posto) por(nomeDe(n), posto, str(n.id));
       }
     }
     return out;
   } catch { return []; }
+}
+
+/* ---------------- O MESMO, POR ID (etapa 3) ----------------
+   oMesmoPorId(porId) → (a, b) → boolean, para entradas { nome, id? }.
+   Com a chave e os DOIS ids, o mesmo é o mesmo id; quando um deles não tem
+   id, o nome de sempre (mesmo). Sem a chave, sempre o nome. */
+export function oMesmoPorId(porId) {
+  return (a, b) => {
+    const ia = ehObj(a) ? str(a.id) : "", ib = ehObj(b) ? str(b.id) : "";
+    if (porId === true && ia && ib) return ia === ib;
+    return mesmo(nomeDe(a), nomeDe(b));
+  };
+}
+/* a pessoa da base pelo id do catálogo (idsDaGente: o homônimo leva `~2`) */
+function aGenteDoId(gente, cidade) {
+  let ids = null;
+  const g = arr(gente).map((p) => (ehObj(p) ? p : { nome: p }));
+  return (id) => {
+    if (!id) return null;
+    if (!ids) { try { ids = idsDaGente(g, str(cidade)); } catch { ids = []; } }
+    const i = ids.indexOf(id);
+    return i >= 0 && ehObj(g[i]) ? g[i] : null;
+  };
 }
 
 /* S4c · QUEM AGE AQUI: a lista que o Intérprete (A GENTE) lê. Num sítio da
@@ -479,18 +511,33 @@ export function naoEstaoAqui(q, ctx) {
   const textos = arr(c.mostrado).map(str).slice(-T.falas);
   if (!textos.length) return [];
   const naProsa = " " + sem(textos.join(" ")).replace(/[^a-z0-9]+/g, " ") + " ";
-  const presentes = [...arr(x.aqui), ...arr(x.doSitio), ...arr(x.doPasso)].map(nomeDe).concat(arr(x.grupo));
-  const esta = (nome) => presentes.some((p) => mesmo(p, nome));
+  /* etapa 3 (identidade): com a chave (`porId`), quem está decide-se pelo id —
+     a homônima noutro sítio não «está» por ter o nome de quem está; o grupo
+     entra com os ids dele (gruposIds) */
+  const porId = x.porId === true;
+  const igual = oMesmoPorId(porId);
+  const gIds = arr(x.gruposIds);
+  const presentesE = [...arr(x.aqui), ...arr(x.doSitio), ...arr(x.doPasso)].filter((n) => nomeDe(n))
+    .concat(arr(x.grupo).map((g, i) => ({ nome: nomeDe(g), ...(str(gIds[i]) ? { id: str(gIds[i]) } : {}) })));
+  const presentes = presentesE.map(nomeDe);
+  const esta = (nome, id) => presentesE.some((p) => igual(p, { nome, id }));
   const cand = [];
-  const por = (nome, onde) => { if (nome && !esta(nome) && !cand.some((y) => mesmo(y.nome, nome))) cand.push({ nome, onde: str(onde).trim() }); };
-  for (const n of arr(x.longe)) if (ehObj(n)) por(nomeDe(n), n.laFora || n.onde || n.local);
-  if (x.noSitio || x.fora) for (const p of arr(c.gente)) if (ehObj(p)) por(nomeDe(p), p.local);
+  const por = (nome, onde, id) => { if (nome && !esta(nome, id) && !cand.some((y) => igual(y, { nome, id }))) cand.push({ nome, onde: str(onde).trim(), ...(porId && id ? { id } : {}) }); };
+  for (const n of arr(x.longe)) if (ehObj(n)) por(nomeDe(n), n.laFora || n.onde || n.local, str(n.id));
+  if (x.noSitio || x.fora) {
+    let idsG = [];
+    if (porId) { try { idsG = idsDaGente(arr(c.gente).map((p) => (ehObj(p) ? p : { nome: p })), str(c.cidade)); } catch { idsG = []; } }
+    arr(c.gente).forEach((p, i) => { if (ehObj(p)) por(nomeDe(p), p.local, str(idsG[i])); });
+  }
   const palavrasDoNome = (nome) => sem(str(nome).split(",")[0]).replace(/[^a-z0-9]+/g, " ").trim();
   const primeiros = new Map();
   for (const n of [...cand.map((y) => y.nome), ...presentes]) { const p = palavrasDoNome(n).split(" ")[0]; if (p) primeiros.set(p, (primeiros.get(p) || 0) + 1); }
+  /* com a chave, o nome que quem está tem INTEIRO é dele (a régua do dito: quem
+     está ganha) — a homônima de fora não é citada por ele */
+  const deQuemEsta = new Set(porId ? presentes.map(palavrasDoNome).filter(Boolean) : []);
   const citado = (nome) => {
     const ps = palavrasDoNome(nome);
-    if (!ps) return false;
+    if (!ps || deQuemEsta.has(ps)) return false;
     if (naProsa.includes(" " + ps + " ")) return true;
     const p1 = ps.split(" ")[0];
     return p1.length >= T.primeiroMinimo && primeiros.get(p1) === 1 && naProsa.includes(" " + p1 + " ");
@@ -515,6 +562,114 @@ export function linhaDeQuemNaoEsta(q, ctx) {
 export function contextoDeQuemEsta(q) {
   const x = ehObj(q) ? q : {};
   return { presentes: arr(x.aqui), longe: arr(x.longe), doPasso: arr(x.doPasso), doSitio: arr(x.doSitio), foraDaCidade: !!x.fora, postosLonge: arr(x.postosLonge) };
+}
+
+/* ============================================================
+   O RÓTULO DO HOMÔNIMO (23/11/2026, identidade · etapa 3)
+
+   Duas «Tabitha» em cena — a taverneira e a recruta — chegavam à pergunta
+   do jogador como «Tabitha / Tabitha» e à pauta como uma só (em-cena.js
+   junta a gente pelo nome). O id já as separava (etapa 2); faltava DIZER a
+   diferença. Uma régua só (rotuloDe, quem-e-quem.js), três leitores:
+     · rotulosDosHomonimos(lista) → Map(id → rótulo): para quem, na lista,
+       tem o primeiro nome de outro de id diferente — e só para esses. O
+       rótulo é o de rotuloDe: o ofício, depois o lugar, depois o nome
+       inteiro, depois o número do homônimo; dois que nada distingue levam
+       o número da ordem (ROTULO_DO_HOMONIMO.ordem), e o rótulo nunca se
+       repete;
+     · comRotuloDoHomonimo(q) → o q de quemEstaAqui com o rótulo NO LUGAR
+       do nome (só com a chave, `q.porId`): é o que a pauta entrega ao EM
+       CENA, sem linha nova;
+     · oQualComRotulos(opcoes, pessoas) e aEscolhaDoQual(texto, opcoes): as
+       opções do «qual» com o rótulo, e a resposta — o número, o nome
+       inteiro, o rótulo, ou uma palavra que só um rótulo tem — devolve a
+       opção inteira, com o id.
+   Lista sem homônimo: tudo sai como entrou.
+   ============================================================ */
+export const ROTULO_DO_HOMONIMO = Object.freeze({
+  /* nada distingue dois rótulos: o número da ordem, assim */
+  ordem: (rotulo, n) => `${rotulo} (${n})`,
+  /* as palavras da resposta que não escolhem ninguém («a da praça», «o ferreiro») */
+  vazias: Object.freeze(["a", "o", "as", "os", "da", "do", "de", "das", "dos", "que", "e", "um", "uma"]),
+  porque: "dois de mesmo primeiro nome em cena são ditos pelo que os distingue — o ofício, o lugar, o nome inteiro —, e a escolha leva o id",
+});
+const primeiroDe = (nome) => palavrasDoNomeQ(nome)[0] || "";
+export function rotulosDosHomonimos(lista) {
+  const out = new Map();
+  try {
+    const L = arr(lista).filter((x) => ehObj(x) && str(x.id) && nomeDe(x));
+    const porPrimeiro = new Map();
+    for (const x of L) { const p = primeiroDe(nomeDe(x)); if (!p) continue; const g = porPrimeiro.get(p) || []; if (!g.some((y) => y.id === x.id)) g.push(x); porPrimeiro.set(p, g); }
+    for (const g of porPrimeiro.values()) {
+      if (g.length < 2) continue;
+      const cat = catalogoDasListas({ aqui: g.map((x) => ({ id: str(x.id), nome: nomeDe(x), oficio: str(x.oficio || x.rotulo || x.papel), local: str(x.local || x.onde) })) });
+      const ids = g.map((x) => str(x.id));
+      const rots = ids.map((id) => rotuloDe(id, cat, ids) || nomeDe(g.find((x) => x.id === id)));
+      const vistos = new Map();
+      rots.forEach((r) => vistos.set(sem(r), (vistos.get(sem(r)) || 0) + 1));
+      const conta = new Map();
+      ids.forEach((id, i) => {
+        const r = rots[i];
+        if (vistos.get(sem(r)) > 1) { const n = (conta.get(sem(r)) || 0) + 1; conta.set(sem(r), n); out.set(id, ROTULO_DO_HOMONIMO.ordem(r, n)); } else out.set(id, r);
+      });
+    }
+  } catch { /* o rótulo nunca derruba a cena: sem ele, o nome */ }
+  return out;
+}
+/* as palavras de um nome, sem o aposto (a régua do catálogo) */
+function palavrasDoNomeQ(nome) { try { return palavrasDoNome(nome); } catch { return []; } }
+
+export function comRotuloDoHomonimo(q) {
+  const x = ehObj(q) ? q : null;
+  if (!x || x.porId !== true) return q;
+  try {
+    const presentes = [...arr(x.aqui), ...arr(x.doSitio), ...arr(x.doPasso)].filter((n) => ehObj(n) && str(n.id) && nomeDe(n));
+    const rots = rotulosDosHomonimos(presentes.map((n) => ({ id: n.id, nome: nomeDe(n), papel: str(n.rotulo || n.papel), local: str(n.local) })));
+    if (!rots.size) return q;
+    const troca = (n) => {
+      if (!ehObj(n) || !rots.has(str(n.id))) return n;
+      const r = rots.get(str(n.id));
+      /* o rótulo que já diz o ofício não o repete entre parênteses (em-cena.js mostra o papel ao lado do nome) */
+      const papel = str(n.rotulo || n.papel).trim();
+      const jaDiz = !!papel && sem(r).includes(sem(papel.split(",")[0]));
+      return jaDiz ? { ...n, nome: r, papel: "", rotulo: "", genero: "", nomeProprio: nomeDe(n) } : { ...n, nome: r, nomeProprio: nomeDe(n) };
+    };
+    return { ...x, aqui: arr(x.aqui).map(troca), doSitio: arr(x.doSitio).map(troca), doPasso: arr(x.doPasso).map(troca) };
+  } catch { return q; }
+}
+
+export function oQualComRotulos(opcoes, pessoas) {
+  const ops = arr(opcoes);
+  try {
+    const P = arr(pessoas).filter(ehObj);
+    const daCena = (o) => P.find((p) => str(p.id) && str(p.id) === str(o.id)) || {};
+    const rots = rotulosDosHomonimos(ops.filter((o) => ehObj(o) && str(o.id)).map((o) => {
+      const p = daCena(o);
+      return { id: str(o.id), nome: str(o.valor || o.rotulo || p.nome), papel: str(p.papel || p.rotulo), local: str(p.local || p.onde) };
+    }));
+    if (!rots.size) return ops;
+    const maiuscula = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+    return ops.map((o) => (ehObj(o) && rots.has(str(o.id)) ? Object.freeze({ ...o, rotulo: maiuscula(rots.get(str(o.id))) }) : o));
+  } catch { return ops; }
+}
+
+export function aEscolhaDoQual(texto, opcoes) {
+  try {
+    const ops = arr(opcoes).filter(ehObj);
+    const t = sem(texto).replace(/[.!?]+$/, "").trim();
+    if (!ops.length || !t) return null;
+    if (/^\d+$/.test(t)) return ops[Number(t) - 1] || null;
+    const umSo = (l) => (l.length === 1 ? l[0] : null);
+    const porId = umSo(ops.filter((o) => str(o.id) && sem(o.id) === t));
+    if (porId) return porId;
+    const exato = umSo(ops.filter((o) => sem(o.rotulo) === t || sem(o.valor) === t));
+    if (exato) return exato;
+    /* as palavras ditas (sem as vazias) estão todas no rótulo de UMA opção */
+    const pal = (s) => sem(s).replace(/[^a-z0-9-]+/g, " ").split(" ").filter((w) => w && !ROTULO_DO_HOMONIMO.vazias.includes(w));
+    const W = pal(t);
+    if (!W.length) return null;
+    return umSo(ops.filter((o) => { const R = pal(`${str(o.rotulo)} ${str(o.valor)}`); return W.every((w) => R.includes(w)); }));
+  } catch { return null; }
 }
 
 /* ============================================================

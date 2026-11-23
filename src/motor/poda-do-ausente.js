@@ -32,7 +32,8 @@
 
    Puro, sem React, determinístico. Provado em testes/teste-poda-do-ausente.mjs.
    ============================================================ */
-import { quemEstaNoutroSitio } from "../quem-esta-aqui.js";
+import { quemEstaNoutroSitio, oMesmoPorId } from "../quem-esta-aqui.js";
+import { idsDaGente } from "../quem-e-quem.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -108,34 +109,55 @@ export function osAusentes(q, ctx) {
   const c = ehObj(ctx) ? ctx : {};
   let noutro = [];
   if (c.tambemSemSitio === true && !x.noSitio && !x.fora) { try { noutro = quemEstaNoutroSitio(x, { gente: c.gente, lugares: c.lugares }); } catch { noutro = []; } }
-  const foiPostoNoutro = (n) => noutro.some((y) => palavrasDoNome(y.nome) === palavrasDoNome(nomeDe(n)));
-  const presentes = [...arr(x.doSitio), ...arr(x.doPasso), ...arr(x.grupo)].map(nomeDe)
-    .concat(x.noSitio ? arr(x.aqui).filter((n) => arr(x.grupo).some((g) => palavrasDoNome(g) === palavrasDoNome(nomeDe(n)))).map(nomeDe) : arr(x.aqui).filter((n) => !foiPostoNoutro(n)).map(nomeDe))
-    .concat([nomeDe(c.heroi)], arr(c.protegidos).map(nomeDe))
+  /* etapa 3 (identidade): com a chave (q.porId), quem já está decide-se pelo
+     id quando os dois lados o têm — a homônima posta noutro sítio continua
+     ausente, com o id dela, e o primeiro nome de quem está só descarta quem
+     não tem id para comparar. Sem a chave, a régua de sempre, pelo nome. */
+  const porId = x.porId === true;
+  const igual = oMesmoPorId(porId);
+  const foiPostoNoutro = (n) => noutro.some((y) => (porId && y.id && ehObj(n) && n.id ? y.id === n.id : palavrasDoNome(y.nome) === palavrasDoNome(nomeDe(n))));
+  const gIds = arr(x.gruposIds);
+  const comoEntrada = (n) => (ehObj(n) ? { nome: nomeDe(n), ...(str(n.id) ? { id: str(n.id) } : {}) } : { nome: nomeDe(n) });
+  const presentesE = [...arr(x.doSitio), ...arr(x.doPasso)].map(comoEntrada)
+    .concat(arr(x.grupo).map((g, i) => ({ nome: nomeDe(g), ...(str(gIds[i]) ? { id: str(gIds[i]) } : {}) })))
+    .concat((x.noSitio ? arr(x.aqui).filter((n) => arr(x.grupo).some((g) => palavrasDoNome(g) === palavrasDoNome(nomeDe(n)))) : arr(x.aqui).filter((n) => !foiPostoNoutro(n))).map(comoEntrada))
+    .concat([{ nome: nomeDe(c.heroi) }], arr(c.protegidos).map((p) => ({ nome: nomeDe(p) })))
     /* quem anda comigo (o companheiro do registo) anda com o herói */
-    .concat(Object.values(ehObj(c.npcs) ? c.npcs : {}).filter((n) => ehObj(n) && /companheir/i.test(str(n.relacao)) && !/morto/i.test(str(n.status))).map(nomeDe))
-    .filter(Boolean);
+    .concat(Object.values(ehObj(c.npcs) ? c.npcs : {}).filter((n) => ehObj(n) && /companheir/i.test(str(n.relacao)) && !/morto/i.test(str(n.status))).map((n) => ({ nome: nomeDe(n) })))
+    .filter((p) => p.nome);
+  const presentes = presentesE.map((p) => p.nome);
   const pres = new Set(presentes.map(palavrasDoNome));
+  /* com a chave e o id do ausente: só quem está SEM id compara pelo nome */
+  const semId = presentesE.filter((p) => !p.id);
+  const presSemId = new Set(semId.map((p) => palavrasDoNome(p.nome)));
+  const primeirosSemId = new Set(semId.map((p) => palavrasDoNome(p.nome).split(" ")[0]).filter(Boolean));
+  const idsAqui = new Set(presentesE.filter((p) => p.id).map((p) => p.id));
   /* o primeiro nome de quem está não é de ninguém de fora: «Saoirse» do grupo
      é a «Saoirse Passo-de-Gato» da base, e «Godfrey» à mesa leva o nome de
      qualquer outro Godfrey (o portão morde só o necessário) */
   const primeirosAqui = new Set(presentes.map((n) => palavrasDoNome(n).split(" ")[0]).filter(Boolean));
   const out = [];
-  const por = (nome, onde, morto, sitio) => {
+  const por = (nome, onde, morto, sitio, id0) => {
     const k = palavrasDoNome(nome);
-    if (!k || pres.has(k) || primeirosAqui.has(k.split(" ")[0]) || out.some((y) => palavrasDoNome(y.nome) === k)) return;
-    out.push({ nome: str(nome).trim(), onde: str(onde).trim(), morto: !!morto, ...(sitio && c.tambemSemSitio === true ? { sitio: true } : {}) });
+    const id = porId ? str(id0) : "";
+    if (!k) return;
+    if (id) {
+      if (idsAqui.has(id) || presSemId.has(k) || primeirosSemId.has(k.split(" ")[0]) || out.some((y) => igual(y, { nome, id }))) return;
+    } else if (pres.has(k) || primeirosAqui.has(k.split(" ")[0]) || out.some((y) => palavrasDoNome(y.nome) === k)) return;
+    out.push({ nome: str(nome).trim(), onde: str(onde).trim(), morto: !!morto, ...(sitio && c.tambemSemSitio === true ? { sitio: true } : {}), ...(id ? { id } : {}) });
   };
-  for (const n of noutro) por(n.nome, n.onde, false, true);
-  for (const n of arr(x.longe)) if (ehObj(n) && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora || n.onde || n.local, false, Number(n.dias) === 0 && !!str(n.laFora).trim() && !x.fora);
+  for (const n of noutro) por(n.nome, n.onde, false, true, n.id);
+  for (const n of arr(x.longe)) if (ehObj(n) && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora || n.onde || n.local, false, Number(n.dias) === 0 && !!str(n.laFora).trim() && !x.fora, n.id);
   if (x.noSitio || x.fora) {
     const sitio = sem(nomeDe(c.lugar));
-    for (const p of arr(c.gente)) {
-      if (!ehObj(p) || /morto/i.test(str(p.status))) continue;
+    let idsG = [];
+    if (porId) { try { idsG = idsDaGente(arr(c.gente).map((p) => (ehObj(p) ? p : { nome: p })), str(c.cidade)); } catch { idsG = []; } }
+    arr(c.gente).forEach((p, i) => {
+      if (!ehObj(p) || /morto/i.test(str(p.status))) return;
       const local = str(p.local);
-      if (sitio && sem(local).includes(sitio)) continue;
-      por(nomeDe(p), local, false);
-    }
+      if (sitio && sem(local).includes(sitio)) return;
+      por(nomeDe(p), local, false, false, idsG[i]);
+    });
   }
   for (const n of Object.values(ehObj(c.npcs) ? c.npcs : {})) if (ehObj(n) && /morto/i.test(str(n.status))) por(nomeDe(n), "", true);
   return out;
@@ -153,8 +175,14 @@ function formasDos(ausentes, outros) {
     const p = palavrasDoNome(n).split(" ")[0];
     if (p) primeiros.set(p, (primeiros.get(p) || 0) + 1);
   }
+  /* etapa 3 (identidade): o ausente cujo nome inteiro é o de quem está (a
+     homônima noutro sítio) não tem forma por que se diga — o nome dito é de
+     quem está (a régua do dito, quem-e-quem.js). Até aqui osAusentes nunca o
+     trazia (descartava-o pelo nome); com a chave ele vem, com o id dele. */
+  const inteirosAqui = new Set(arr(outros).map((n) => palavrasDoNome(nomeDe(n))).filter(Boolean));
   return ausentes.map((a) => {
     const todo = palavrasDoNome(a.nome).split(" ").filter(Boolean);
+    if (inteirosAqui.has(todo.join(" "))) return { ...a, formas: [] };
     const formas = [todo];
     if (todo.length > 1 && todo[0].length >= T.primeiroMinimo && primeiros.get(todo[0]) === 1) formas.push([todo[0]]);
     return { ...a, formas };
