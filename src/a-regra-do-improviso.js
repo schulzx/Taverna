@@ -102,7 +102,8 @@ export function aRespostaDoMestre(leitura, cena) {
        (o estoque, o preço, «ninguém aqui») e nunca nas opções de «a quem». A cena de exame não traz bancas */
     const bancas = arr(c.bancas).filter((b) => b && str(b.nome).trim());
     const vendedores = [...pessoas, ...bancas];
-    const sai = (veredito, motivo = null, pergunta = null) => Object.freeze({ veredito, motivo, pergunta: pergunta ? Object.freeze({ texto: pergunta.texto, opcoes: Object.freeze([...pergunta.opcoes]) }) : null });
+    /* `extra`: o detalhe do motivo quando a frase disse mais de uma coisa ({ coisa } de quem falhou, { total } da soma) */
+    const sai = (veredito, motivo = null, pergunta = null, extra = null) => Object.freeze({ veredito, motivo, pergunta: pergunta ? Object.freeze({ texto: pergunta.texto, opcoes: Object.freeze([...pergunta.opcoes]) }) : null, ...(extra || {}) });
     const tem = (coisa) => { const s = sem(coisa); return carrega.some((x) => sem(x) === s || sem(x).split(" ")[0] === s || sem(x).replace(/s$/, "") === s.replace(/s$/, "")); };
 
     /* o uso: tem → sim; não tem → não; sem coisa → pergunta */
@@ -170,12 +171,24 @@ export function aRespostaDoMestre(leitura, cena) {
         return sai("sim_com_preco");
       }
       if (preco * vezes > moeda) return sai("nao", "sem_moeda");
+      /* 23/11 (as frases novas da bancada, N05): «quero levar a corda e o dente» — as outras coisas do mesmo
+         verbo somam no preço; a que ninguém vende diz o nome dela, e a soma que não chega diz a soma */
+      let total = preco * vezes;
+      for (const o of arr(l.outrasCoisas)) {
+        const dono = o && o.dono ? vendedores.find((p) => sem(p.nome) === sem(o.dono)) : null;
+        const p2 = dono && precoDe(dono, o.nome) != null ? precoDe(dono, o.nome) : (vendeQuem(o.nome)[0] ? precoDe(vendeQuem(o.nome)[0], o.nome) : null);
+        if (p2 == null) return sai("nao", "nao_vende", null, { coisa: str(o && o.nome) });
+        total += p2 * Math.max(1, Number(o.quantos) || 1);
+      }
+      if (total > moeda) return sai("nao", "sem_moeda", null, { total });
       if (l.regateio) return sai("dado");
       return sai("sim_com_preco");
     }
     if (s === "vender") {
       if (!l.coisa) return sai("pergunta", "falta_o_que", { texto: tpl(R.textos.faltaOQue, { verbo: V }), opcoes: carrega });
       if (!tem(l.coisa)) return sai("nao", "nao_tem");
+      const naoTemOutra = arr(l.outrasCoisas).find((o) => !tem(o && o.nome));
+      if (naoTemOutra) return sai("nao", "nao_tem", null, { coisa: str(naoTemOutra.nome) });
       if (!pessoa) {
         const merc = pessoas.filter((p) => arr(p.vende).length);
         /* com banca na cena, quem compra é o mercado (a oferta do sistema diz qual): não se pergunta */

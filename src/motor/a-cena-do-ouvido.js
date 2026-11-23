@@ -76,6 +76,8 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
       ausente: "",
       morto: "🤝 {Nome} está morto: não recebe nem dá nada.",
       sem_moeda: "◉ Não chega: você tem ◉ {Bolsa}.",
+      /* 23/11 (N05): a soma das coisas ditas juntas, quando não chega para todas */
+      sem_moedaTudo: "◉ Não chega para tudo: ◉ {Total}, e você tem ◉ {Bolsa}.",
       nao_tem: "🎒 Você não tem {coisa}.",
       nao_vende: "🛒 {Nome} não vende {coisa}.",
       nao_vendeNinguem: "🛒 Ninguém aqui vende {coisa}.",
@@ -95,6 +97,8 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
     pagar: "◉ −{Q}: pago a {Quem} (bolsa: ◉ {B}).",
     pagarSemQuem: "◉ −{Q} (bolsa: ◉ {B}).",
     pagarQuanto: "◉ Quanto você paga? Diga a quantia.",
+    /* 23/11 (as frases novas da bancada): «dou umas moedas pra Prudence» — sem número, nunca 1 calado */
+    darQuanto: "◉ Quanto você {verbo}? Diga a quantia.",
     comprar: "🛒 {Coisa} de {Quem}: ◉ −{Q} (bolsa: ◉ {B}).",
     vender: "◉ +{Q}: {Quem} fica com {Coisa} (bolsa: ◉ {B}).",
     venderSemQuem: "🛒 Ninguém aqui compra {coisa}.",
@@ -108,6 +112,7 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
       ausente: "{Nome} não está aqui: não houve com quem trocar, e nada mudou de mão.",
       morto: "{Nome} está morto: não recebe nem dá nada, e nada mudou de mão.",
       sem_moeda: "Quis {gesto}, e não tenho moeda que chegue (tenho ◉ {Bolsa}): nada saiu da minha bolsa.",
+      sem_moedaTudo: "Quis {gesto} e o resto junto, que custa ◉ {Total}, e não tenho moeda que chegue (tenho ◉ {Bolsa}): nada saiu da minha bolsa.",
       nao_tem: "Quis {gesto}, e não tenho isso comigo: nada mudou de mão.",
       nao_vende: "{Nome} não vende {coisa}: nada mudou de mão.",
       nao_vendeNinguem: "Ninguém aqui vende {coisa}: nada mudou de mão.",
@@ -124,6 +129,7 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
     pagar: "Paguei ◉ {Q} a {Quem}; saiu da minha bolsa (agora tenho ◉ {B}).",
     pagarSemQuem: "Paguei ◉ {Q}; saiu da minha bolsa (agora tenho ◉ {B}).",
     pagarQuanto: "Quis pagar sem dizer quanto: nada saiu da minha bolsa ainda.",
+    darQuanto: "Quis {gesto} sem dizer quanto: nada saiu da minha bolsa ainda.",
     comprar: "Comprei {Coisa} de {Quem} por ◉ {Q}; já está comigo, e a moeda saiu da minha bolsa (agora tenho ◉ {B}).",
     vender: "Vendi {Coisa} a {Quem} por ◉ {Q}; saiu da minha bolsa e a moeda entrou (agora tenho ◉ {B}).",
     venderSemQuem: "Quis vender {coisa}, e ninguém aqui compra: nada mudou de mão.",
@@ -138,6 +144,10 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
   }),
   /* quem não tem nome na frase: a palavra que a linha usa */
   alguem: "alguém",
+  /* o verbo da pergunta «Quanto você …?» */
+  verboDoQuanto: Object.freeze({ dar: "dá", emprestar: "empresta", devolver: "devolve" }),
+  /* o «e» que junta as coisas ditas juntas, na linha e no cartão */
+  juntaCoisas: " e ",
   /* quem serve a casa (o ofício, sem acento): a ela vão a sopa e a caneca */
   quemServe: /(tavern|estalaj|pousad|cozinh|copeir|servent|servical|criad|atendent|empregad|camareir|garcon|garcom|hospedeir|dono da|dona da)/,
   /* a bancada da troca (B03, B11): quem tem ofício de vender e está na praça atende as bancas dela —
@@ -341,9 +351,10 @@ function aNegativa(l, r, cena) {
   const Nome = str(l.quem || (motivo === "ausente" || motivo === "morto" ? l.quemDito : "") || "").trim()
     || (motivo === "ausente" || motivo === "morto" ? str(arr(l.opcoesDeQuem)[0] || "") : "");
   const Bolsa = Number(obj(cena) && obj(cena.heroi) ? cena.heroi.moeda : 0) || 0;
-  const coisa = str(l.coisa) || "isso";
-  const chave = motivo === "nao_vende" && !Nome ? "nao_vendeNinguem" : motivo;
-  const o = { Nome: Nome || R.alguem, Bolsa, coisa, gesto: oGesto(l) };
+  /* 23/11 (N05): com mais de uma coisa dita, o motivo diz a coisa que falhou e a soma que não chega */
+  const coisa = str(r.coisa) || str(l.coisa) || "isso";
+  const chave = motivo === "nao_vende" && !Nome ? "nao_vendeNinguem" : motivo === "sem_moeda" && Number(r.total) > 0 ? "sem_moedaTudo" : motivo;
+  const o = { Nome: Nome || R.alguem, Bolsa, coisa, gesto: oGesto(l), Total: Number(r.total) || 0 };
   if (motivo === "nao_vende" && l.subtipo === "escambo" && Nome) {
     const outra = str(obj(l.propostaDeEmTroca) && l.propostaDeEmTroca.nome) || "isso";
     return Object.freeze({
@@ -545,7 +556,9 @@ export function aTrocaDoOuvido(o, ctx) {
       if (l.coisaTipo === "moeda") {
         /* a moeda emprestada ou devolvida sai da bolsa como a dada (o «até devolver» é da prosa, não da ficha) */
         if (comp) return negada("ouvido", "grupo", tpl(T.darMoedaAoGrupo, { Nome: primeiro(comp) }), tpl(F.darMoedaAoGrupo, { Nome: primeiro(comp) }));
-        const Q = Math.max(1, Number(l.quantia) || 1);
+        /* 23/11 (as frases novas da bancada): «umas moedas», «uns trocados» — sem número, o Mestre pergunta quanto (nunca 1 calado) */
+        if (!(Number(l.quantia) > 0)) return negada("ouvido", "quanto", tpl(T.darQuanto, { verbo: R.verboDoQuanto[s] || R.verboDoQuanto.dar }), tpl(F.darQuanto, { gesto: oGesto(l) }));
+        const Q = Number(l.quantia);
         if (Q > moedas) return null;
         const B = moedas - Q;
         const nova = { ...ficha, moedas: B };
@@ -610,14 +623,26 @@ export function aTrocaDoOuvido(o, ctx) {
       const preco = achado ? Number(achado.item.preco) || 0 : Number(l.preco) || 0;
       const vezes = l.quantiaDe === "coisa" && Number(l.quantia) > 1 ? Number(l.quantia) : 1;
       const oferta = l.quantiaDe !== "coisa" && Number(l.quantia) > 0 ? Number(l.quantia) : 0;
-      const Q = oferta || preco * vezes;
+      /* 23/11 (N05, B13): as outras coisas ditas com o mesmo verbo entram na mesma compra, cada uma pelo preço dela */
+      const outras = oferta ? [] : arr(l.outrasCoisas).filter((o) => obj(o) && str(o.nome));
+      const dasOutras = [];
+      for (const o of outras) {
+        const ach = doEstoque(o.nome, o.dono);
+        const p2 = ach ? Number(ach.item.preco) || 0 : Number(o.preco) || 0;
+        if (!p2 || (ach && obj(ach.item) && ach.item.tipo === "mapa")) return null;
+        dasOutras.push({ achado: ach, nome: ach ? curto(ach.item) : str(o.nome), dono: ach ? nomeDe(ach.banca) : str(o.dono), vezes: Math.max(1, Number(o.quantos) || 1), preco: p2 });
+      }
+      const Q = (oferta || preco * vezes) + dasOutras.reduce((n, o) => n + o.preco * o.vezes, 0);
       if (!Q || Q > moedas) return null;
       const B = moedas - Q;
-      const nova = entrar({ ...ficha, moedas: B }, achado, l.coisa, vezes);
-      const Coisa = (vezes > 1 ? `${vezes} × ` : "") + (achado ? curto(achado.item) : l.coisa);
-      return aplicada("ouvido", nova, [{ coisa: l.coisa, quantos: vezes, de: l.dono, para: "heroi" }, { coisa: "moedas", quantos: Q, de: "heroi", para: l.dono }],
+      let nova = entrar({ ...ficha, moedas: B }, achado, l.coisa, vezes);
+      for (const o of dasOutras) nova = entrar(nova, o.achado, o.nome, o.vezes);
+      const rotulo = (n, v) => (v > 1 ? v + " × " : "") + n;
+      const Coisa = [rotulo(achado ? curto(achado.item) : l.coisa, vezes), ...dasOutras.map((o) => rotulo(o.nome, o.vezes))].join(R.juntaCoisas);
+      const comprados = dasOutras.filter((o) => o.achado && o.achado.banca.id).map((o) => Object.freeze({ banca: o.achado.banca.id, nome: nomeDe(o.achado.item), vezes: o.vezes }));
+      return aplicada("ouvido", nova, [{ coisa: l.coisa, quantos: vezes, de: l.dono, para: "heroi" }, ...dasOutras.map((o) => ({ coisa: o.nome, quantos: o.vezes, de: o.dono, para: "heroi" })), { coisa: "moedas", quantos: Q, de: "heroi", para: l.dono }],
         tpl(T.comprar, { Coisa: maiuscula(Coisa), Quem: semAposto(l.dono), Q, B }), tpl(F.comprar, { Coisa, Quem: semAposto(l.dono), Q, B }),
-        achado && achado.banca.id ? { comprado: Object.freeze({ banca: achado.banca.id, nome: nomeDe(achado.item), vezes }) } : null);
+        { ...(achado && achado.banca.id ? { comprado: Object.freeze({ banca: achado.banca.id, nome: nomeDe(achado.item), vezes }) } : {}), ...(comprados.length ? { comprados: Object.freeze(comprados) } : {}) });
     }
 
     if (s === "vender") {
@@ -643,17 +668,35 @@ export function aTrocaDoOuvido(o, ctx) {
       }
       if (!k) return null;
       if (k.onde === "equipados") return negada("ouvido", "emUso", tpl(T.darEmUso, { Coisa: maiuscula(k.nome) }), tpl(F.darEmUso, { Coisa: k.nome }));
-      let of = null;
-      try { of = typeof c.ofertaDe === "function" ? c.ofertaDe(k.raw) : null; } catch { of = null; }
+      const ofertaPor = (raw) => { let x = null; try { x = typeof c.ofertaDe === "function" ? c.ofertaDe(raw) : null; } catch { x = null; } return x; };
+      const of = ofertaPor(k.raw);
       const comprador = (obj(of) && obj(of.quem) && nomeDe(of.quem)) || "";
-      const Q = obj(of) ? Math.max(0, Math.floor(Number(of.valor) || 0)) : 0;
-      if (!comprador || !Q) return negada("ouvido", "semComprador", tpl(T.venderSemQuem, { coisa: k.nome }), tpl(F.venderSemQuem, { coisa: k.nome }));
+      const Q1 = obj(of) ? Math.max(0, Math.floor(Number(of.valor) || 0)) : 0;
+      if (!comprador || !Q1) return negada("ouvido", "semComprador", tpl(T.venderSemQuem, { coisa: k.nome }), tpl(F.venderSemQuem, { coisa: k.nome }));
+      /* 23/11 (Q11): as outras coisas da mochila ditas com o mesmo verbo vão na mesma venda, cada uma pela oferta dela */
+      let nova = tirar(ficha, k);
+      const vendidas = [{ nome: k.nome, valor: Q1 }];
+      const mesma = (r, nome) => mesmaCoisa(curto(r), nome) || sem(curto(r)).split(" ")[0] === sem(nome).split(" ")[0];
+      for (const o of arr(l.outrasCoisas).filter((x) => obj(x) && str(x.nome))) {
+        const inv2 = arr(nova.inventario), eq2 = arr(nova.equipamento);
+        const i2 = inv2.findIndex((r) => mesma(r, o.nome));
+        const j2 = i2 < 0 ? eq2.findIndex((r) => mesma(r, o.nome)) : -1;
+        const k2 = i2 >= 0 ? { onde: "inventario", i: i2, raw: inv2[i2], nome: curto(inv2[i2]) } : j2 >= 0 ? { onde: "equipamento", i: j2, raw: eq2[j2], nome: curto(eq2[j2]) } : null;
+        if (!k2) return null;
+        const of2 = ofertaPor(k2.raw);
+        const Q2 = obj(of2) ? Math.max(0, Math.floor(Number(of2.valor) || 0)) : 0;
+        if (!Q2) return negada("ouvido", "semComprador", tpl(T.venderSemQuem, { coisa: k2.nome }), tpl(F.venderSemQuem, { coisa: k2.nome }));
+        nova = tirar(nova, k2);
+        vendidas.push({ nome: k2.nome, valor: Q2 });
+      }
+      const Q = vendidas.reduce((n, v) => n + v.valor, 0);
       /* quem a frase nomeia compra, se é gente; a banca que o pronome retomou cede ao comprador do mercado */
       const Para = quemDoOutro && !arr(c.bancas).some((b) => sem(nomeDe(b)) === sem(quemDoOutro)) ? semAposto(quemDoOutro) : comprador;
       const B = moedas + Q;
-      const nova = { ...tirar(ficha, k), moedas: B };
-      return aplicada("ouvido", nova, [{ coisa: k.nome, quantos: 1, de: "heroi", para: Para }, { coisa: "moedas", quantos: Q, de: Para, para: "heroi" }],
-        tpl(T.vender, { Q, Quem: Para, Coisa: k.nome, B }), tpl(F.vender, { Q, Quem: Para, Coisa: k.nome, B }), { vendido: Object.freeze({ banca: (of.quem && of.quem.id) || "", valor: Q }) });
+      nova = { ...nova, moedas: B };
+      const CoisaV = vendidas.map((v) => v.nome).join(R.juntaCoisas);
+      return aplicada("ouvido", nova, [...vendidas.map((v) => ({ coisa: v.nome, quantos: 1, de: "heroi", para: Para })), { coisa: "moedas", quantos: Q, de: Para, para: "heroi" }],
+        tpl(T.vender, { Q, Quem: Para, Coisa: CoisaV, B }), tpl(F.vender, { Q, Quem: Para, Coisa: CoisaV, B }), { vendido: Object.freeze({ banca: (of.quem && of.quem.id) || "", valor: Q }) });
     }
 
     if (s === "escambo") {

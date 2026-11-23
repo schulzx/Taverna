@@ -41,7 +41,7 @@
    regra do improviso.
    ============================================================ */
 import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CENA_DO_OUVIDO } from "./a-cena-do-ouvido.js";
-import { ligarACena } from "../o-ouvido.js";
+import { ligarACena, asAcoesDaFrase } from "../o-ouvido.js";
 
 export const UMA_PORTA_SO = Object.freeze({
   /* o resultado lido na proposta da frase vale para o turno da mesma frase por este tempo (ms) */
@@ -57,6 +57,10 @@ export const UMA_PORTA_SO = Object.freeze({
     daBanca: "🛒 {Coisa} é de {Nome}: só sai da banca pago.",
     ausente: "🤝 {Nome} não está aqui.",
     semCaminho: "🤝 Nada muda de mão.",
+    /* 23/11 (as frases novas da bancada, N43): a moeda oferecida a quem é do grupo — a bolsa do grupo é uma só */
+    subornoAoGrupo: "🤝 {Nome} é do seu grupo: a moeda fica na bolsa comum, e a conversa segue sem ela.",
+    /* 23/11 (N08): a segunda ação da frase que não pode seguir agora — dita numa linha, nunca descartada calada */
+    depois: "🤝 Uma coisa de cada vez: «{frase}» fica para depois.",
   }),
   fato: Object.freeze({
     desiste: "Não respondi ao que o Mestre perguntou: a troca não aconteceu, e nada mudou de mão.",
@@ -65,6 +69,8 @@ export const UMA_PORTA_SO = Object.freeze({
     daBanca: "Quis levar {Coisa} da banca de {Nome} sem pagar: não levei, e nada mudou de mão.",
     ausente: "{Nome} não está aqui: não houve com quem trocar, e nada mudou de mão.",
     semCaminho: "Quis {gesto}: nada mudou de mão.",
+    subornoAoGrupo: "Ofereci moedas a {Nome}, que é do meu grupo: o dinheiro do grupo é um só, e nada mudou de mão.",
+    depois: "Disse também «{frase}»: isso fica para depois, e nesta resposta não aconteceu.",
     preco: "O preço é do sistema: {Coisa} custa ◉ {Preco} ({Quem}). É este o preço; não diga outro.",
   }),
   /* o rótulo de cada ação oferecida quando o verbo não se reconheceu */
@@ -80,6 +86,15 @@ export const UMA_PORTA_SO = Object.freeze({
   aQuem: /(?<![\p{L}\p{N}])(?:a|ao|à|pra|pro|para)\s+((?:[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)(?:\s+(?:(?:de|da|do|dos|das)\s+)?[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)*)/gu,
   /* quem precisa de alguém do outro lado, para a negativa do nome desconhecido */
   precisaDeQuem: Object.freeze(["dar", "pagar", "emprestar", "devolver", "vender", "subornar", "escambo", "cobrar", "pedir"]),
+  /* 23/11 (N17): o pronome que retoma a COISA da frase anterior («Cornelius, que corda é essa?» → «levo ela»):
+     o verbo de levar/comprar seguido do pronome (sem acento, a frase inteira em minúsculas) */
+  retomaACoisa: /^(?:eu\s+)?(?:(?:vou|quero)\s+)?(lev\w*|compr\w*|quero|fico com|peg\w*|vend\w*)\s+(ela|ele|essa|esse|esta|este|isso|isto|aquela|aquele|aquilo)\b/,
+  /* 23/11 (N08): o que a primeira ação pode ser para a segunda seguir na mesma resposta, e o que a segunda pode ser */
+  seguinteAgora: Object.freeze({ primeira: Object.freeze(["aplicado", "nao", "desiste", "recolher", "dado"]), segunda: Object.freeze(["aplicado", "nao", "cartao"]) }),
+  /* a segunda que é só o pagamento da primeira («compro uma ração e pago sete moedas»): a mesma ação */
+  mesmaAcao: Object.freeze({ primeira: Object.freeze(["comprar", "pedir"]), segunda: "pagar" }),
+  /* quantas ações encadeadas a porta lê numa frase */
+  maxAcoes: 3,
 });
 
 const str = (x) => (x == null ? "" : String(x));
@@ -243,6 +258,55 @@ function oNomeDeFora(frase, cena) {
 export function aPortaUnica(frase, retrato, ctx) {
   const R = UMA_PORTA_SO;
   const f = str(frase).trim();
+  const inteira = aPortaDeUmaAcao(frase, retrato, ctx);
+  /* DUAS AÇÕES NA FRASE (23/11, N08): «dou uma moeda pra Prudence e compro uma ração do Cornelius». A
+     primeira é lida sozinha (a quantia de uma não vaza para a outra); a segunda, com a ficha que a
+     primeira deixou. Se a segunda pode seguir agora, vai em `seguinte.r` e o App a executa logo depois;
+     se não pode, `seguinte.linha` diz isso numa linha. A resposta à pergunta e o clique do cartão não se
+     cortam (já são de uma ação só). */
+  try {
+    const c = obj(ctx) || {};
+    if (!f || c.confirmado || obj(c.pendente) || (Number(c.profundidade) || 0) >= R.maxAcoes - 1) return inteira;
+    const partes = asAcoesDaFrase(f);
+    if (partes.length < 2) return inteira;
+    const primeira = partes[0], resto = partes.slice(1).join(" e ");
+    const r1 = aPortaDeUmaAcao(primeira, retrato, ctx);
+    if (!r1.troca || !r1.caminho) return inteira;
+    const r0 = obj(retrato) || {};
+    const ret2 = r1.caminho === "aplicado" && r1.veredito && obj(r1.veredito.ficha) ? { ...r0, ficha: r1.veredito.ficha } : r0;
+    const r2 = aPortaUnica(resto, ret2, { ...c, profundidade: (Number(c.profundidade) || 0) + 1 });
+    if (!r2.troca || !r2.caminho) return inteira;
+    const s1 = r1.leitura && r1.leitura.subtipo, l2 = r2.leitura || {};
+    if (R.mesmaAcao.primeira.includes(s1) && l2.subtipo === R.mesmaAcao.segunda && (!l2.coisa || l2.coisaTipo === "moeda")) return inteira;
+    const agora = R.seguinteAgora.primeira.includes(r1.caminho) && R.seguinteAgora.segunda.includes(r2.caminho);
+    return Object.freeze({
+      ...r1,
+      frase: ["cartao", "pergunta"].includes(r1.caminho) ? primeira : f,
+      seguinte: Object.freeze({ frase: resto, r: r2, agora, linha: agora ? "" : tpl(R.tela.depois, { frase: resto }), fato: agora ? "" : tpl(R.fato.depois, { frase: resto }) }),
+    });
+  } catch { return inteira; }
+}
+
+/* o pronome que retoma a coisa da frase anterior → a frase com a coisa no lugar dele, ou "" */
+function aCoisaRetomada(frase, cena, anteriores) {
+  const ant = str(obj(anteriores) && anteriores.jogador).trim();
+  if (!ant) return "";
+  const m = sem(frase).match(UMA_PORTA_SO.retomaACoisa);
+  if (!m) return "";
+  const L = ligarACena(ant, { ...cena, foco: undefined });
+  const porNome = new Map();
+  for (const x of L.marcas.filter((y) => y.tipo === "COISA")) {
+    const l = arr(x.leituras).find((y) => y.tipo === "dele") || arr(x.leituras)[0];
+    if (l && l.nome) porNome.set(sem(l.nome), l.nome);
+  }
+  if (porNome.size !== 1) return "";
+  const nome = [...porNome.values()][0];
+  return str(frase).replace(new RegExp("(?<![\\p{L}])" + m[2] + "(?![\\p{L}])", "iu"), nome);
+}
+
+function aPortaDeUmaAcao(frase, retrato, ctx) {
+  const R = UMA_PORTA_SO;
+  const f = str(frase).trim();
   const vazio = Object.freeze({ lido: false, troca: false, caminho: null, frase: f, leitura: null, resposta: null, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null });
   try {
     if (!f) return vazio;
@@ -277,6 +341,11 @@ export function aPortaUnica(frase, retrato, ctx) {
       }
     }
     if (!o) o = oOuvidoNaTroca(f, cena);
+    /* 23/11 (N17): «levo ela» depois de «que corda é essa que você vende?» — sem coisa na frase, o pronome retoma a da anterior */
+    if (!pend && o && o.lido && !str(o.leitura && o.leitura.coisa)) {
+      const f2 = aCoisaRetomada(f, cena, r0.anteriores);
+      if (f2) { const o2 = oOuvidoNaTroca(f2, cena); if (o2 && o2.lido && o2.leitura.familia === "trocar" && str(o2.leitura.coisa)) o = o2; }
+    }
     if (!o || !o.lido) return vazio;
     const l = o.leitura;
     const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null };
@@ -359,7 +428,10 @@ function oCartao(l, t, ficha) {
     if (disse || !coisa) return null;
     const nome = maiuscula((t.comprado && t.comprado.nome) || coisa.coisa);
     const quantos = Math.max(1, Number(coisa.quantos) || 1);
-    return cartao("compra", { compras: [{ fecha: true, total, bolsa, itens: [{ nome, quantos }] }] }, [sem(nome), quantos]);
+    /* 23/11 (N05, B13): as outras coisas da mesma compra vão no mesmo cartão, cada uma com a quantia dela */
+    const outras = m.filter((x) => x && x.coisa !== "moedas" && x !== coisa).map((x) => ({ nome: maiuscula(x.coisa), quantos: Math.max(1, Number(x.quantos) || 1) }));
+    const itens = [{ nome, quantos }, ...outras];
+    return cartao("compra", { compras: [{ fecha: true, total, bolsa, itens }] }, itens.flatMap((x) => [sem(x.nome), x.quantos]));
   }
   if (s === "pagar") {
     if (disse) return null;
@@ -368,8 +440,10 @@ function oCartao(l, t, ficha) {
   }
   if (s === "vender" && coisa) {
     const quantos = Math.max(1, Number(coisa.quantos) || 1);
-    const rotulo = (quantos > 1 ? `${quantos} × ` : "") + maiuscula(coisa.coisa);
-    return cartao("venda", { venda: { item: coisa.coisa, rotulo, valor: total, bolsa, quem: str(coisa.para) } }, [sem(coisa.coisa), quantos]);
+    /* 23/11 (Q11): a venda de mais de uma coisa diz todas no rótulo, e o valor é a soma */
+    const vendidas = m.filter((x) => x && x.coisa !== "moedas");
+    const rotulo = vendidas.length > 1 ? vendidas.map((x) => maiuscula(x.coisa)).join(A_CENA_DO_OUVIDO.juntaCoisas) : (quantos > 1 ? `${quantos} × ` : "") + maiuscula(coisa.coisa);
+    return cartao("venda", { venda: { item: coisa.coisa, rotulo, valor: total, bolsa, quem: str(coisa.para) } }, [...vendidas.map((x) => sem(x.coisa)), quantos]);
   }
   if (s === "escambo" && m.length >= 2) {
     const da = maiuscula(m[0].coisa), por = maiuscula(m[1].coisa);
@@ -398,6 +472,11 @@ function decidir(o, sai, ctxT, cena, r0, R) {
       return sai({ caminho: "nao", veredito: negada("daBanca", tpl(R.tela.daBanca, o2), tpl(R.fato.daBanca, o2)) });
     }
     if (l.coisaTipo !== "solta") return sai({ caminho: "nao", veredito: negada("naoHa", tpl(R.tela.naoHa, { coisa: str(l.coisa) || "isso" }), tpl(R.fato.naoHa, { coisa: str(l.coisa) || "isso" })) });
+  }
+  /* 23/11 (N43): a moeda oferecida a quem é do grupo não vai ao dado — a bolsa do grupo é uma só */
+  if (s === "subornar" && l.companheiro) {
+    const Nome = semAposto(l.companheiro).split(/\s+/)[0];
+    return sai({ caminho: "nao", veredito: negada("grupo", tpl(R.tela.subornoAoGrupo, { Nome }), tpl(R.fato.subornoAoGrupo, { Nome })) });
   }
   /* o dado: o caminho de hoje rola o furto, o pedido de graça, o tomar, o suborno e o pegar de alguém */
   if (v === "dado") {

@@ -141,6 +141,29 @@ export const O_OUVIDO = Object.freeze({
   infinitivo: /(?:ar|er|ir|or)$/,
   /* o fim de palavra que não é infinitivo apesar de parecer */
   naoInfinitivo: Object.freeze(["lugar", "bar", "mar", "jantar", "colher", "mulher", "par", "altar", "lar", "ar", "por", "favor", "senhor", "valor", "melhor", "pior", "maior", "menor", "flor", "dor", "amor", "calor", "cor", "interior", "exterior", "anterior", "redor"]),
+  /* AS REGRAS DE ESTRUTURA (23/11, as 50 frases novas da bancada — causas, não frases):
+     a OFERTA NO IMPERATIVO, dita a quem está: «toma», «pega», «segura», «fica com» + a quantia de
+     moeda dita (ou a coisa minha) é dar — o menu «Dar / Emprestar / Vender» só quando falta saber */
+  ofertaImperativa: Object.freeze(["toma", "tome", "pega", "pegue", "segura", "segure", "aceita", "aceite", "fica com", "fique com", "leva", "leve"]),
+  /* o pedido com a marca de que não se paga: «me dá… tô sem grana» é pedir (o dado), nunca o cartão de compra */
+  semPagar: /\b(estou sem (moeda|moedas|grana|dinheiro|um tostao|nada)|sem (grana|dinheiro|um tostao|um centavo)|nao tenho (grana|dinheiro|moeda|moedas|como pagar)|de graca|por caridade|na amizade|na faixa|sem pagar|pelo amor de deus)\b/,
+  /* o verbo de estado sobre a coisa, sem gesto do herói: «esse dente custa uma fortuna» é conversa
+     (o «é» só com o acento escrito — sem ele é a conjunção de «a corda e o dente») */
+  verbosDeEstado: Object.freeze(["custa", "custam", "custou", "custava", "vale", "valem", "valia", "valeu", "parece", "parecem", "pesa", "pesam", "é", "são", "era", "eram"]),
+  /* a quantia sem número que a bolsa calcula: «todas as moedas», «tudo o que tenho», «metade» */
+  quantiaDaBolsa: Object.freeze([
+    Object.freeze({ rx: /\b(todas as (moedas|pratas)|todo o (dinheiro|ouro)|toda a (grana|prata)|todo meu dinheiro|todas minhas moedas|tudo (o )?que (eu )?tenho|o que (eu )?tenho|tudo que sobrou|o resto da bolsa)\b/, parte: 1 }),
+    Object.freeze({ rx: /\bmetade\b/, parte: 0.5 }),
+  ]),
+  /* a coisa minha que vai a alguém «por» preço, moeda ou «uns trocados» é VENDA: o preço dito ou o do mercado (o cartão) */
+  vendaPorPreco: Object.freeze({ alcance: 3 }),
+  /* a dúvida entre dar e vender (a coisa minha a alguém, com dinheiro na frase e sem «por»): o Mestre pergunta */
+  dinheiroNaFrase: /\b(pago|paga|pagar|pagando|pagamento|preco|quanto|cobro|cobra|cobrar|cobrando|vendo|vende|vender|venda)\b/,
+  /* a moeda oferecida em troca de um favor condicionado («vinte moedas se você ficar calada»): suborno.
+     O «se» de quem paga («se eu pagar…») não é favor de ninguém */
+  favorCondicionado: Object.freeze({ naoSujeito: Object.freeze(["eu", "nos", "a gente"]), daMoeda: /\b(dou|te dou|lhe dou|pago|te pago|lhe pago|ganha|ganhas|sao suas|sao tuas|e sua|e seu|fica com)\b/ }),
+  /* o mesmo verbo com mais de uma coisa («levo a corda e o dente»): todas vão à mesma resposta */
+  maisCoisas: Object.freeze(["comprar", "vender"]),
 });
 
 /* ---------------- os verbos (a forma-base sem acento → família e subtipo) ----------------
@@ -445,6 +468,31 @@ function oracoesDe(toks) {
   return out;
 }
 
+/* asAcoesDaFrase(frase) → [trecho]
+   23/11 (as frases novas da bancada, N08): «dou uma moeda pra Prudence e compro uma ração do Cornelius»
+   são DUAS ações, e um mestre real trata as duas. O corte é o mesmo das orações (o «e», o «depois», o
+   «então» seguidos de verbo, com o «eu» ou o clítico no meio), e devolve os trechos da frase como o
+   jogador os escreveu. Uma ação só: um trecho. */
+export function asAcoesDaFrase(frase) {
+  try {
+    const f = str(frase);
+    const toks = palavrasDaFrase(f);
+    const out = [];
+    let ini = 0;
+    for (let k = 1; k + 1 < toks.length; k++) {
+      if (!["e", "depois", "entao"].includes(toks[k].s) || (toks[k].s === "e" && toks[k].o.toLowerCase() !== "e")) continue;
+      let j = k + 1;
+      while (j < toks.length && ["eu", "tambem", "depois", "entao", "ai", "logo"].includes(toks[j].s)) j++;
+      if (j + 1 < toks.length && O_OUVIDO.clitico.includes(toks[j].s)) j++;
+      if (j >= toks.length || !(verboDe(toks[j].s) || O_OUVIDO.modais.includes(toks[j].s))) continue;
+      out.push(f.slice(ini, toks[k].idx).replace(/[\s,;]+$/, "").trim());
+      ini = toks[k + 1].idx;
+    }
+    out.push(f.slice(ini).trim());
+    return out.filter(Boolean);
+  } catch { return [str(frase)]; }
+}
+
 /* ---------------- 5. a leitura ---------------- */
 const VAZIA = Object.freeze({ familia: "agir", subtipo: null, quem: null, coisa: null, quantia: null, confianca: 0, marcada: "", fala: false, pergunta: false, negada: false, condicional: false });
 
@@ -667,6 +715,16 @@ function ler(L, frase) {
   /* a condicional: «se eu pagar, você me anuncia?» */
   if (condicional) {
     const m = quemDaOracao();
+    /* 23/11 (as frases novas da bancada): «se você ficar calada, te dou vinte moedas» — a moeda dita em troca do
+       favor de quem está é suborno (o dado), e não conversa */
+    {
+      const kSe = primeiraOr[k0];
+      const sujeito = toks[kSe + 1] ? toks[kSe + 1].s : "";
+      const moedaDita = marcas.some((x) => x.tipo === "N" && marcaEm(x.j) && marcaEm(x.j).tipo === "MOEDA");
+      if (moedaDita && m && m.estado === "aqui" && !O_OUVIDO.favorCondicionado.naoSujeito.includes(sujeito) && O_OUVIDO.favorCondicionado.daMoeda.test(txtTudo)) {
+        return sai({ familia: "trocar", subtipo: "subornar", condicional: true, ...quemDe(m), coisa: { nome: "moeda", tipo: "moeda" }, quantia: quantiaDe(todos), confianca: C.contexto });
+      }
+    }
     const conseq = O_OUVIDO.consequenciaAoMestre.some((x) => txtTudo.includes(x));
     const preco = /\b(quanto|preco|desconto)\b/.test(txtTudo);
     const segunda = temSegunda && /\b(voce|senhor|senhora|vc|me|faz|leva|conta|deixa|anuncia)\b/.test(txtTudo);
@@ -975,7 +1033,46 @@ function ler(L, frase) {
   /* 23/11 (a décima sexta sessão, frase 48): «fico devendo até amanhã» — o fiado vai ao dado */
   if (familia === "trocar" && ["comprar", "pagar", "pedir"].includes(subtipo) && O_OUVIDO.fiado.test(txtTudo)) base.fiado = true;
 
+  /* AS REGRAS DE ESTRUTURA (23/11, as 50 frases novas da bancada). Uma frase só não as decide: cada
+     uma lê uma FORMA (quem, o quê, a quantia, a preposição), e a tabela diz as palavras. */
+  const pessoaAquiDe = () => { const p = vocativo || primeiraPessoa(todos); return p && p.estado === "aqui" ? p : null; };
+  /* a quantia de moeda dita («doze moedas») a partir da palavra `desde` e antes de `ate` */
+  const moedaDitaEm = (desde, ate = 1e9) => { for (const x of marcas) { if (x.tipo !== "N" || x.i < desde || x.i >= ate) continue; const p = marcaEm(x.j); if (p && p.i === x.j && p.tipo === "MOEDA") return x.valor; } return null; };
+  /* a) a oferta no imperativo, a quem está: «Tabitha, toma duas moedas», «Lavinia, toma, fica com doze moedas» */
+  if (!base.jeito && !O_OUVIDO.aMim.test(txtTudo) && clitico !== "me" && !(familia === "trocar" && subtipo && subtipo !== "pegar" && !base.pedidoDirigido)) {
+    const kOf = toks.findIndex((t, k) => (k === 0 || /^[,.;:!?"—]$/.test(toks[k - 1].s)) && (O_OUVIDO.ofertaImperativa.includes(t.s) || (k + 1 < toks.length && O_OUVIDO.ofertaImperativa.includes(t.s + " " + toks[k + 1].s))));
+    const pAqui = kOf >= 0 ? pessoaAquiDe() : null;
+    if (pAqui) {
+      const q = moedaDitaEm(kOf);
+      const cm = q ? null : coisaDe(todos.filter((k) => k > kOf), 0, "minha", false);
+      if (q || (cm && cm.tipo === "minha")) { ctx("trocar", "dar"); base.pedidoDirigido = false; base.oferta = q ? { nome: "moeda", tipo: "moeda", dono: null, preco: null } : cm; }
+    }
+  }
+  /* b) a moeda dita por um favor condicionado de quem está: «Lavinia, vinte moedas se você ficar calada» */
+  if (familia !== "trocar" || !subtipo) {
+    const kSe = todos.find((k) => k > 0 && O_OUVIDO.condicionais.includes(toks[k].s));
+    const pAqui = kSe != null ? pessoaAquiDe() : null;
+    const suj = kSe != null && toks[kSe + 1] ? toks[kSe + 1].s : "";
+    if (pAqui && moedaDitaEm(0, kSe) && !O_OUVIDO.favorCondicionado.naoSujeito.includes(suj)) { ctx("trocar", "subornar"); base.oferta = { nome: "moeda", tipo: "moeda", dono: null, preco: null }; }
+  }
+  /* d) a coisa minha a alguém «por» moeda, preço ou «uns trocados» é VENDA; com dinheiro na frase e
+     sem o «por», é a dúvida — e na dúvida o item não sai: o Mestre pergunta (Dar, Emprestar, Vender) */
+  if (familia === "trocar" && subtipo === "dar" && !base.oferta) {
+    const cm = coisaDe(depois.length ? depois : ks, 0, "minha");
+    if (cm && cm.tipo === "minha") {
+      const kp = todos.find((k) => k > cm.k && O_OUVIDO.emTroca.includes(toks[k].s));
+      const din = kp != null && Array.from({ length: O_OUVIDO.vendaPorPreco.alcance }, (_, d) => kp + 1 + d).some((k) => { const x = marcaEm(k); if (!x || x.i !== k) return false; if (x.tipo === "MOEDA") return true; if (x.tipo !== "N") return false; const p = marcaEm(x.j); return !(p && p.i === x.j && p.tipo === "COISA"); });
+      if (din) ctx("trocar", "vender");
+      else if (O_OUVIDO.dinheiroNaFrase.test(txtTudo)) { familia = "trocar"; subtipo = null; confianca = C.estrutura; base.duvidaVenda = true; }
+    }
+  }
+
   /* sem verbo reconhecido: a estrutura decide */
+  /* e) o verbo de estado sobre a coisa, sem gesto do herói: «esse dente custa uma fortuna, hein» é conversa */
+  if (!familia) {
+    const estado = ks.some((k) => { const x = marcaEm(k); return x && x.i === k && (x.tipo === "COISA" || x.tipo === "MOEDA") && x.j < toks.length && ks.includes(x.j) && O_OUVIDO.verbosDeEstado.includes(toks[x.j].o.toLowerCase()); });
+    if (estado) ctx("falar");
+  }
   if (!familia) {
     const cMarc0 = coisaDe(ks, 0, "dele", false);
     const cMarc = cMarc0 && cMarc0.tipo === "dele" && (primeiraPessoa(todos) || vocativo) ? coisaDe(ks, 0, null, false) : cMarc0;
@@ -1008,6 +1105,10 @@ function ler(L, frase) {
     }
   }
 
+  /* c) (depois da estrutura, que também lê a compra sem verbo: «me passa uma corda») o pedido com a marca de que não se paga: «Cornelius, me dá uma tocha, tô sem grana» */
+  /*    Só o pedido feito A alguém («me dá», «me passa», «me vê»): quem diz «compro» ou «quero» sem ter com
+        que pagar está comprando, e a bolsa responde «não chega» (o selado o mediu: o «quero» virava pedido) */
+  if (familia === "trocar" && subtipo === "comprar" && (clitico === "me" || base.pedidoDirigido) && lema !== "comprar" && lema !== "vender" && O_OUVIDO.semPagar.test(txtTudo) && !O_OUVIDO.fiado.test(txtTudo)) ctx("trocar", "pedir");
   /* quem, coisa e quantia, segundo a família */
   let m = null, coisa = null, pessoaDepoisEscambo = null;
   const prefereDe = { comprar: "dele", pedir: "dele", furtar: "dele", pegar: "dele", cobrar: null, subornar: null, vender: "minha", dar: "minha", emprestar: direcao === "recebe" ? "dele" : "minha", devolver: "minha", escambo: "minha", pagar: "dele" };
@@ -1015,6 +1116,8 @@ function ler(L, frase) {
     const pref = prefereDe[subtipo] || null;
     coisa = coisaDe(depois.length ? depois : ks, 0, pref);
     if (subtipo === "escambo" && coisa && coisa.tipo !== "minha") { const cm = coisaDe(ks, 0, "minha", false); if (cm && cm.tipo === "minha") coisa = cm; }
+    /* a oferta no imperativo e o favor condicionado já disseram a coisa (a moeda dita, ou a coisa minha) */
+    if (base.oferta) coisa = base.oferta;
     if (!coisa && depois.length && !marcaEm(depois[0])) {
       const w = toks[depois[0]].s;
       if (w.length >= 4 && !O_OUVIDO.naoECoisa.includes(w) && !ehInfinitivo(w) && !verboDe(w) && !O_OUVIDO.artigos.includes(w) && !O_OUVIDO.entrega.includes(w) && !O_OUVIDO.tira.includes(w) && !O_OUVIDO.emTroca.includes(w) && !["isso", "isto", "aquilo", "tudo", "algo", "nada", "mais", "menos", "aqui", "agora"].includes(w)) coisa = { nome: singular(toks[depois[0]].o.toLowerCase()), tipo: "livre", dono: null, preco: null, k: depois[0] };
@@ -1088,7 +1191,34 @@ function ler(L, frase) {
     const aSeguir = nM ? marcaEm(nM.j) : null;
     if (familia === "trocar" && coisa && coisa.tipo !== "moeda" && coisa.k != null && nM && aSeguir && aSeguir.i === nM.j && aSeguir.tipo === "COISA" && nM.j !== coisa.k) quantia = null;
   }
-  return sai({ familia, subtipo, ...q, coisa, quantia, quantiaDe: quantiaDeQue(), confianca, direcao, regateio, quemPronomeSemDono: !!base.quemPronomeSemDono });
+  /* f) a quantia sem número que a bolsa calcula («dou todas as moedas que tenho»): o valor sai da bolsa
+     de agora, e é dito como se o jogador o tivesse dito. «umas moedas», «uns trocados» não têm valor:
+     a quantia fica vazia, e quem entrega pergunta quanto (nunca 1 calado) */
+  if (familia === "trocar" && coisa && coisa.tipo === "moeda" && quantia == null) {
+    const qb = O_OUVIDO.quantiaDaBolsa.find((x) => x.rx.test(txtTudo));
+    if (qb && cn.moeda > 0) { quantia = Math.max(1, Math.floor(cn.moeda * qb.parte)); base.quantiaDaBolsa = true; }
+  }
+  /* g) o mesmo verbo com mais de uma coisa («quero levar a corda e o dente», «vendo a corda e o símbolo»):
+     as outras vão junto, cada uma com a quantia dita antes dela — nenhuma some calada */
+  let outrasCoisas = null;
+  if (familia === "trocar" && O_OUVIDO.maisCoisas.includes(subtipo) && coisa && coisa.k != null && coisa.tipo !== "moeda") {
+    const pref = subtipo === "comprar" ? "dele" : "minha";
+    const achadas = [];
+    for (const k of ks) {
+      if (k <= coisa.k) continue;
+      const x = marcaEm(k);
+      if (!x || x.i !== k || x.tipo !== "COISA") continue;
+      /* só a coisa ligada à anterior por «e» ou vírgula (com o artigo ou o número entre eles) */
+      let j = k - 1, n = null;
+      while (j > coisa.k && (O_OUVIDO.artigos.includes(toks[j].s) || (marcaEm(j) && marcaEm(j).tipo === "N"))) { if (marcaEm(j) && marcaEm(j).tipo === "N") n = marcaEm(j).valor; j--; }
+      if (!(toks[j] && (toks[j].s === "e" || toks[j].s === ","))) continue;
+      const l2 = escolherLeitura(x, pref);
+      if (l2.tipo !== pref || sem(l2.nome) === sem(coisa.nome) || achadas.some((a) => sem(a.nome) === sem(l2.nome))) continue;
+      achadas.push(Object.freeze({ nome: l2.nome, tipo: l2.tipo, dono: l2.dono || null, preco: l2.preco == null ? null : l2.preco, quantos: n && n > 1 ? n : 1 }));
+    }
+    if (achadas.length) outrasCoisas = Object.freeze(achadas);
+  }
+  return sai({ familia, subtipo, ...q, coisa, quantia, quantiaDe: base.quantiaDaBolsa ? "moeda" : quantiaDeQue(), confianca, direcao, regateio, quemPronomeSemDono: !!base.quemPronomeSemDono, ...(outrasCoisas ? { outrasCoisas } : {}) });
 }
 
 /* a coisa que vem depois de uma preposição de «em troca» («pela erva», «pelo rum do Pio») */
