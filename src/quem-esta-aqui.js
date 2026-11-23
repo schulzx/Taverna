@@ -181,7 +181,7 @@ export function quemEstaAqui(estado) {
      mesmo nome que mais campos partilha — o homônimo do registo (Hilda e Hilda~2) dá
      cada um a sua */
   const npcsE = ehObj(e.npcs) ? e.npcs : {};
-  const chaveCache = new WeakMap(), chavesUsadas = new Set();
+  const chaveCache = new Map(), chavesUsadas = new Set();
   const idDoRegisto = (n) => {
     if (!ehObj(n)) return "";
     if (chaveCache.has(n)) return chaveCache.get(n);

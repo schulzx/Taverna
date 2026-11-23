@@ -318,8 +318,11 @@ sec("6. a fiação — App.jsx");
      o elencoDaCena com a masmorra ficou como rede no catch, e é essa rede que
      ainda tem de levar a masmorra — a intenção (A GENTE não esquece a masmorra)
      é a mesma. */
+  /* MOVIDA em 23/11 (identidade · etapa 2), e o motivo: pessoasDaCena passou a ler a presença única
+     (presencaAgora("age")), e é ela que faz quemAgeAqui(quemAgora()). A intenção é a mesma: A GENTE sai
+     da conta única, e a rede do catch continua a levar a masmorra. */
   t("pessoasDaCena (A GENTE do Intérprete) idem — a conta única, e a rede com a masmorra",
-    app.includes("aqui = quemAgeAqui(quemAgora());") &&
+    app.includes("aqui = presencaAgora(\"age\").age;") && app.includes("const q = quemAgora();\n    if (parte === \"age\") return { age: quemAgeAqui(q) };") &&
     app.includes("aqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current }).aqui;"));
   // retirada (trilha A, 29/10): «o rodapé (resumoCenaPrompt) idem» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 
