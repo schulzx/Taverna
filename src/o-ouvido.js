@@ -86,6 +86,8 @@ export const O_OUVIDO = Object.freeze({
   /* o jeito de dizer que vale mais que o verbo: o começo da oração (sem acento) → [família, subtipo].
      A ordem importa: a primeira que casa vence («jogo conversa fora» antes de «jogo conversa»). */
   jeitosDeDizer: Object.freeze([
+    /* a bancada da troca (B121, L16, X06, B122): pedir desculpas é falar, e «deixa pra lá» desiste — nenhum dos dois é troca */
+    ["peco desculpa", "falar"], ["peco desculpas", "falar"], ["peco perdao", "falar"], ["peco licenca", "falar"], ["deixa pra la", "falar"], ["deixa para la", "falar"], ["deixo pra la", "falar"], ["deixe pra la", "falar"], ["esquece", "falar"], ["esqueca", "falar"],
     ["jogo conversa fora", "falar"], ["troco ideia", "falar"], ["troco uma ideia", "falar"], ["levo um papo", "falar"], ["puxo assunto", "falar"], ["puxo conversa", "falar"], ["dou um toque", "falar"], ["dou um alo", "falar"], ["mando a real", "falar"], ["bato um papo", "falar"], ["bato papo", "falar"],
     ["levo no papo", "convencer"], ["levo <p> no papo", "convencer"], ["levo <p> na conversa", "convencer"], ["levo <p> na labia", "convencer"], ["passo a perna em <p>", "convencer"], ["passo a perna no <p>", "convencer"], ["passo a perna na <p>", "convencer"], ["levo na conversa", "convencer"], ["levo na lábia", "convencer"], ["levo na labia", "convencer"], ["jogo um charme", "convencer"], ["jogo charme", "convencer"], ["jogo conversa", "convencer"], ["jogo um xaveco", "convencer"], ["dou uma cantada", "convencer"], ["passo a perna", "convencer"], ["passo uma conversa", "convencer"], ["dou um migue", "convencer"], ["dou uma enrolada", "convencer"], ["faco a cabeca", "convencer"], ["dou uma carteirada", "convencer"], ["falo grosso", "convencer"], ["dou uma prensa", "convencer"], ["dou uma dura", "convencer"], ["boto medo", "convencer"], ["boto pressao", "convencer"], ["ponho medo", "convencer"], ["ponho pressao", "convencer"], ["uso minha labia", "convencer"], ["uso meu charme", "convencer"], ["uso minha lábia", "convencer"], ["uso a labia", "convencer"], ["uso meu carisma", "convencer"], ["peco com jeitinho", "convencer"], ["puxo o saco", "convencer"], ["dou uma de", "convencer"], ["faco ameaca", "convencer"],
     ["saio no braco", "lutar"], ["saio na porrada", "lutar"], ["sento a mao", "lutar"], ["meto a porrada", "lutar"], ["meto a mao na cara", "lutar"], ["desco a porrada", "lutar"], ["desco o braco", "lutar"], ["desco a mao", "lutar"], ["desco o cacete", "lutar"], ["desco a lenha", "lutar"], ["quebro a cara", "lutar"], ["parto pra briga", "lutar"], ["parto pro pau", "lutar"], ["parto pra porrada", "lutar"], ["caio na porrada", "lutar"], ["caio de pau", "lutar"], ["caio em cima", "lutar"], ["dou uma voadora", "lutar"], ["dou uma rasteira", "lutar"], ["dou uma cabecada", "lutar"], ["dou uma surra", "lutar"], ["dou uma sova", "lutar"], ["dou porrada", "lutar"], ["vou pra cima", "lutar"], ["vou pro pau", "lutar"], ["pulo em cima", "lutar"], ["pulo no pescoco", "lutar"], ["avanco pra cima", "lutar"],
@@ -110,7 +112,8 @@ export const O_OUVIDO = Object.freeze({
   /* tirar da mão de alguém é tomar (força contra quem segura: o dado) */
   daMao: /\b(da|das) maos?\b/,
   /* «fico devendo», «pendura», «fiado»: pagar depois é o fiado (o dado decide se fiam) */
-  fiado: /\b(fico devendo|ficar devendo|fica devendo|pendura|penduro|fiado|fiada|na conta|a credito|pago (amanha|depois|mais tarde|na volta))\b/,
+  /* a bancada da troca (L03): «na minha conta» também é o fiado */
+  fiado: /\b(fico devendo|ficar devendo|fica devendo|pendura|penduro|fiado|fiada|na conta|na minha conta|bota na conta|poe na conta|a credito|pago (amanha|depois|mais tarde|na volta))\b/,
   /* «fico com o troco»: receber moeda de quem devia o troco */
   troco: /\b(fico|ficar|guardo) com o troco\b/,
   /* guardar na bolsa o que não é meu é pegá-lo */
@@ -126,7 +129,13 @@ export const O_OUVIDO = Object.freeze({
   /* o olhar de gíria: «dou uma geral», «dou uma conferida» */
   olharDeGiria: Object.freeze(["lida", "olhada", "espiada", "conferida", "checada", "vasculhada", "sondada", "bisbilhotada", "examinada", "investigada", "geral", "vistoria", "varrida", "sacada", "manjada", "boa olhada"]),
   /* o que tem forma de nome e não é coisa que muda de mão */
-  naoECoisa: Object.freeze(["conta", "divida", "preco", "silencio", "nome", "jeito", "papo", "pulo", "salto", "lida", "olhada", "espiada", "conferida", "coisa", "outra", "isso", "isto", "aquilo", "mao", "bico", "informacao", "novidade", "novidades", "volta", "tempo", "favor", "lealdade", "vista", "absurdo", "que", "tudo", "nada", "algo", "noite", "dia", "lugar", "vez", "pouco", "mais", "menos", "desconto", "chance", "sorte", "ideia", "caminho", "estrada", "trilha", "gente", "homem", "mulher", "cara", "moco", "moca", "senhor", "senhora", "porrada", "soco", "chute", "tapa", "murro", "golpe", "charme", "conversa", "ajuda", "resto", "frente", "lado", "cima", "baixo", "canto", "chao", "hora", "minuto", "missa", "manha", "tarde", "amanha", "hoje", "bolso", "cinto", "costas", "olho", "olhos", "ombro", "mim", "ti", "si", "bem"]),
+  naoECoisa: Object.freeze(["conta", "divida", "preco", "silencio", "nome", "jeito", "papo", "pulo", "salto", "lida", "olhada", "espiada", "conferida", "coisa", "outra", "isso", "isto", "aquilo", "mao", "bico", "informacao", "novidade", "novidades", "volta", "tempo", "favor", "lealdade", "vista", "absurdo", "que", "tudo", "nada", "algo", "noite", "dia", "lugar", "vez", "pouco", "mais", "menos", "desconto", "chance", "sorte", "ideia", "caminho", "estrada", "trilha", "gente", "homem", "mulher", "cara", "moco", "moca", "senhor", "senhora", "porrada", "soco", "chute", "tapa", "murro", "golpe", "charme", "conversa", "ajuda", "resto", "frente", "lado", "cima", "baixo", "canto", "chao", "hora", "minuto", "missa", "manha", "tarde", "amanha", "hoje", "bolso", "cinto", "costas", "olho", "olhos", "ombro", "mim", "ti", "si", "bem",
+    /* a bancada da troca (B11, B121): o pedido de desculpa e o demonstrativo não mudam de mão — «uma dessas cordas» é a corda */
+    "desculpa", "desculpas", "perdao", "licenca", "dessa", "desse", "dessas", "desses", "desta", "deste", "destas", "destes", "daquela", "daquele", "daquelas", "daqueles", "disso", "disto", "daquilo", "nessa", "nesse"]),
+  /* o demonstrativo com «de» que está no lugar do «de» depois do recipiente («um pedaço dessa corda») */
+  deDemonstrativo: Object.freeze(["dessa", "desse", "dessas", "desses", "desta", "deste", "destas", "destes", "daquela", "daquele", "daquelas", "daqueles"]),
+  /* o recipiente que diz uma PARTE da coisa, e não a porção que se serve: «um pedaço dessa corda» se pede, não se compra */
+  parteDe: Object.freeze(["pedaco", "pedacos", "bocado", "pouco", "punhado", "naco", "lasca"]),
   /* o fim de palavra que é verbo (o resto da palavra depois do radical) */
   terminacoes: Object.freeze(["io", "o", "a", "as", "e", "es", "ar", "er", "ir", "amos", "emos", "imos", "am", "em", "ei", "i", "ou", "eu", "iu", "ando", "endo", "indo", "ava", "ia", "aria", "eria", "iria", "asse", "esse", "isse"]),
   infinitivo: /(?:ar|er|ir|or)$/,
@@ -484,7 +493,7 @@ function ler(L, frase) {
   const primeiraPessoa = (ks) => { for (const k of ks) { const m = marcaEm(k); if (m && m.tipo === "PESSOA" && m.i === k) return m; } return null; };
 
   /* o pronome: o único candidato, o mesmo gênero, ou quem vende a coisa dita */
-  const resolverPronome = (ks, coisaLeitura, rigido) => {
+  const resolverPronome = (ks, coisaLeitura, rigido, subtipoDaTroca) => {
     const pr = ks.map(marcaEm).find((m) => m && m.tipo === "PRONOME");
     if (!pr) return null;
     const antes = marcas.find((m) => m.tipo === "PESSOA" && m.estado === "aqui" && m.i < pr.i);
@@ -498,7 +507,8 @@ function ler(L, frase) {
       const presentes = [...cn.pessoas.map((p) => p.nome), ...(cn.companheiro ? [cn.companheiro] : [])];
       if (cn.foco && presentes.some((n) => sem(n) === sem(cn.foco))) return { tipo: "PESSOA", estado: "aqui", nome: presentes.find((n) => sem(n) === sem(cn.foco)), opcoes: [] };
       /* a banca de quem a frase anterior comprou («compro duas tochas do balcão… vendo o símbolo pra ela») */
-      if (cn.foco && cn.bancas.some((b) => sem(b.nome) === sem(cn.foco))) return { tipo: "PESSOA", estado: "aqui", nome: cn.bancas.find((b) => sem(b.nome) === sem(cn.foco)).nome, opcoes: [] };
+      /* a bancada da troca (Q10): «dou a ela a corda» não entrega à loja — a banca só é o «ela» de quem negocia com ela */
+      if (cn.foco && ["vender", "comprar", "escambo", "pagar"].includes(subtipoDaTroca) && cn.bancas.some((b) => sem(b.nome) === sem(cn.foco))) return { tipo: "PESSOA", estado: "aqui", nome: cn.bancas.find((b) => sem(b.nome) === sem(cn.foco)).nome, opcoes: [] };
       /* o único do gênero dito não é adivinhar */
       const fem0 = (n) => /a$/.test(palavrasDoNome(n).filter((w) => !TITULOS.includes(w))[0] || "");
       const doGenero0 = cn.pessoas.filter((p) => (pr.genero === "f" ? fem0(p.nome) : pr.genero === "m" ? !fem0(p.nome) : false));
@@ -531,7 +541,14 @@ function ler(L, frase) {
           const w = toks[k + 1].s;
           if (O_OUVIDO.recipientes.includes(w) && k + 3 < toks.length && O_OUVIDO.tira.includes(toks[k + 2].s)) {
             const r = marcaEm(k + 3);
-            if (r && r.tipo === "COISA") return { ...escolherLeitura(r, prefere), k: k + 3 };
+            if (r && r.tipo === "COISA") return { ...escolherLeitura(r, prefere), k: k + 3, parte: O_OUVIDO.parteDe.includes(w) };
+          }
+          /* «um pedaço dessa corda»: o demonstrativo já traz o «de», e a coisa é a seguinte */
+          if ((O_OUVIDO.recipientes.includes(w) || O_OUVIDO.parteDe.includes(w)) && k + 3 < toks.length && O_OUVIDO.deDemonstrativo.includes(toks[k + 2].s)) {
+            const r = marcaEm(k + 3);
+            if (r && r.tipo === "COISA") return { ...escolherLeitura(r, prefere), k: k + 3, parte: O_OUVIDO.parteDe.includes(w) };
+            const w3 = toks[k + 3].s;
+            if (!r && w3.length >= 3 && !O_OUVIDO.naoECoisa.includes(w3) && !ehInfinitivo(w3)) return { nome: singular(toks[k + 3].o.toLowerCase()), tipo: "livre", dono: null, preco: null, k: k + 3, parte: O_OUVIDO.parteDe.includes(w) };
           }
           if (w.length >= 3 && !O_OUVIDO.naoECoisa.includes(w) && !O_OUVIDO.naoECoisa.includes(sem(singular(w))) && !ehInfinitivo(w) && !ehNumero(w) && !O_OUVIDO.artigos.includes(w) && !["que", "qual", "quem"].includes(w)) {
             return { nome: singular(toks[k + 1].o.toLowerCase()), tipo: "livre", dono: null, preco: null, k: k + 1 };
@@ -554,7 +571,8 @@ function ler(L, frase) {
            o sistema não conhece é a coisa dita (e a regra responde «você não tem»), não uma pergunta */
         if (!prox && livre && ks.includes(m.j) && m.j < toks.length) {
           const w = toks[m.j].s;
-          if (w.length >= 3 && !O_OUVIDO.naoECoisa.includes(w) && !O_OUVIDO.naoECoisa.includes(sem(singular(w))) && !ehInfinitivo(w) && !verboDe(w) && !O_OUVIDO.artigos.includes(w) && !O_OUVIDO.entrega.includes(w) && !O_OUVIDO.tira.includes(w) && !O_OUVIDO.emTroca.includes(w) && !O_OUVIDO.antesDoOficio.includes(w) && !O_OUVIDO.recipientes.includes(w)) return { nome: singular(toks[m.j].o.toLowerCase()), tipo: "livre", dono: null, preco: null, k: m.j };
+          /* a bancada da troca (B44): «dou três flechas» — depois do número vem um nome, ainda que tenha cara de verbo («flech-») */
+          if (w.length >= 3 && !O_OUVIDO.naoECoisa.includes(w) && !O_OUVIDO.naoECoisa.includes(sem(singular(w))) && !ehInfinitivo(w) && (!verboDe(w) || /s$/.test(w)) && !O_OUVIDO.artigos.includes(w) && !O_OUVIDO.entrega.includes(w) && !O_OUVIDO.tira.includes(w) && !O_OUVIDO.emTroca.includes(w) && !O_OUVIDO.antesDoOficio.includes(w) && !O_OUVIDO.recipientes.includes(w)) return { nome: singular(toks[m.j].o.toLowerCase()), tipo: "livre", dono: null, preco: null, k: m.j };
         }
       }
     }
@@ -665,6 +683,12 @@ function ler(L, frase) {
     return sai({ familia, condicional: true, ...quemDe(m), coisa, quantia: quantiaDe(todos), confianca: C.contexto });
   }
 
+  /* a bancada da troca (B08): «quanto custa uma corda? Se for menos de cinquenta, eu compro» — a compra
+     condicionada ao preço perguntado ainda é a pergunta do preço (o Mestre diz quanto; nada muda de mão) */
+  if (pergunta && O_OUVIDO.precoPergunta.some((w) => new RegExp("\\b" + w + "\\b").test(txtTudo)) && cand.some((o) => o.length && O_OUVIDO.condicionais.includes(toks[o[comeca(o)]] ? toks[o[comeca(o)]].s : ""))) {
+    const mP = vocativo || primeiraPessoa(todos);
+    return sai({ familia: "falar", ...quemDe(mP), coisa: coisaDe(todos, 0, "dele"), quantia: quantiaDe(todos), confianca: C.falaOuPergunta });
+  }
   /* a pergunta: de preço (falar), a alguém (falar), ao mundo (Mestre) */
   const principalAcao = !ks.some((k) => toks[k].s === "?") && (() => { const k1 = ks[comeca(ks)]; const vv = k1 != null ? verboDe(toks[k1].s) : null; return !!(vv && !marcaEm(k1)); })();
   if (pergunta && !principalAcao) {
@@ -712,7 +736,8 @@ function ler(L, frase) {
   const pessoaDepois = primeiraPessoa(depois);
   const temMoeda = depois.some((k) => { const m = marcaEm(k); return m && (m.tipo === "MOEDA" || m.tipo === "N"); });
   const temN = quantiaDe(ks);
-  const propositoRx = /\b(pra|para|pro)\s+(?:(?:<p>|ele|ela|eles|elas|o|a|me|eu)\s+)?([a-z]+(?:ar|er|ir))\b/;
+  /* a bancada da troca (B91): «para ela me deixar passar» — o propósito pode ter dois pronomes antes do verbo */
+  const propositoRx = /\b(pra|para|pro)\s+(?:(?:<p>|ele|ela|eles|elas|o|a|me|eu|nos|lhe)\s+){0,2}([a-z]+(?:ar|er|ir))\b/;
   const txtDpsP = depois.map((k) => { const m = marcaEm(k); return m && m.tipo === "PESSOA" ? (m.i === k ? "<p>" : "") : toks[k].s; }).filter(Boolean).join(" ");
   const proposito = (() => { const m = txtDpsP.match(propositoRx); return !!(m && ehInfinitivo(m[2]) && !["ver", "comer", "beber", "dormir"].includes(m[2])); })();
   const destino = () => {
@@ -884,11 +909,11 @@ function ler(L, frase) {
   /* «me dá/me dê» */
   if (vk != null && clitico === "me" && ["da", "de", "dou"].includes(toks[vk].s)) {
     const od = coisaDe(depois, 0, "dele");
-    ctx("trocar", od && od.tipo === "dele" ? "comprar" : "pedir");
+    ctx("trocar", od && od.tipo === "dele" && !od.parte ? "comprar" : "pedir");
   }
   if (!v && vk != null && clitico === "me" && ["da", "de", "ve"].includes(toks[vk].s)) {
     const od = coisaDe(depois, 0, "dele");
-    ctx("trocar", od && od.tipo === "dele" ? "comprar" : "pedir");
+    ctx("trocar", od && od.tipo === "dele" && !od.parte ? "comprar" : "pedir");
   }
   /* 23/11 (a décima sexta sessão, frase 48): «Charity, me serve uma sopa» — o pedido ao balcão sem
      verbo da tabela, dito a alguém: compra do que se vende, pedido do resto */
@@ -1025,7 +1050,7 @@ function ler(L, frase) {
     if (!m && depois.some((k) => { const x = marcaEm(k); return x && x.tipo === "PRONOME"; })) m = depois.map(marcaEm).find((x) => x && x.tipo === "PRONOME");
     if (m && m.tipo === "PRONOME") {
       const vemDeOutro = ["pedir", "cobrar", "furtar", "pegar", "comprar"].includes(subtipo) || direcao === "recebe";
-      const r = resolverPronome(ks, coisa && (coisa.tipo === "dele" || vemDeOutro) ? coisa : null, ["pegar", "furtar"].includes(subtipo));
+      const r = resolverPronome(ks, coisa && (coisa.tipo === "dele" || vemDeOutro) ? coisa : null, ["pegar", "furtar"].includes(subtipo), subtipo);
       m = r;
       if (!r) base.quemPronomeSemDono = true;
     }
@@ -1056,7 +1081,13 @@ function ler(L, frase) {
     }
   }
   const q = quemDe(m && m.tipo !== "PRONOME" ? m : null);
-  const quantia = quantiaDe(familia === "trocar" || familia === "convencer" || familia === "falar" ? todos : ks);
+  let quantia = quantiaDe(familia === "trocar" || familia === "convencer" || familia === "falar" ? todos : ks);
+  /* a bancada da troca (B13): «compro a corda e duas tochas» — o «duas» é das tochas, não da corda */
+  {
+    const nM = marcas.find((x) => x.tipo === "N");
+    const aSeguir = nM ? marcaEm(nM.j) : null;
+    if (familia === "trocar" && coisa && coisa.tipo !== "moeda" && coisa.k != null && nM && aSeguir && aSeguir.i === nM.j && aSeguir.tipo === "COISA" && nM.j !== coisa.k) quantia = null;
+  }
   return sai({ familia, subtipo, ...q, coisa, quantia, quantiaDe: quantiaDeQue(), confianca, direcao, regateio, quemPronomeSemDono: !!base.quemPronomeSemDono });
 }
 
