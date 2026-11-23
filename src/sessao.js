@@ -1033,6 +1033,7 @@ export const NASCERAM_DEPOIS_DA_GRAVACAO = Object.freeze({
   quadro: "a memória do quadro da quest (quadro-da-quest.js, QQ · Q3, 14/11): as sessões gravadas antes dela não a levam, e o replay não a inventa",
   pecas: "a memória das peças (src/pecas/calor.js, fase B, 17/11): só existe com o interruptor ligado, as sessões gravadas antes dela não a levam, e o replay não a inventa",
   confrontosAlertas: "as bestas que me venceram e seguem alerta (o-confronto-da-quest.js, S7c, 17/11): as sessões gravadas antes delas não as levam, e o replay não as inventa",
+  pessoas: "o que o catálogo de pessoas não deriva — fusões e homônimos (quem-e-quem.js, identidade · etapa 1, 23/11): as sessões gravadas antes dele não o levam, e o replay não o inventa",
 });
 
 /* fora da régua: o que não é jogo, ou o que só a tela escreve */

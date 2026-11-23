@@ -43,8 +43,8 @@
    entram por argumento. O estado recebido nunca é mutado; o `null` e o
    lixo dão o livro vazio, nunca uma exceção.
    ============================================================ */
-import { HOMONIMO, FORCA_MAX } from "./npcs.js";
-import { idDaGente } from "./mundo-base.js";
+import { FORCA_MAX } from "./npcs.js";
+import { RESOLVER_NOME, QUEM_E_QUEM, CASA_O_NOME, palavrasDoNome, naCidade, catalogoDoElenco, candidatos } from "./quem-e-quem.js";
 import { MARCOS_VINCULO } from "./vinculos.js";
 
 /* ---------------- OS TETOS ----------------
@@ -77,9 +77,9 @@ export const LIVRO_DE_FACTOS = Object.freeze({
   lugares: 100,
   recebeu: 4,
   prometeu: 3,
-  nome: 40,
+  nome: QUEM_E_QUEM.nome,
   texto: 60,
-  id: 120,
+  id: QUEM_E_QUEM.id,
   chars: 50000,
   vezNova: Object.freeze({ turnos: 3 }),
   quemE: Object.freeze({ porPessoa: 2, linha: 90, total: 24 }),
@@ -151,36 +151,18 @@ export const COMO_CAIU = Object.freeze({
 });
 
 /* ---------------- DO NOME AO ID: A REGRA DE DESEMPATE ----------------
-   As fontes, da que manda mais à que manda menos: a gente da base do
-   mundo (o id é `Cidade|gente|Nome`, o de `idDaGente`), o núcleo da
-   campanha, o grupo, o registo e o cânone do Cronista (o id é `npc|Nome`).
-   UMA PESSOA, UM ID: quem está numa fonte de baixo com o nome igual — ou
-   com o nome mais curto, palavra a palavra («Marl» de «Marl de Osso») — a
-   UMA SÓ pessoa de uma fonte de cima, e na mesma cidade quando as duas a
-   dizem, é essa pessoa, e leva o id dela.
+   A régua (RESOLVER_NOME: as fontes, da que manda mais à que manda menos, e
+   os níveis exato e prefixo) mora desde 23/11 no catálogo de pessoas
+   (quem-e-quem.js), que é o dono da identidade; o livro reexporta-a para
+   quem já a lia daqui.
 
-   Um nome procura-se por dois níveis, e pára no primeiro que acha alguém:
-     · `exato` — as palavras todas iguais, sem acento, sem artigo nem
-       tratamento à frente (HOMONIMO.artigos, npcs.js: «Dona Inocência»),
-       e sem o aposto («Corrado, o empresário da arena» é «Corrado»);
-     · `prefixo` — um nome é o começo do outro, palavra a palavra, com o
-       primeiro nome de pelo menos HOMONIMO.primeiroMinimo letras.
-   NÃO HÁ o nível «só o primeiro nome»: «Nyla Pé-Leve» e «Nyla
-   Punho-de-Pedra» são duas pessoas (10.ª sessão), e um fecho em falso não
-   se desfaz, enquanto o que não fecha aparece no «o que falta».
-
-   Mais de uma pessoa no nível: fica a ÚNICA que está na cidade do herói.
-   Nenhuma ou mais de uma: AMBÍGUO, e não se escreve nada (fica a nota).
-   Nome que ninguém tem: DESCONHECIDO, e também não se escreve — o registo
-   é quem diz que alguém existe (o Cronista escreve-o antes da conversa), e
-   isto deixa de fora a descrição («o guarda») que nunca ganhou ficha. */
-export const RESOLVER_NOME = Object.freeze({
-  fontes: Object.freeze(["gente", "nucleo", "grupo", "registo", "canone"]),
-  niveis: Object.freeze(["exato", "prefixo"]),
-  prefixoDoRegisto: "npc|",
-  /* o que corta o aposto: a vírgula, o parêntese, o travessão */
-  aposto: /[,(—–]/,
-});
+   O que é só do livro é a decisão de ESCREVER: mais de uma pessoa no nível
+   fica a ÚNICA que está na cidade do herói. Nenhuma ou mais de uma:
+   AMBÍGUO, e não se escreve nada (fica a nota). Nome que ninguém tem:
+   DESCONHECIDO, e também não se escreve — o registo é quem diz que alguém
+   existe (o Cronista escreve-o antes da conversa), e isto deixa de fora a
+   descrição («o guarda») que nunca ganhou ficha. */
+export { RESOLVER_NOME };
 
 /* ---------------- utilidades ---------------- */
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
@@ -195,99 +177,26 @@ const inteiro = (v) => {
 };
 const nomeDe = (x) => (typeof x === "string" ? x : obj(x) && typeof x.nome === "string" ? x.nome : "");
 
-/* as palavras que fazem o nome: sem o aposto, sem acento, sem artigo */
-function palavrasDoNome(nome) {
-  let s = String(nome == null ? "" : nome);
-  const corte = s.search(RESOLVER_NOME.aposto);
-  if (corte > 0) s = s.slice(0, corte);
-  const ps = semAc(s).replace(/[^a-z0-9-]+/g, " ").split(/\s+/).filter((w) => w && w !== "-");
-  while (ps.length > 1 && HOMONIMO.artigos.includes(ps[0])) ps.shift();
-  return ps;
-}
-const casaExato = (a, b) => a.length > 0 && a.length === b.length && a.every((w, i) => w === b[i]);
-function casaPrefixo(a, b) {
-  const [curto, longo] = a.length <= b.length ? [a, b] : [b, a];
-  if (!curto.length || curto[0].length < HOMONIMO.primeiroMinimo) return false;
-  return curto.every((w, i) => w === longo[i]);
-}
-const CASA = { exato: casaExato, prefixo: casaPrefixo };
-/* duas «ondes» são compatíveis quando uma nomeia a outra, palavra a palavra
-   («nas docas de Alto do Sal» e «Alto do Sal»); sem uma delas, não se sabe */
-const frase = (s) => ` ${semAc(s).replace(/[^a-z0-9]+/g, " ").trim()} `;
-function mesmaTerra(a, b) {
-  const x = frase(a), y = frase(b);
-  if (!x.trim() || !y.trim()) return true;
-  return x.includes(y) || y.includes(x);
-}
-const naCidade = (onde, cidade) => !!frase(onde).trim() && !!frase(cidade).trim() && frase(onde).includes(frase(cidade));
-
 /* ---------------- O ELENCO QUE RESOLVE ----------------
-   Cada candidato: { fonte, nome, id, onde, ps }. Os de fontes de baixo que
-   são uma só pessoa de cima ficam com o id dela (`para`). */
-function montarElenco(ctx) {
-  const c = obj(ctx) || {};
-  const cidade = limpo(c.cidade, LIVRO_DE_FACTOS.id);
-  const pre = RESOLVER_NOME.prefixoDoRegisto;
-  const cands = [];
-  const por = (fonte, nome0, id, onde) => {
-    const nome = limpo(nome0);
-    const ps = palavrasDoNome(nome);
-    if (!ps.length || !id || id.length > LIVRO_DE_FACTOS.id) return;
-    cands.push({ fonte, nome, id, onde: typeof onde === "string" ? onde : "", ps, rank: RESOLVER_NOME.fontes.indexOf(fonte), para: null });
-  };
-  for (const g of arr(c.gente)) {
-    const o = obj(g) || { nome: g };
-    const nome = nomeDe(o);
-    const cid = limpo(o.cidade, LIVRO_DE_FACTOS.id) || cidade;
-    const id = typeof o.id === "string" && o.id.includes("|gente|") ? o.id : cid && nome ? idDaGente(cid, { nome: limpo(nome) }) : "";
-    por("gente", nome, id, cid);
-  }
-  const nucleo = Array.isArray(c.nucleo) ? c.nucleo : arr(obj(c.nucleo) && c.nucleo.pessoas);
-  for (const q of nucleo) { const n = limpo(nomeDe(q)); por("nucleo", n, n && pre + n, (obj(q) && q.cidade) || ""); }
-  for (const g of arr(c.grupo)) { const n = limpo(nomeDe(g)); por("grupo", n, n && pre + n, ""); }
-  const reg = obj(c.npcs) || {};
-  for (const k of Object.keys(reg)) {
-    const f = obj(reg[k]) || {};
-    const chave = limpo(k);
-    por("registo", typeof f.nome === "string" && f.nome.trim() ? f.nome : chave, chave && pre + chave, f.cidade || f.local || "");
-  }
-  for (const x of arr(c.canone)) { const n = limpo(nomeDe(x)); por("canone", n, n && pre + n, (obj(x) && (x.cidade || x.local)) || ""); }
-  /* uma pessoa, um id: cada um procura-se nos de cima que já são eles mesmos */
-  for (const x of cands) {
-    const cima = cands.filter((h) => h.rank < x.rank && !h.para && h.id !== x.id && mesmaTerra(h.onde, x.onde));
-    for (const nivel of RESOLVER_NOME.niveis) {
-      const ids = [...new Set(cima.filter((h) => CASA[nivel](x.ps, h.ps)).map((h) => h.id))];
-      if (ids.length === 1) { x.para = ids[0]; break; }
-      if (ids.length > 1) break;
-    }
-  }
-  const dono = new Map();
-  for (const x of cands) if (!x.para && !dono.has(x.id)) dono.set(x.id, x);
-  return { cands, dono, cidade, heroi: palavrasDoNome(c.heroi) };
-}
+   O elenco é o catálogo de pessoas (catalogoDoElenco, quem-e-quem.js): os
+   ids nascem lá (idDe), as fusões fazem-se lá, e os candidatos de um nome
+   saem de lá (candidatos) — todos, sem escolher. Daqui só sai a decisão do
+   livro sobre eles. */
+const montarElenco = (ctx) => catalogoDoElenco(ctx);
 
-const RX_ID_PESSOA = /^(npc\|.+|[^|]+\|gente\|.+)$/;
 function resolverCom(el, nome0) {
   const nome = typeof nome0 === "string" ? nome0.trim() : nomeDe(nome0).trim();
   const ps = palavrasDoNome(nome);
   const fora = (motivo, extra = {}) => ({ id: "", nome: limpo(nome), motivo, ...extra });
   if (!ps.length) return fora("vazio");
-  if (nome.length <= LIVRO_DE_FACTOS.id && RX_ID_PESSOA.test(nome)) return { id: nome, nome: limpo(nome.split("|").pop()), motivo: "id" };
+  const cs = candidatos(nome, el);
+  if (!cs.length) return fora("desconhecido");
+  if (cs[0].porque === "id") return { id: nome, nome: limpo(nome.split("|").pop()), motivo: "id" };
   /* o herói nunca é gente da cena (a régua de nomeComDono, npcs.js) */
-  const h = el.heroi;
-  if (h.length && (casaExato(ps, h) || (ps.length === 1 && ps[0] === h[0]))) return fora("heroi");
-  for (const nivel of RESOLVER_NOME.niveis) {
-    const ids = [...new Set(el.cands.filter((x) => CASA[nivel](ps, x.ps)).map((x) => x.para || x.id))].filter((id) => el.dono.has(id));
-    if (!ids.length) continue;
-    let fica = ids;
-    if (fica.length > 1 && el.cidade) fica = ids.filter((id) => naCidade(el.dono.get(id).onde, el.cidade));
-    if (fica.length === 1) {
-      const d = el.dono.get(fica[0]);
-      return { id: d.id, nome: d.nome, motivo: nivel };
-    }
-    return fora("ambiguo", { candidatos: ids.map((id) => el.dono.get(id).nome) });
-  }
-  return fora("desconhecido");
+  if (cs[0].porque === "heroi") return fora("heroi");
+  const fica = cs.length > 1 && el.cidade ? cs.filter((c) => c.daCidade) : cs;
+  if (fica.length === 1) return { id: fica[0].id, nome: fica[0].nome, motivo: fica[0].porque };
+  return fora("ambiguo", { candidatos: cs.map((c) => c.nome) });
 }
 
 /* idDaPessoa(nome, ctx) → { id, nome, motivo, candidatos? }
@@ -757,7 +666,7 @@ export function pessoaDoLivro(livro, nome0, opcoes) {
   const cands = Object.keys(pessoas).map((id) => ({ id, ps: palavrasDoNome(limpo((obj(pessoas[id]) || {}).nome) || id.split("|").pop()) }));
   const cidade = limpo(obj(opcoes) && opcoes.cidade, LIVRO_DE_FACTOS.id);
   for (const nivel of RESOLVER_NOME.niveis) {
-    const ids = cands.filter((x) => x.ps.length && CASA[nivel](ps, x.ps)).map((x) => x.id);
+    const ids = cands.filter((x) => x.ps.length && CASA_O_NOME[nivel](ps, x.ps)).map((x) => x.id);
     if (!ids.length) continue;
     if (ids.length === 1) return ids[0];
     const daqui = cidade ? ids.filter((id) => id.includes("|gente|") && naCidade(id.split("|")[0], cidade)) : [];

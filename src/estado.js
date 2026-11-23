@@ -107,6 +107,8 @@ export const CAMPOS = Object.freeze([
   C("factos", "memoria", "qualquer"),   // BQ2: o livro de factos (livro-de-factos.js)
   C("saber", "memoria", "qualquer"),
   C("quadro", "memoria", "qualquer"),   // QQ · Q3 (14/11): a memória do quadro da quest (quadro-da-quest.js, garantirQuadro); aditivo, save antigo = vazio
+  /* depois do `quadro`, e não do `factos`: as suítes do livro e do quadro leem «factos, saber, quadro» à letra no retrato */
+  C("pessoas", "memoria", "qualquer"),  // 23/11 (identidade, etapa 1): o que o catálogo de pessoas não deriva — fusões e homônimos (quem-e-quem.js, garantirPessoas); aditivo, save antigo = null (tudo se deriva)
   C("coracao", "coracao", "qualquer"),
   C("vilaoAgiu", "historia", "numero"),
   C("canone", "memoria", "objeto"),
