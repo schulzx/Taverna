@@ -29,6 +29,7 @@ import { chefesDoMundo } from "../src/mundo-base.js";
 import { garantirFactos } from "../src/livro-de-factos.js";
 import { MOLDES } from "../src/moldes.js";
 
+import { osQuadrosDoEstado, aCartaDoTeste, CARTA_DO_TESTE } from "../src/quadro-da-quest.js";
 
 const J = (x) => JSON.stringify(x);
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -200,6 +201,28 @@ sec("2b · A CATRACA: em campanhas de todos os moldes, nenhum botão morto");
   t("antes: havia botões que a lei não deixava seguir (a prova de que a catraca morde)", mortosAntes > 0, String(mortosAntes));
   t("depois: nenhum botão morto", mortosDepois === 0, String(mortosDepois));
   t("toda quest cujo destino o mapa alcança tem um botão", semBotao === 0, String(semBotao));
+}
+
+/* ============================================================ */
+sec("3 · o teste de troca não vira carta de consulta");
+{
+  /* o passo 2 («Saber quem da guarda come da mão de…») com só o passo 1 feito */
+  const S = estadoS17(true);
+  const R0 = S.espinha.quests.registos[0];
+  const S2 = { ...S, espinha: { ...S.espinha, quests: { ...S.espinha.quests, registos: [{ ...R0, feitas: { chaves: R0.feitas.chaves }, acesas: { chaves: 1, ronda: 1 } }] } } };
+  const quadros = osQuadrosDoEstado(S2, { mundo: S2.mundo });
+  const HILDA = "Hilda Passo-de-Gato";
+  const temCarta = quadros.some((q) => (q.cartas || []).some((c) => c.forma === "pessoa" && c.juiz && c.juiz.nome === HILDA && c.viravel));
+  t("o passo 2 tem a carta de consultar a sargento, virável", temCarta);
+  const onde = { cidade: CID, emCena: [HILDA] };
+  const teste = (frase, passou = false) => aCartaDoTeste(quadros, { id: "convencer", passou, total: 13, dc: 16, quem: HILDA, frase }, onde);
+  t("pedir um mapa emprestado à sargento (Persuasão, falhou) não vira a carta", teste("Peço emprestado o mapa à Hilda, por favor.") === null);
+  t("pedir de graça uma coisa também não", teste("Peço a corda de graça à Hilda.", true) === null);
+  t("comprar uma coisa dela também não", teste("Compro o mapa da Hilda.", true) === null);
+  t("tomar uma coisa da mão dela também não", aCartaDoTeste(quadros, { id: "forcar", passou: true, total: 18, dc: 12, quem: HILDA, frase: "Tomo a lanterna da mão da Hilda." }, onde) === null);
+  const certo = teste("Convenço a Hilda a me contar quem da guarda recebe por fora.", true);
+  t("convencê-la a falar do caso continua a virar a carta", !!certo && certo.caminho === "falar", JSON.stringify(certo));
+  t("as âncoras abertas continuam a pedir o assunto (a tabela de antes)", J(CARTA_DO_TESTE.assunto) === J(["cidade", "nenhuma"]) && CARTA_DO_TESTE.trocaQueNaoConsulta.includes("deGraca"));
 }
 
 /* ============================================================ */

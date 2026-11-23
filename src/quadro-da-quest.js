@@ -71,7 +71,7 @@ import { hashSemente, rng } from "./semente.js";
 import { noLugarDoPasso } from "./a-quest-manda.js";
 import { desafioPorPericia, desafioPorId } from "./desafios.js";
 /* 21/11 (a nona sessão, T57): a moeda que a frase dá pela coisa é da compra — uma porta cobra */
-import { aPortaDaMoeda, quemDaFrase } from "./o-veredito-da-troca.js";
+import { aPortaDaMoeda, quemDaFrase, aIntencaoDaTroca } from "./o-veredito-da-troca.js";
 /* a décima terceira sessão (T19): a quem a frase paga e o sistema sabe noutro lugar não se paga */
 import { oNomeDito, quemONomeDiz } from "./quem-esta-aqui.js";
 
@@ -353,6 +353,18 @@ export const CARTA_DO_TESTE = Object.freeze({
   precisao: Object.freeze({ lugar: 2, pessoa: 2, nasce: 2, cidade: 1, nenhuma: 1 }),
   assunto: Object.freeze(["cidade", "nenhuma"]),
   pagos: Object.freeze(["pagar"]),
+  /* 23/11 (a décima sétima sessão, frase 12): pedir um mapa emprestado a Jora
+     (Persuasão, falhou) virou a carta essencial «consultar o sargento» e fechou
+     a etapa. A frase que pede, empresta, compra, furta ou toma uma COISA é
+     sobre a coisa, não sobre o caso: com a âncora `pessoa`, a intenção de
+     troca lida na frase (aIntencaoDaTroca, o-veredito-da-troca.js) nunca vira
+     a carta. `trocaQueNaoConsulta`: os tipos dessa intenção que vetam; o
+     suborno veta todo caminho que não seja o de pagar (pagar para falar é o
+     caminho `pagar`, e a moeda posta pelo que se viu — `pagamento` — também) */
+  trocaQueNaoConsulta: Object.freeze(["deGraca", "furto", "tomar", "pegar", "companheiro", "fiado", "vendaDeUso", "dar"]),
+  /* o verbo de troca que o leitor da intenção deixa passar (a compra sem
+     quantia, «compro o mapa da Jora»): veta como o suborno, fora do pagar */
+  verboDeTroca: /\b(compr[oaei]\w*|vend[oaei]\w*|emprest\w*|furt\w*|roub\w*|troc[oaq]\w*|alug\w*)\b/,
   palavra: 4,
   vazias: Object.freeze([
     "casa", "rua", "praca", "cidade", "vila", "aldeia", "lugar", "sitio", "velho", "velha", "novo", "nova",
@@ -910,6 +922,9 @@ function aAncoraBate(carta, def, ctx) {
   else if (def.ancora === "nenhuma") ok = true;
   if (!ok) return false;
   if (CARTA_DO_TESTE.assunto.includes(def.ancora) && !nomeia(ctx.texto, j.nomes)) return false;
+  /* a troca não consulta (23/11): a frase que pede uma coisa não vira a carta da pessoa */
+  if (def.ancora === "pessoa" && ctx.troca && (CARTA_DO_TESTE.trocaQueNaoConsulta.includes(ctx.troca)
+    || (ctx.troca === "suborno" && !CARTA_DO_TESTE.pagos.includes(def.id)))) return false;
   return true;
 }
 /* as cartas que se podem virar agora, com o índice do quadro e da carta */
@@ -978,6 +993,13 @@ function oAlvoDoTeste(quadros, V, onde) {
       quem: semArtigo(typeof V.quem === "string" && V.quem ? V.quem : (obj(V.pessoa) || {}).nome),
       texto: [V.frase, V.sobre, o.frase].filter((x) => typeof x === "string").join(" "),
     };
+    /* a intenção de troca da frase do jogador (só a frase dele, não o `sobre`) */
+    try {
+      const fr = [V.frase, o.frase].find((x) => typeof x === "string" && x.trim()) || "";
+      const it = fr ? aIntencaoDaTroca(fr, { grupo: arr(o.grupo) }) : null;
+      ctx.troca = it && typeof it.tipo === "string" ? it.tipo
+        : CARTA_DO_TESTE.verboDeTroca.test(semAc(fr)) ? "suborno" : "";
+    } catch { ctx.troca = ""; }
     const cands = [];
     for (const x of asViraveis(quadros)) {
       arr(x.C.caminhos).forEach((k, ki) => {
