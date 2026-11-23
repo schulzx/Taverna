@@ -19199,6 +19199,8 @@ export default function Taverna() {
       if (!p) return false;
       /* sem os dados das listas: quem aplica no clique é a porta única, nunca o executor antigo */
       setPropostaDaFrase({ ...p, dados: {}, porta: r.cartao }); setPropostaAberta(false);
+      /* 23/11 (N08): a segunda ação da frase que não segue com o cartão é dita numa linha — nunca some calada */
+      try { if (r.seguinte && r.seguinte.linha) pushMsgs([{ autor: "sistema", texto: r.seguinte.linha }]); } catch (e) { calou("duas ações · a linha do depois", e); }
       /* como o cartão de sempre: o campo esvazia, e o «Agora não» devolve a frase */
       setEntrada("");
       try { setCampoFocado(false); const foco = typeof document !== "undefined" ? document.activeElement : null; if (foco && typeof foco.blur === "function") foco.blur(); } catch (e) { calou("o campo descansa com o cartão", e); }
@@ -19220,6 +19222,43 @@ export default function Taverna() {
   /* executa o resultado único. Devolve o que o turno faz a seguir: { parou } (a
      pergunta: o turno para aqui, sem Narrador), { fechou } (o veredito já foi à
      ficha, à tela e à pauta) ou a leitura (o dado: o caminho de hoje, ou adiado) */
+  /* DUAS AÇÕES NA FRASE (23/11, as frases novas da bancada, N08): a porta única leu a primeira sozinha
+     e a segunda com a ficha que a primeira deixou (motor/uma-porta-so.js). A que pode seguir agora segue
+     — a linha e a ficha, ou o cartão com o preço —; a que não pode é dita numa linha e vai à pauta como
+     fato. Nunca uma ação descartada em silêncio. */
+  const executarASeguinte = (r) => {
+    try {
+      const sg = r && r.seguinte;
+      if (!sg) return;
+      if (!sg.agora || !sg.r) {
+        if (sg.linha) pushMsgs([{ autor: "sistema", texto: sg.linha }]);
+        if (sg.fato) { try { porNaPautaDoTurno({ fato: [sg.fato] }); } catch (e) { calou("duas ações · o fato do depois", e); } }
+        return;
+      }
+      const r2 = sg.r;
+      if (r2.caminho === "cartao" && r2.cartao) { portaUnicaRef.current = null; mostrarOCartaoDaPorta(r2); return; }
+      if ((r2.caminho === "aplicado" || r2.caminho === "nao") && r2.veredito) {
+        aplicarOVereditoDaTroca(r2.veredito);
+        darABaixaNaBanca(r2.veredito);
+        executarASeguinte(r2);
+      }
+    } catch (e) { calou("duas ações · a segunda", e); }
+  };
+  /* a baixa no estoque da banca, como a compra à banca da frase (a primeira coisa e as outras da mesma compra) */
+  const darABaixaNaBanca = (v) => {
+    try {
+      if (!v || v.estado !== "aplicada") return;
+      const todos = [...(v.comprado && v.comprado.banca ? [v.comprado] : []), ...((Array.isArray(v.comprados) ? v.comprados : []).filter((x) => x && x.banca))];
+      if (!todos.length) return;
+      let merc = mercadoRef.current || {};
+      for (const c of todos) {
+        const doMercador = ((merc.comprados || {})[c.banca]) || [];
+        merc = { ...merc, comprados: { ...(merc.comprados || {}), [c.banca]: [...doMercador, c.nome] } };
+      }
+      mercadoRef.current = merc;
+      setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
+    } catch (e) { calou("o ouvido · a baixa na banca", e); }
+  };
   const ouvirAFrase = (acao) => {
     ouvidoDoTurnoRef.current = null;
     if (!acao || acao.startsWith("/") || acao.startsWith("[") || combateRef.current) { portaUnicaRef.current = null; return null; }
@@ -19234,6 +19273,7 @@ export default function Taverna() {
       perguntaDoOuvidoRef.current = r.pergunta;
       setEntrada(""); apagarORascunho();
       pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: r.pergunta.linha }]);
+      executarASeguinte(r);
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true, parou: true };
     }
@@ -19245,20 +19285,14 @@ export default function Taverna() {
     }
     if ((r.caminho === "nao" || r.caminho === "aplicado" || r.caminho === "desiste") && r.veredito) {
       aplicarOVereditoDaTroca(r.veredito);
-      /* a baixa no estoque da banca, como a compra à banca da frase */
-      if (r.veredito.estado === "aplicada" && r.veredito.comprado && r.veredito.comprado.banca) {
-        try {
-          const merc = mercadoRef.current || {};
-          const doMercador = ((merc.comprados || {})[r.veredito.comprado.banca]) || [];
-          mercadoRef.current = { ...merc, comprados: { ...(merc.comprados || {}), [r.veredito.comprado.banca]: [...doMercador, r.veredito.comprado.nome] } };
-          setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
-        } catch (e) { calou("o ouvido · a baixa na banca", e); }
-      }
+      darABaixaNaBanca(r.veredito);
+      executarASeguinte(r);
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true };
     }
     if (r.caminho === "recolher" && r.recolher) {
       try { recolherDoChao(r.recolher); } catch (e) { calou("o ouvido · o recolher", e); }
+      executarASeguinte(r);
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true };
     }
@@ -19266,6 +19300,7 @@ export default function Taverna() {
     if (r.caminho === "falar" && r.fato) { try { porNaPautaDoTurno({ fato: [r.fato] }); } catch (e) { calou("o ouvido · o preço", e); } }
     /* o dado com caminho de hoje: a porta do veredito lê a intenção (o furto, o pedido, o tomar) */
     if (r.caminho === "dado" && r.intencao) ouvidoDoTurnoRef.current = { ...ov, caminho: "aplicar", intencao: r.intencao };
+    if (r.caminho === "dado") executarASeguinte(r);
     return ouvidoDoTurnoRef.current;
   };
   /* o dado sem caminho de hoje (cobrar, pedir emprestado, o fiado, o regateio): com a porta do
@@ -19896,7 +19931,12 @@ export default function Taverna() {
     if (!trocaAoDado && procurarAlguem(acao)) return true;
     const v = veredictoDaAcao(acao);
     if (!v) return false;
-    if (m && !m.rola && v.tipo === "teste") {
+    /* a bancada da troca (L10): o suborno que a porta única mandou ao dado caía no «acontece» do momento — o
+       Narrador contava o sim e a moeda nunca saía (o sem-dado não cobra o dito). O suborno é oposição: rola, e o
+       sim cobra a moeda dita pelo caminho do dado («o suborno cobra no sim») */
+    let subornoAoDado = false;
+    try { const ovS = ouvidoDoTurnoRef.current; subornoAoDado = !!(trocaAoDado && ovS && ovS.intencao && ovS.intencao.tipo === "suborno"); } catch (e) { calou("a porta única · o suborno rola", e); subornoAoDado = false; }
+    if (m && !m.rola && v.tipo === "teste" && !subornoAoDado) {
       try { return acontecerSemDado(v, m, acao); } catch (e) { calou("Mestre vivo · o que acontece", e); }
     }
     /* v9.70: TODA recusa do sistema conta como falha para a cobrança, não

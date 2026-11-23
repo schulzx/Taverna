@@ -240,7 +240,9 @@ sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
   if (iEf > 0) regioes.push([iEf, APP.indexOf("}, [carregando]);", iEf)]);
   const ad = corpo("adjudicarAcao");
   const iAd = APP.indexOf(ad);
-  for (const rx of [/if \(m && !m\.rola && v\.tipo === "teste"\) \{/g, /\n      if \(m\) \{/g]) for (const x of ad.matchAll(rx)) regioes.push(bloco(APP, iAd + x.index));
+  /* MOVIDA em 23/11 (a bancada da troca, L10), e o motivo: o ramo do «acontece» ganhou a guarda do suborno que a
+     porta única mandou ao dado (`&& !subornoAoDado`) — ainda é o ramo do `m`, que só a chave enche */
+  for (const rx of [/if \(m && !m\.rola && v\.tipo === "teste"(?: && !subornoAoDado)?\) \{/g, /\n      if \(m\) \{/g]) for (const x of ad.matchAll(rx)) regioes.push(bloco(APP, iAd + x.index));
   const dentro = (i) => regioes.some(([a, b]) => i >= a && i < b);
   const soltas = [];
   for (const n of NOVAS) {

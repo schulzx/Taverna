@@ -23,7 +23,7 @@
 import { readFileSync } from "node:fs";
 import { aPortaUnica, oFocoDaConversa, UMA_PORTA_SO } from "../src/motor/uma-porta-so.js";
 import { aCenaDoOuvido, osPratosDaCasa, oVereditoDoOuvido } from "../src/motor/a-cena-do-ouvido.js";
-import { oOuvido } from "../src/o-ouvido.js";
+import { oOuvido, asAcoesDaFrase } from "../src/o-ouvido.js";
 import { aPropostaDaFrase } from "../src/motor/a-proposta-da-frase.js";
 import { oSubornoDaFrase } from "../src/o-veredito-da-troca.js";
 
@@ -387,6 +387,62 @@ sec("§7 a bancada da troca — o que o jogo jogado mostrou");
   t("a troca que a porta única negou não rola dado no catálogo (B92, Q09)", /ovD\.fechou && ovD\.veredito && ovD\.veredito\.estado === "negada"\) return false;/.test(adj) && adj.indexOf("ovD.fechou") < adj.indexOf("alvoLocalPedido(acao)"));
   t("a troca que a porta única mandou ao dado não abre a procura de gente (L10)", /if \(!trocaAoDado && procurarAlguem\(acao\)\) return true;/.test(adj));
   t("«suborno a Charity com vinte moedas pra ela me contar…» é suborno (L10)", oSubornoDaFrase("suborno a Charity com vinte moedas pra ela me contar quem esteve aqui") === true && oSubornoDaFrase("pago duas moedas à Charity") === false);
+
+  /* AS 50 FRASES NOVAS (23/11): a bancada mediu 39 de 50 em frases que ninguém tinha visto — o conserto anterior
+     ficou em parte moldado às frases dele. Aqui cada CAUSA é provada com frases nossas, diferentes das da bancada,
+     para a regra não depender de uma frase só. */
+  const ok1b = (r) => ok1(r) || !!r.seguinte;
+  const regras = [
+    /* 1. a coisa minha a alguém «por» moeda ou «uns trocados» é venda (o cartão com o preço), nunca presente */
+    ["entrego o símbolo sagrado riscado à Prudence por umas moedas", (r) => cartao(r, "venda", 7) && r.leitura.subtipo === "vender", "venda «por umas moedas»: o cartão, e o símbolo não sai antes"],
+    ["deixo o símbolo com o Cornelius por cinco pratas", (r) => r.leitura.subtipo === "vender" && r.leitura.quantia === 5 && !r.veredito, "venda com o preço dito: vender, e nada sai sem resposta"],
+    ["dou o símbolo sagrado riscado à Prudence, ela me paga amanhã", (r) => r.caminho === "pergunta" && /Vender/.test(r.pergunta.linha) && !r.veredito, "dar ou vender? na dúvida o item não sai: o Mestre pergunta"],
+    /* 2. a oferta no imperativo, a quem está, com a quantia dita: dar, sem menu */
+    ["Prudence, pega três moedas pela ajuda", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 27, "«pega três moedas» é dar (◉ 30 → 27)"],
+    ["Cornelius, segura cinco moedas", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 25, "«segura cinco moedas» é dar (◉ 30 → 25)"],
+    ["Cornelius, pega a corda pra mim", (r) => r.leitura.subtipo !== "dar" && !(r.veredito && r.veredito.estado === "aplicada"), "«pega … pra mim» não é oferta: nada sai da bolsa"],
+    /* 3. a moeda por um favor condicionado é suborno (o dado), não menu */
+    ["Prudence, dez moedas se você esquecer o meu rosto", (r) => r.leitura.subtipo === "subornar" && r.caminho === "dado" && r.intencao && r.intencao.tipo === "suborno", "«dez moedas se você esquecer…» é suborno"],
+    ["se você não contar a ninguém, Cornelius, te pago quinze moedas", (r) => r.leitura.subtipo === "subornar" && r.caminho === "dado", "a condicional na frente também é suborno"],
+    ["se eu pagar cinco moedas, levo a corda", (r) => r.leitura.subtipo !== "subornar", "o «se» de quem paga não é favor de ninguém"],
+    /* 4. o verbo de estado sobre a coisa, sem gesto: conversa, nenhuma resposta de troca */
+    ["essa corda vale cada moeda", (r) => !r.troca && !r.veredito && !r.pergunta && !r.cartao, "«essa corda vale cada moeda» é conversa"],
+    ["o amuleto de osso parece caro demais", (r) => !r.troca && !r.veredito && !r.pergunta && !r.cartao, "«o amuleto parece caro» é conversa"],
+    /* 5. a quantia sem número: a bolsa calcula «todo», «metade»; «uns trocados» pergunta quanto (nunca 1 calado) */
+    ["entrego todo o dinheiro que tenho ao Cornelius", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 0, "«todo o dinheiro que tenho» é a bolsa inteira (◉ 30)"],
+    ["dou metade das moedas à Prudence", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 15, "«metade» é metade da bolsa (◉ 15)"],
+    ["dou uns trocados pra Prudence", (r) => r.caminho === "nao" && /Quanto você dá/.test(r.veredito.linha) && r.veredito.ficha === null, "«uns trocados» sem número: o Mestre pergunta quanto, e nada sai"],
+    /* 6. o pedido com a marca de que não se paga é pedir (o dado), não o cartão de compra */
+    ["Cornelius, me passa uma corda, estou sem dinheiro", (r) => r.leitura.subtipo === "pedir" && r.caminho === "dado" && !r.cartao, "«me passa… estou sem dinheiro» é pedir"],
+    ["Cornelius, me dá um amuleto de osso de graça", (r) => r.leitura.subtipo === "pedir" && !r.cartao, "«me dá… de graça» é pedir"],
+    ["compro uma corda, estou sem grana", (r) => r.leitura.subtipo === "comprar", "quem diz «compro» está comprando, com ou sem grana (o selado o mediu)"],
+    /* 8. as coisas do mesmo verbo vão juntas: o cartão com todas, ou a soma que não chega */
+    ["levo o amuleto de osso e a corda", (r) => cartao(r, "compra", 11) && r.cartao.leitura.compras[0].itens.length === 2, "«levo o amuleto e a corda»: um cartão, as duas coisas, ◉ 11"],
+  ];
+  for (const [frase, ok, nota] of regras) { const r = P(frase); t(`${nota}: «${frase}»`, ok(r) && ok1b(r), J([r.caminho, r.leitura && r.leitura.subtipo, r.leitura && r.leitura.coisa, r.leitura && r.leitura.quantia, linhaOuFato(r)])); }
+  const naoChega = P("levo o amuleto de osso e a corda", null, ficha(10, [SIMBOLO]));
+  t("as duas coisas que juntas não chegam: «Não chega para tudo», com a soma, e nada sai", naoChega.caminho === "nao" && /Não chega para tudo: ◉ 11/.test(naoChega.veredito.linha) && naoChega.veredito.ficha === null, J([naoChega.caminho, linhaOuFato(naoChega)]));
+  const venda2 = P("vendo a corda e o símbolo sagrado ao Cornelius", null, ficha(13, [SIMBOLO, { nome: "Corda de cânhamo" }]));
+  t("vender duas coisas: um cartão com as duas no rótulo e a soma das ofertas", cartao(venda2, "venda", 14) && /Corda/.test(venda2.cartao.leitura.venda.rotulo) && /Símbolo/.test(venda2.cartao.leitura.venda.rotulo), J([venda2.caminho, venda2.cartao]));
+  t("…e o clique tira as duas da bolsa", (() => { const c2 = aPortaUnica("vendo a corda e o símbolo sagrado ao Cornelius", PRACA_B(ficha(13, [SIMBOLO, { nome: "Corda de cânhamo" }])), { ...CTX, confirmado: venda2.cartao }); return c2.caminho === "aplicado" && c2.veredito.ficha.inventario.length === 0 && c2.veredito.ficha.moedas === 27; })());
+  /* 7. o pronome que retoma a coisa da frase anterior */
+  const ret1 = P("compro ele", { jogador: "Cornelius, quanto custa esse amuleto de osso?" });
+  t("«compro ele» depois de «quanto custa esse amuleto?»: o cartão do amuleto", cartao(ret1, "compra", 9) && /Amuleto/.test(ret1.cartao.leitura.compras[0].itens[0].nome), J([ret1.caminho, ret1.leitura && ret1.leitura.coisa]));
+  const ret2 = P("levo essa", { jogador: "que corda é aquela no armazém?" });
+  t("«levo essa» depois de «que corda é aquela?»: o cartão da corda", cartao(ret2, "compra", 2), J([ret2.caminho, ret2.leitura && ret2.leitura.coisa]));
+  /* 8. duas ações na frase: a primeira e a segunda, em ordem, cada uma com a sua resposta; a que não segue é dita */
+  t("o corte das ações: o «e» seguido de verbo corta; o «e» entre coisas não", J(asAcoesDaFrase("pago duas moedas à Prudence e compro uma corda")) === J(["pago duas moedas à Prudence", "compro uma corda"]) && asAcoesDaFrase("compro a corda e duas tochas").length === 1);
+  const duas = P("pago duas moedas à Prudence e compro uma corda");
+  t("«pago… e compro…»: a primeira aplica (◉ 28), e a segunda é o cartão com a bolsa que a primeira deixou", duas.caminho === "aplicado" && duas.veredito.ficha.moedas === 28 && duas.seguinte && duas.seguinte.agora && cartao(duas.seguinte.r, "compra", 2) && duas.seguinte.r.cartao.leitura.compras[0].bolsa === 28, J([duas.caminho, duas.seguinte && duas.seguinte.r.caminho]));
+  const depois = P("compro uma corda e dou o símbolo sagrado riscado ao Cornelius");
+  t("a primeira é um cartão: a segunda não some — é dita numa linha («uma coisa de cada vez»)", cartao(depois, "compra", 2) && depois.seguinte && !depois.seguinte.agora && /Uma coisa de cada vez/.test(depois.seguinte.linha) && depois.frase === "compro uma corda", J([depois.caminho, depois.seguinte && depois.seguinte.linha]));
+  const mesma = P("compro uma corda e pago duas moedas");
+  t("«compro… e pago…» é a mesma ação (o pagamento da primeira): uma resposta só", !mesma.seguinte && mesma.caminho === "aplicado" && mesma.veredito.ficha.moedas === 28, J([mesma.caminho, linhaOuFato(mesma)]));
+  /* 9. o suborno à companheira vai à regra do grupo; o que vai ao dado rola no App (o «acontece» não o paga de graça) */
+  const grupo = P("Lavinia, cinco moedas se você guardar segredo");
+  t("a moeda oferecida à companheira: a bolsa do grupo é uma só (nada muda de mão)", grupo.caminho === "nao" && /é do seu grupo/.test(grupo.veredito.linha) && grupo.veredito.ficha === null, J([grupo.caminho, linhaOuFato(grupo)]));
+  t("o suborno que a porta mandou ao dado não cai no «acontece» do momento (L10)", /if \(m && !m\.rola && v\.tipo === "teste" && !subornoAoDado\)/.test(adj) && /subornoAoDado = !!\(trocaAoDado && ovS && ovS\.intencao && ovS\.intencao\.tipo === "suborno"\)/.test(adj));
+  t("a fiação executa a segunda ação, ou diz a linha do depois", /const executarASeguinte = \(r\) =>/.test(APP) && (APP.match(/executarASeguinte\(r\);/g) || []).length >= 4 && /if \(r\.seguinte && r\.seguinte\.linha\) pushMsgs/.test(APP));
 }
 
 console.log("\n" + bons + " ok, " + maus + " XX");
