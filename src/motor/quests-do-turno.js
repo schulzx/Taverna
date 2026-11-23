@@ -1091,9 +1091,12 @@ export function aMesaDasQuests(estado, opcoes) {
       /* 23/11 (a décima sétima sessão, §1): O CAMINHO ALCANÇÁVEL. Quando o alvo
          direto do passo é do vilão e o herói ainda não o viu, a coisa que falta
          é o ramo que não passa por ele (quem consultar, onde vasculhar) — o
-         mesmo que o botão da tela mostra (oRumoDaBusca) */
+         mesmo que o botão da tela mostra (oRumoDaBusca). No turno do espólio
+         cede, como a ponte do RUMO (pauta-do-turno.js, medido em teste-te9-motor
+         §6 e teste-quadro-fiacao §8: a pauta está cheia, e o anúncio e O CASO
+         chegam primeiro); volta no turno seguinte */
       const caminhoDe = (v, R) => {
-        if (!v || !R) return null;
+        if (!v || !R || (Q.anuncio && arr(Q.anuncio.linhas).length)) return null;
         const F = questPorId(R.id);
         const doFio = (p) => !!(F && obj(F.papeis) && obj(F.papeis[p]) && F.papeis[p].de === "fio");
         const viu = (p) => arr(v.gente).some((g) => obj(g) && g.papel === p);
