@@ -11659,7 +11659,13 @@ export default function Taverna() {
          aplicar — a diferença, depois do conferente, é o feito do turno */
       let antesDaFe = null;
       try { antesDaFe = retratoDaFe(); } catch (e) { calou("NE4 · o retrato da fé", e); antesDaFe = null; }
-      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa, quemFalou: fichaDaCena ? fichaDaCena.falam : null }) || personagemRef.current || personagem;
+      /* 23/11 (a bancada da troca, B30 B31 B49 L02): «pago duas moedas ao Cornelius» debitava DUAS vezes —
+         a porta única aplicava (◉ −2: pago a Cornelius) e, depois da prosa, a cobrança da frase do jogador
+         (cobranca.js#oQueFaltaDebitar, o «pedido») pagava outra vez (◉ −2 moedas). Com a frase lida como
+         troca pela porta única, ela é a única porta: a cobrança não lê o pedido deste turno. */
+      let pedidoDaCobranca = pedidoDaBolsa;
+      try { const ovC = ouvidoDoTurnoRef.current; if (mestreVivoLigado() && ovC && ovC.lido && ovC.troca) pedidoDaCobranca = ""; } catch (e) { calou("a porta única · a cobrança da frase", e); }
+      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaCobranca, moeda: moedaDaBolsa, quemFalou: fichaDaCena ? fichaDaCena.falam : null }) || personagemRef.current || personagem;
       juizDoTurnoRef.current = null; /* um turno sem juízo não empresta o veredito da véspera ao Cronista */
       try {
         if (fotoDoJuiz) {

@@ -330,5 +330,15 @@ sec("§6 o veredito antes do clique — a quantia dita aplica; o preço do siste
   t("o vazio traz o campo do cartão (null)", vazio.cartao === null);
 }
 
+/* §7 A BANCADA DA TROCA (testes/bancada-da-troca): a régua do meio digita cada frase no jogo de
+   verdade, e o que ela achou e se consertou fica provado aqui, sem navegador. */
+sec("§7 a bancada da troca — o que o jogo jogado mostrou");
+{
+  const APP = ler("../src/App.jsx");
+  /* B30 B31 B49 L02: a quantia dita saía duas vezes — a porta única aplicava, e a cobrança da frase pagava de novo depois da prosa */
+  t("a frase que a porta única leu como troca não paga de novo pela cobrança do pedido",
+    /if \(mestreVivoLigado\(\) && ovC && ovC\.lido && ovC\.troca\) pedidoDaCobranca = "";/.test(APP) && /aplicarResposta\(resp, persAtual, \{ envelopes: [^}]*pedido: pedidoDaCobranca,/.test(APP));
+}
+
 console.log("\n" + bons + " ok, " + maus + " XX");
 if (maus) process.exitCode = 1;
