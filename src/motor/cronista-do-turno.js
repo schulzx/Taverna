@@ -383,7 +383,9 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
         try { id = nomeComDono(n.nome, reg, porta("contextoDoNome", n)); } catch (e) { calou("nomeComDono", e); }
         if (id && id.decisao === "recusada") { homonimos.push(id); return; }
         const nomeCerto = (id && id.nome) || n.nome;
-        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
+        /* identidade · etapa 3: o segundo homônimo nasce na chave numerada (Hilda~2) — nunca mescla na primeira */
+        const homon = !!(id && id.decisao === "homonimo" && id.chave);
+        const chave = homon ? "" : (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
         if (!tocou) { reg = { ...reg }; tocou = true; }
         /* E3 do "o Narrador só narra" (a fiação): sem o canal npcs do
            Narrador, o gênero vem do Cronista ("ele"/"ela"), entra no
@@ -399,7 +401,7 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
         } catch (e) { calou("o gênero do Cronista", e); nF = n; }
         if (chave) reg[chave] = mesclarNPC(reg[chave], nF);
         else {
-          reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: E.npcTurno, conhecidoEm: E.dia });
+          reg[homon ? id.chave : String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: E.npcTurno, conhecidoEm: E.dia });
           /* BQ2: quem nasce no registo por ser nomeado — no livro, `nomeado`, que não é `conheceu` */
           doLivro.nomeados.push(String(nomeCerto).slice(0, 40));
         }

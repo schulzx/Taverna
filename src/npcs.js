@@ -1328,7 +1328,79 @@ function pontosDoSolto(p, reg, novo, recentes) {
   return pts;
 }
 
+/* ============================================================
+   O SEGUNDO HOMÔNIMO (23/11/2026, identidade · etapa 3)
+
+   A ordem da pessoa: «mesmo que tenha dois fulanos, o sistema vai saber
+   qual é que está em cena». Até aqui o registo, sem forma de guardar duas
+   pessoas de mesmo nome, RECUSAVA a segunda (e mandava o Narrador trocar o
+   nome) ou a FUNDIA na primeira. Com a chave do Mestre vivo
+   (`contexto.porId`), a segunda entra com a chave numerada da planta —
+   `Hilda~2`, `nome: "Hilda"` —, que é o id `npc|Hilda~2` do catálogo
+   (quem-e-quem.js): o registo, o livro e a presença falam da mesma pessoa.
+
+   Quem é OUTRA pessoa sai do que não muda com o tempo
+   (SEGUNDO_HOMONIMO.separam): o sexo e o ofício de outra família — e, entre
+   nomes diferentes, o sobrenome. O lugar e o paradeiro mudam (a pessoa
+   viaja) e não fazem nascer ninguém: continuam a recusar como antes.
+   Um nome igual procura primeiro, entre todos os de mesmo nome (a chave e
+   as numeradas), quem nada separa — esse é ele; só sem nenhum nasce o
+   número seguinte. Nenhuma chave já gravada muda.
+   → a decisão nova é `"homonimo"`, com `chave` (a numerada, livre),
+     `nome` (o nome da pessoa) e `id`.
+   ============================================================ */
+export const SEGUNDO_HOMONIMO = Object.freeze({
+  /* os motivos da recusa que dizem «é outra pessoa» (os outros dizem «não sei») */
+  separam: Object.freeze(["sexo", "oficio", "sobrenome"]),
+  /* o número do homônimo na chave, o de QUEM_E_QUEM.homonimo */
+  marca: "~",
+  /* o teto de números por nome */
+  max: 9,
+  porque: "duas pessoas de mesmo nome são duas fichas — a chave numerada dá a cada uma o seu id",
+});
+const RX_NUMERADA = /~\d+$/;
+/* a ficha nova separa-se desta? (o que não muda com o tempo) */
+function separaDe(c, ficha) {
+  const f = ficha && typeof ficha === "object" ? ficha : {};
+  const s1 = sexoDe(typeof c.genero === "string" ? c.genero : ""), s2 = sexoDe(f.genero);
+  if (s1 && s2 && s1 !== s2) return true;
+  return oficioCasa(typeof c.papel === "string" ? c.papel : "", f.papel) < 0;
+}
+/* a chave livre para o nome: ele mesmo, senão nome~2, nome~3… */
+function chaveLivre(nome, reg) {
+  const livre = (k) => !Object.keys(reg).some((x) => semAcento(x) === semAcento(k));
+  if (livre(nome)) return nome;
+  for (let i = 2; i <= SEGUNDO_HOMONIMO.max; i++) { const k = `${nome}${SEGUNDO_HOMONIMO.marca}${i}`; if (livre(k)) return k; }
+  return "";
+}
 export function nomeComDono(nome, npcs, contexto = {}) {
+  const reg = npcs && typeof npcs === "object" ? npcs : {};
+  const c = contexto && typeof contexto === "object" ? contexto : {};
+  if (c.porId !== true) return oVereditoDoNome(nome, reg, c);
+  /* as chaves numeradas ficam fora da régua de antes (que lê a chave como nome) */
+  const numeradas = Object.keys(reg).filter((k) => RX_NUMERADA.test(k) && reg[k] && typeof reg[k] === "object");
+  const base = Object.fromEntries(Object.entries(reg).filter(([k]) => !numeradas.includes(k)));
+  const v = oVereditoDoNome(nome, base, c);
+  const nomeLimpo = String(nome == null ? "" : nome).trim();
+  const daFicha = (k) => semAcento((reg[k] && reg[k].nome) || k.replace(RX_NUMERADA, ""));
+  /* os de mesmo nome que a chave: ela e as numeradas dela, na ordem */
+  const familia = (k) => [k, ...numeradas.filter((x) => daFicha(x) === daFicha(k))];
+  const homonimo = (chave) => (chave ? { decisao: "homonimo", nome: nomeLimpo, chave, dono: "", motivo: "", id: `npc|${chave}` } : v);
+  if (v.decisao === "mesma" && v.chave && reg[v.chave] && semAcento(nomeLimpo) === daFicha(v.chave)) {
+    const quem = familia(v.chave).find((k) => !separaDe(c, reg[k]));
+    if (quem) return { ...v, nome: (reg[quem] && reg[quem].nome) || quem, chave: quem, dono: quem };
+    return homonimo(chaveLivre(nomeLimpo, reg));
+  }
+  if (v.decisao === "recusada" && SEGUNDO_HOMONIMO.separam.includes(v.motivo)) {
+    const mesmos = numeradas.filter((k) => daFicha(k) === semAcento(nomeLimpo));
+    const quem = mesmos.find((k) => !separaDe(c, reg[k]));
+    if (quem) return { decisao: "mesma", nome: (reg[quem] && reg[quem].nome) || quem, chave: quem, dono: quem, motivo: "" };
+    return homonimo(chaveLivre(nomeLimpo, reg));
+  }
+  return v;
+}
+
+function oVereditoDoNome(nome, npcs, contexto = {}) {
   const reg = npcs && typeof npcs === "object" ? npcs : {};
   const c = contexto && typeof contexto === "object" ? contexto : {};
   const alvo = semAcento(nome);

@@ -503,7 +503,9 @@ export function aplicar(estado, resposta, ctx = {}) {
    ============================================================ */
 export function contextoDoNomeCom(base, n) {
   const b = base && typeof base === "object" ? base : {};
-  return { importantes: b.importantes || [], conhecidos: b.conhecidos || [], recentes: b.recentes || [], grupo: b.grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: b.aqui || [], heroi: b.heroi || "" };
+  return { importantes: b.importantes || [], conhecidos: b.conhecidos || [], recentes: b.recentes || [], grupo: b.grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: b.aqui || [], heroi: b.heroi || "",
+    /* identidade · etapa 3: a chave do Mestre vivo, que deixa o segundo homônimo entrar no registo (nomeComDono) */
+    ...(b.porId === true ? { porId: true } : {}) };
 }
 
 /* ============================================================
@@ -611,6 +613,12 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
         /* MM13: a menção não é presença — o nome da pista (ou do alvo) da
            abertura não entra no registo antes de o herói de fato chegar. */
         if (aindaSoUmNome(e0.abertura, nomeCerto, { lugar: e0.lugar, missoes: e0.missoes })) return;
+        /* identidade · etapa 3: o segundo homônimo nasce na chave numerada (Hilda~2), com o nome dele */
+        if (id && id.decisao === "homonimo" && id.chave) {
+          if (!tocou) { reg = { ...reg }; tocou = true; }
+          reg[id.chave] = criarNPC(nomeCerto, { ...n, ultimaVez: npcTurno, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : e0.dia });
+          return;
+        }
         const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
         const ficha = chave
           ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurno, conhecidoEm: reg[chave].conhecidoEm != null ? reg[chave].conhecidoEm : e0.dia })
@@ -627,7 +635,9 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
         const nomeCerto = (id && id.nome) || nome;
         /* MM13: idem — a menção não é presença. */
         if (aindaSoUmNome(e0.abertura, nomeCerto, { lugar: e0.lugar, missoes: e0.missoes })) continue;
-        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === nomeCerto.toLowerCase());
+        /* identidade · etapa 3: o homônimo do cânone nasce na chave numerada (o cânone guarda o nome; a chave, o registo) */
+        const homon = !!(id && id.decisao === "homonimo" && id.chave);
+        const chave = homon ? "" : (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === nomeCerto.toLowerCase());
         /* chave achada por homónimo (id.chave): já existe ficha dela — mescla,
            nunca `criarNPC` por cima (apagaria laço e consultas já firmados;
            sem isto, este mesmo cânone recriaria "Delfina" do zero a cada
@@ -644,7 +654,7 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
              copia para quem já é fato (npcs.js#mesclarNPC). */
           ...(typeof f.dito === "string" && f.dito.trim() ? { dito: f.dito } : {}) };
         if (!tocou) { reg = { ...reg }; tocou = true; }
-        reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);
+        reg[chave || (homon ? id.chave : nomeCerto)] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);
       }
       if (homonimos.length) notas.push(notaDoHomonimo(homonimos));
       if (tocou) {
