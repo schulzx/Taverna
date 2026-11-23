@@ -291,7 +291,7 @@ import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-p
 import { aTrocaDoOuvido, oRegistroDoOuvido, osPratosDaCasa } from "./motor/a-cena-do-ouvido.js";
 import { aPortaUnica, UMA_PORTA_SO } from "./motor/uma-porta-so.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
-import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui } from "./quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui, aPresencaUnica } from "./quem-esta-aqui.js";
 import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ausente.js";
 import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oChamadoDaPeca, ausentesDaPeca, foraDaCenaNaProsa, semAChegadaDaPeca } from "./pecas/no-jogo.js";
 import { oBatismo } from "./motor/o-batismo.js";
@@ -7468,7 +7468,37 @@ export default function Taverna() {
       gente: lugarRef.current ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
       /* S4e: os nomes do mundo, para o figurante que atende o sítio (elenco-do-lugar.js) — a mesma conta da pauta */
       nomes: vale("QUEM ESTÁ · os nomes", () => ({ semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico }), null),
+      /* 23/11 (identidade · etapa 2): com o Mestre vivo, o segundo homônimo no mesmo sítio fica (o id decide) */
+      porId: vale("QUEM ESTÁ · a chave", () => mestreVivoLigado() === true, false),
+      pessoas: pessoasRef.current,
     });
+  };
+  /* ---------------- A PRESENÇA ÚNICA (23/11, identidade · etapa 2) ----------------
+     «Quem está em cena» era calculado de quatro jeitos, todos por nome (pessoasDaCena,
+     presentesAgora, presentesDaTela, ausentesAgora), e o retrato do ouvido juntava os
+     resultados à mão. Agora é UMA conta (quem-esta-aqui.js#aPresencaUnica), toda por id
+     (o do catálogo, quem-e-quem.js), com o nome como rótulo: quem está aqui (quem age e
+     quem a tela mostra), noutro sítio daqui, longe, morto, o grupo, a pessoa do passo.
+     As quatro de antes são leituras dela, com a mesma assinatura. `parte` pede só um
+     pedaço (a tela, a cidade, quem age, os ausentes), para quem chama a cada render não
+     pagar a conta inteira; sem `parte`, a presença inteira. Cada leitura no seu calou. */
+  const presencaAgora = (parte) => {
+    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou("a presença · " + rotulo, e); return seNao; } };
+    const tela = () => vale("quem a tela põe em cena", () => (Array.isArray(emCenaRef.current) ? emCenaRef.current : []).filter((x) => x && x.tipo === "pessoa" && x.aqui && x.nome).map((x) => ({ nome: x.nome })), []);
+    const naCidade = () => vale("quem está à vista na cidade", () => (elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: [] }).aqui || []).filter((x) => x && x.nome).map((x) => ({ nome: x.nome })), []);
+    if (parte === "tela") return { tela: tela() };
+    if (parte === "naCidade") return { naCidade: naCidade() };
+    const q = quemAgora();
+    if (parte === "age") return { age: quemAgeAqui(q) };
+    const pA = personagemRef.current || personagem || {};
+    const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
+    const genteA = vale("a gente da base", () => (cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : []), []);
+    const protegidos = vale("os protegidos", () => [divindadeRef.current && divindadeRef.current.nome].filter(Boolean), []);
+    const aus = vale("quem o sistema sabe noutro lugar", () => osAusentes(q, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, ...semSitioAgora(), protegidos }), []);
+    const conhecidos = vale("quem o sistema conhece", () => [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)], []);
+    if (parte === "ausentes") return { aus, conhecidos, protegidos };
+    const P = vale("a conta única", () => aPresencaUnica(q, { npcs: npcsRef.current, gente: genteA, grupo: pA.grupo || [], cidade: cidA, heroi: pA, pessoas: pessoasRef.current, ausentes: aus, tela: tela(), naCidade: naCidade(), factos: factosRef.current }), null);
+    return { ...(P || {}), aus, conhecidos, protegidos };
   };
   const contextoDoEmCena = (frase, quem) => {
     const p0 = personagemRef.current || personagem || {};
@@ -8176,7 +8206,7 @@ export default function Taverna() {
          procura, o alvo e quem responde leem daqui; fora dos muros a cidade
          fica lá, num sítio está quem o posto põe nele (e o passo) */
       let aqui;
-      try { aqui = quemAgeAqui(quemAgora()); } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current }).aqui; }
+      try { aqui = presencaAgora("age").age; if (!Array.isArray(aqui)) throw new Error("a presença não respondeu"); } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current }).aqui; }
       const quantos = aqui.length;
       const daBase = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
       const confid = confidenciasRef.current || [];
@@ -8188,6 +8218,8 @@ export default function Taverna() {
         const noGrupo = (p0.grupo || []).some((g) => (g.nome || "") === nome);
         return {
           nome,
+          /* 23/11 (identidade · etapa 2): o id do catálogo, aditivo — quem lê o nome continua a ler o nome */
+          ...(x && typeof x === "object" && typeof x.id === "string" && x.id ? { id: x.id } : {}),
           papel: n.papel || daBaseEla.papel || "",
           temperamento: n.traco || daBaseEla.traco || "",
           quer: daBaseEla.vontade || n.notas || "",
@@ -18718,7 +18750,8 @@ export default function Taverna() {
   };
   const presentesAgora = () => {
     try {
-      return (elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: [] }).aqui || []).map((x) => x && x.nome).filter(Boolean);
+      /* 23/11 (identidade · etapa 2): uma leitura da presença única (a régua da cidade, sem o grupo) */
+      return (presencaAgora("naCidade").naCidade || []).map((x) => x && x.nome).filter(Boolean);
     } catch (e) { calou("Q3 · quem está à vista", e); return []; }
   };
   /* o momento (formas.md §QQ 4): só quando o SISTEMA virou ou fechou uma
@@ -19024,20 +19057,14 @@ export default function Taverna() {
   /* 22/11 (a décima segunda sessão): a lista de quem o sistema sabe noutro lugar, numa
      função — e quem a tela põe em cena (o mesmo Em cena), que ganha o primeiro nome
      dito quando casa com um presente e com um ausente (quemONomeDiz) */
+  /* 23/11 (identidade · etapa 2): as duas são leituras da presença única (presencaAgora) */
   const ausentesAgora = () => {
-    let aus = [], conhecidos = [], protegidos = [];
     try {
-      const qA = quemAgora();
-      const pA = personagemRef.current || personagem || {};
-      const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
-      const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
-      protegidos = [divindadeRef.current && divindadeRef.current.nome].filter(Boolean);
-      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, ...semSitioAgora(), protegidos });
-      conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
-    } catch (e) { calou("quem o sistema sabe noutro lugar", e); }
-    return { aus, conhecidos, protegidos };
+      const r = presencaAgora("ausentes");
+      return { aus: r.aus || [], conhecidos: r.conhecidos || [], protegidos: r.protegidos || [] };
+    } catch (e) { calou("quem o sistema sabe noutro lugar", e); return { aus: [], conhecidos: [], protegidos: [] }; }
   };
-  const presentesDaTela = () => { try { return (Array.isArray(emCenaRef.current) ? emCenaRef.current : []).filter((x) => x && x.tipo === "pessoa" && x.aqui && x.nome).map((x) => x.nome); } catch (e) { calou("quem a tela põe em cena", e); return []; } };
+  const presentesDaTela = () => { try { return (presencaAgora("tela").tela || []).map((x) => x.nome); } catch (e) { calou("quem a tela põe em cena", e); return []; } };
   const quemNaoEstaDaFrase = (acao, cena) => {
     let aus = [], conhecidos = [], protegidos = [];
     try {
@@ -19165,6 +19192,25 @@ export default function Taverna() {
        moedas pra Constance» com ela fora é «não está aqui», nunca «a quem?» (frase 40) */
     try { conhecidos = [...(ausentesAgora().conhecidos || [])]; } catch (e) { calou("o ouvido · quem o sistema conhece", e); conhecidos = []; }
     try { for (const p of passosDasQuestsAgora()) for (const c of ((p && p.candidatos && p.candidatos.pessoa) || [])) if (c && c.nome) conhecidos.push(c.nome); } catch (e) { calou("o ouvido · a gente do passo", e); }
+    /* 23/11 (identidade · etapa 2): quem está, quem não está e quem morreu saem da PRESENÇA ÚNICA
+       (presencaAgora), por id — e não da junção à mão de cima. Dois homônimos são dois (um aqui, outro
+       longe), a pessoa que a tela mostra é a que o ouvido recebe, e quem está noutro sítio daqui vai como
+       ausente. O retrato do ouvido só é lido dentro das guardas da chave (ouvirAFrase, a proposta da
+       frase, a encruzilhada e o cartão que só a porta única abre): sem a chave, nada disto corre. Se a
+       conta estoura, o retrato de cima. */
+    {
+      try {
+        const P = presencaAgora();
+        if (P && Array.isArray(P.aqui) && Array.isArray(P.longe)) {
+          const daCena = (nome) => pessoas.find((p) => p && p.nome === nome) || {};
+          pessoas = P.aqui.map((p) => ({ id: p.id, nome: p.nome, papel: p.papel || daCena(p.nome).papel || "", ehCompanheiro: !!daCena(p.nome).ehCompanheiro }));
+          ausentes = [...(P.noutroSitio || []), ...P.longe].map((a) => ({ id: a.id, nome: a.nome, onde: a.onde || "", morto: false }))
+            .concat((P.mortos || []).map((m) => ({ id: m.id, nome: m.nome, onde: "", morto: true })));
+          const temNome = (n) => [...P.aqui, ...ausentes, ...(P.conhecidos || [])].some((x) => x.nome === n);
+          conhecidos = [...(P.conhecidos || []).map((c) => ({ id: c.id, nome: c.nome })), ...conhecidos.filter((n) => typeof n === "string" && n && !temNome(n))];
+        }
+      } catch (e) { calou("o ouvido · a presença única", e); }
+    }
     try { chao = pertoDaqui(chaoRef.current, null, RAIO_EXAME).filter((x) => x && x.nome).map((x) => ({ id: x.id, nome: x.nome })); } catch (e) { calou("o ouvido · o chão", e); chao = []; }
     /* a conversa: a frase anterior e a última fala do Mestre (o «ele/ela» de uma mesa) */
     try { anteriores = { jogador: fraseAnteriorDoJogador(mensagensRef.current), mestre: falasDoMestre(mensagensRef.current, 1)[0] || "" }; } catch (e) { calou("o ouvido · a conversa", e); anteriores = {}; }
