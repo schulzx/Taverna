@@ -54,9 +54,11 @@ ok(ehBusca("vasculho o quarto"), "vasculhar o quarto continua busca");
 console.log("\n[a ordem no App: o passo antes do catálogo]");
 const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 const ini = app.indexOf("const adjudicarAcao = (acao) => {");
-const corpo = app.slice(ini, ini + 4000);
+/* 23/11 (a bancada da troca): a janela cresceu (a guarda da troca negada entrou no topo de adjudicarAcao)
+   e a procura passou a ler «if (!trocaAoDado && procurarAlguem(acao))» — a ordem medida é a mesma */
+const corpo = app.slice(ini, ini + 7000);
 const iPasso = corpo.indexOf("moverParaLocal(passo)");
-const iProcura = corpo.indexOf("if (procurarAlguem(acao))");
+const iProcura = corpo.indexOf("procurarAlguem(acao)) return true;");
 const iVeredito = corpo.indexOf("const v = veredictoDaAcao(acao);");
 ok(ini > 0 && iPasso > 0, "adjudicarAcao move pelo mesmo moverParaLocal do envio");
 ok(iPasso > 0 && iPasso < iProcura && iPasso < iVeredito, "o passo vem antes da procura e do veredito");

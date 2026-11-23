@@ -259,7 +259,9 @@ sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
   t("o espontâneo só abre rolagem depois da guarda", APP.indexOf("rolagemDoEspontaneo(prov") > iEf && iEf > 0);
   /* o caminho de hoje, letra a letra, onde a chave desligada passa */
   t("sem o ref do momento, veredictoDaAcao é o catálogo de hoje", /let v = dm && dm\.frase === acao \? dm\.v : lerAcao\(acao, ctxDesafio\(\)\);/.test(corpo("veredictoDaAcao")));
-  t("adjudicarAcao: a procura e o veredito de hoje continuam colados", /if \(procurarAlguem\(acao\)\) return true;\s*const v = veredictoDaAcao\(acao\);\n    if \(!v\) return false;/.test(ad));
+  /* 23/11 (a bancada da troca, L10): a procura ganhou a guarda «!trocaAoDado» (a troca que a porta única mandou ao
+     dado não vira procura de gente); procura e veredito continuam colados */
+  t("adjudicarAcao: a procura e o veredito de hoje continuam colados", /if \(!trocaAoDado && procurarAlguem\(acao\)\) return true;\s*const v = veredictoDaAcao\(acao\);\n    if \(!v\) return false;/.test(ad));
   t("sem m, o Mestre de hoje concede como sempre", /const conc = m \? \{ segura: false \} : seguraOTeste\(v, mesaRef\.current, \{ emCombate: !!combateRef\.current \}\);/.test(ad));
   t("sem o chamado do momento, chamadoDoVeredito é o de hoje", /return oChamado\(v, ctxDoChamado\(mod\)\) \|\| null;/.test(corpo("chamadoDoVeredito")) && /if \(dm && v && dm\.id === \(v\.id \|\| ""\) && dm\.chave === \(v\.chave \|\| ""\)\) \{ chamadoDoMomentoRef\.current = null; return dm\.chamado; \}/.test(corpo("chamadoDoVeredito")));
   /* toda guarda está em try/catch com calou */

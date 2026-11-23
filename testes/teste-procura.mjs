@@ -131,7 +131,9 @@ sec("6. LIGADA AO JOGO");
   t("ela junta elenco, grupo, gente daqui e a espinha", /npcsRef\.current[\s\S]{0,400}?genteDaqui\(\)[\s\S]{0,300}?espinhaRef\.current/.test(APP));
   t("o guarda de `buscar` recebe a pergunta", /ehPessoaConhecida: \(txt\) =>/.test(APP));
   t("e o desafio a consulta", /naoSeCom && x\.naoSeCom\(daAcao, ctx\)/.test(readFileSync("../src/desafios.js", "utf8")));
-  t("a procura corre ANTES do adjudicador", /if \(procurarAlguem\(acao\)\) return true;\s*const v = veredictoDaAcao\(acao\);/.test(APP));
+  /* 23/11 (a bancada da troca, L10): a procura ganhou a guarda «!trocaAoDado» — a troca que a porta única mandou
+     ao dado não vira procura de gente —, e continua ANTES do adjudicador */
+  t("a procura corre ANTES do adjudicador", /if \(!trocaAoDado && procurarAlguem\(acao\)\) return true;\s*const v = veredictoDaAcao\(acao\);/.test(APP));
   t("a escondida devolve o turno ao teste normal", /if \(!r \|\| procuraPedeDado\(r\)\) return false;/.test(APP));
   t("e o Narrador recebe o fato fechado", /envelopeDaProcura\(r\)/.test(APP));
 }

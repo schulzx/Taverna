@@ -88,7 +88,9 @@ const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
    `quemFalou` (quem a ficha do ator pôs a falar, para a recência do elenco)
    DEPOIS da moeda. O que esta asserção guarda — a frase e a moeda por nome —
    continua igual; a régua aceita o que vier depois de `moeda`. */
-t("o App passa a frase do jogador por nome à bolsa", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo \+ "\\n" \+ nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa(?:, [^}]*)? \}\)/.test(app));
+/* 23/11 (a bancada da troca, B30): o pedido passa por `pedidoDaCobranca`, que É a frase do jogador
+   (pedidoDaBolsa) salvo quando a porta única do Mestre vivo já fechou a troca — aí a cobrança não paga duas vezes */
+t("o App passa a frase do jogador por nome à bolsa", /let pedidoDaCobranca = pedidoDaBolsa;/.test(app) && /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo \+ "\\n" \+ nota, pedido: pedidoDaCobranca, moeda: moedaDaBolsa(?:, [^}]*)? \}\)/.test(app));
 t("a frase é a que a escuta lê como do jogador (nunca um envelope)", /lerOPedido\(conteudo\); pedidoDaBolsa = pb && pb\.doJogador \? pb\.texto : ""/.test(app));
 /* MOVIDA (20/10, o Léxico vira camada de cor): a palavra continua a ser a do
    léxico, mas passa por `nomeDaMoeda` — o nome único da campanha, o mesmo da

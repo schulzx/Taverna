@@ -289,7 +289,9 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
      seis frases reais, é teste-frase-que-paga.mjs. Fica aqui o que ela de
      facto prova: os envelopes continuam a chegar (a porta do JÁ PAGO). */
   t("e os envelopes do turno chegam à bolsa (a porta do já pago pelo sistema)", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo/.test(app) && /envelopes: op\.envelopes/.test(app));
-  t("e a frase do jogador chega à bolsa por nome", /pedido: pedidoDaBolsa/.test(app));
+  /* 23/11 (a bancada da troca, B30): a frase chega por `pedidoDaCobranca` (= pedidoDaBolsa, salvo com a troca já
+     fechada pela porta única do Mestre vivo, para não pagar duas vezes) */
+  t("e a frase do jogador chega à bolsa por nome", /let pedidoDaCobranca = pedidoDaBolsa;/.test(app) && /pedido: pedidoDaCobranca/.test(app));
 }
 
 /* ============================================================ */
