@@ -10,6 +10,7 @@
      node testes/bancada-da-troca/bancada.mjs --estado balanca  um grupo (estado de partida)
      node testes/bancada-da-troca/bancada.mjs --so B30          uma frase (ou várias: --so B30,B31)
      node testes/bancada-da-troca/bancada.mjs --lista           só lista as frases
+     node testes/bancada-da-troca/bancada.mjs --frases arquivo.json  outro arquivo de frases (mesmo formato)
      opções: --json arquivo (grava o resultado frase a frase) · --quieto (sem a linha de progresso)
 
    É MEDIDA, não portão: sai sempre com código 0. */
@@ -26,7 +27,7 @@ const args = process.argv.slice(2);
 const opcao = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };
 const tem = (n) => args.includes(n);
 
-const { frases: TODAS } = JSON.parse(fs.readFileSync(path.join(AQUI, "frases.json"), "utf8"));
+const { frases: TODAS } = JSON.parse(fs.readFileSync(opcao("--frases") ? path.resolve(opcao("--frases")) : path.join(AQUI, "frases.json"), "utf8"));
 const estadoDe = (() => { const c = {}; return (n) => (c[n] = c[n] || JSON.parse(fs.readFileSync(path.join(AQUI, "estados", n + ".json"), "utf8"))); })();
 
 let escolhidas = TODAS;
