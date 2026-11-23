@@ -503,6 +503,17 @@ sec("1. NENHUM MÓDULO MUDO");
        do Mestre vivo (ouvirAFrase, oOuvidoFechaATroca). A entrada SAIU — a
        catraca volta a vigiar a regra como a qualquer módulo ligado.
        `teste-a-cena-do-ouvido.mjs` prova a fiação. */
+    /* 23/11 (identidade e posse, etapa 5 · backend): `quem-tem-o-que.js`
+       nasce — o registro de posse (`garantirPosses`, o campo `posses` que a
+       etapa 6 põe no save), a posse derivada de quem é do mundo
+       (`posseInicial`, `posseDe`), as dívidas (`dividasDe`) e a transação
+       única (`aplicarTransacao`). Espera a etapa 6 da planta
+       (mente/plano-identidade-e-posse.md §4): a troca da frase passa a
+       devolver transações e o App.jsx chama `aplicarTransacao` uma vez,
+       atrás da chave do Mestre vivo. Credor: o `oficial` (com o backend),
+       na etapa 6. A entrada sai quando o App ou o motor o importar.
+       `teste-quem-tem-o-que.mjs` é o primeiro leitor. */
+    "quem-tem-o-que.js": "etapa 6 da identidade e posse (oficial)",
   };
   const mudos = [];
   for (const f of arqs) {
