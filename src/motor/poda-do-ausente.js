@@ -186,7 +186,7 @@ function formasDos(ausentes, outros) {
     const formas = [todo];
     if (todo.length > 1 && todo[0].length >= T.primeiroMinimo && primeiros.get(todo[0]) === 1) formas.push([todo[0]]);
     return { ...a, formas };
-  }).filter((a) => a.formas[0].length);
+  }).filter((a) => a.formas.length && a.formas[0].length);
 }
 
 /* o ausente AGE nesta frase? `linha` é a linha inteira (para contar os
