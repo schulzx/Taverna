@@ -41,7 +41,7 @@ import { resumoRitoPrompt } from "../ascensao.js";
 import { AMANHECER, dataTxt, ehNoite, estacaoDe, horaTxt } from "../calendario.js";
 import { celulaDaCidade, celulaDaJornada, resumoCelulaPrompt } from "../celulas.js";
 import { elencoDaCena, resumoCenaPrompt } from "../cena.js";
-import { quemEstaAqui, quemAgeAqui } from "../quem-esta-aqui.js";
+import { quemEstaAqui, quemAgeAqui, rotulosDosHomonimos } from "../quem-esta-aqui.js";
 import { cenarioAtivo } from "../cenario.js";
 import { RAIO_EXAME, criarChao, envelopeDoQueFicou, pertoDaqui } from "../chao.js";
 import { oVetoDaMao } from "./a-mao-da-frase.js";
@@ -462,18 +462,27 @@ export function oPedidoDoTurno(estado, entrada, portas) {
       let aqui;
       try {
         aqui = quemAgeAqui(quemEstaAqui({ npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [], masmorra: $ref.masmorra,
-          jornada: $ref.jornada, lugar: $ref.lugar, lugares: [], gente: (daBase && daBase.gente) || [], nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico } }));
+          jornada: $ref.jornada, lugar: $ref.lugar, lugares: [], gente: (daBase && daBase.gente) || [], nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico },
+          /* identidade · etapa 3: com a chave do Mestre vivo, o homônimo fica (porId) */
+          porId: $E.porId === true }));
       } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra }).aqui; }
       const quantos = aqui.length;
       const confid = $ref.confidencias || [];
+      /* identidade · etapa 3: dois de mesmo primeiro nome são ditos pelo rótulo
+         que os distingue (rotulosDosHomonimos), e a ficha do registo vem pelo id
+         (a chave numerada do homônimo) — só com a chave do Mestre vivo */
+      const porIdG = $E.porId === true;
+      let rotH = new Map();
+      if (porIdG) { try { rotH = rotulosDosHomonimos(aqui.filter((x) => x && typeof x === "object")); } catch (e) { calou("o rótulo do homônimo", e); } }
+      const fichaPorId = (x) => (porIdG && x && typeof x === "object" && typeof x.id === "string" && x.id.startsWith("npc|") && $ref.npcs[x.id.slice(4)]) || null;
       return aqui.map((x) => {
         const nome = typeof x === "string" ? x : x.nome;
-        const n = $ref.npcs[nome] || {};
+        const n = fichaPorId(x) || $ref.npcs[nome] || {};
         const l = garantirLaco(n.laco);
         const daBaseEla = ((daBase && daBase.gente) || []).find((g) => g.nome === nome) || {};
         const noGrupo = (p0.grupo || []).some((g) => (g.nome || "") === nome);
         return {
-          nome,
+          nome: (porIdG && x && typeof x === "object" && rotH.get(x.id)) || nome,
           papel: n.papel || daBaseEla.papel || "",
           temperamento: n.traco || daBaseEla.traco || "",
           quer: daBaseEla.vontade || n.notas || "",

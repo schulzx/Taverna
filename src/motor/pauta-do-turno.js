@@ -55,7 +55,7 @@ import { arredoresDaCidade } from "../arredores.js";
 import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
-import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, linhaDeQuemNaoEsta, ondeDaCena, falasDoMestreAqui } from "../quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, linhaDeQuemNaoEsta, ondeDaCena, falasDoMestreAqui, comRotuloDoHomonimo, rotulosDosHomonimos } from "../quem-esta-aqui.js";
 import { fichaDaCidade, fichaParaPauta } from "../cidade-por-dentro.js";
 import { oQueAMesaFecha } from "../mesa-do-buraco.js";
 import { consultarCobrador, envelopeDoMundo, linhaDoMundo } from "../cobrador.js";
@@ -880,6 +880,9 @@ export function aPautaDoTurno(estado, entrada, portas) {
       /* S4e: os nomes do mundo, para o figurante que atende o sítio (elenco-do-lugar.js) */
       nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico },
       /* 23/11 (a décima sétima sessão): quem o herói conhece e tem papel numa quest aberta leva o rótulo dela */
+      /* identidade · etapa 3: a chave do Mestre vivo (o App põe-na no estado) — a
+         pauta vê o homônimo que a tela vê */
+      porId: $E.porId === true,
       passos: vale("QUEM ESTÁ · os passos", () => osPassosDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() }, { mundo: mundoDaBase() }), []),
     });
   };
@@ -923,7 +926,8 @@ export function aPautaDoTurno(estado, entrada, portas) {
          da quest, nunca chegou à EM CENA (em-cena.js, EM_CENA_DO_PASSO) */
       /* S4: o registo daqui, o longe, a pessoa do passo e a da carta, e o
          fora dos muros — da conta única (quem-esta-aqui.js) */
-      ...contextoDeQuemEsta(q),
+      /* identidade · etapa 3: com a chave, o homônimo chega ao EM CENA pelo rótulo que o distingue, no lugar do nome */
+      ...contextoDeQuemEsta(vale("EM CENA · o rótulo do homônimo", () => comRotuloDoHomonimo(q), q)),
     };
   };
   const pautaDoTurno = (acaoDoTurno = "") => {
@@ -1627,18 +1631,27 @@ export function aPautaDoTurno(estado, entrada, portas) {
       let aqui;
       try {
         aqui = quemAgeAqui(quemEstaAqui({ npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [], masmorra: $ref.masmorra,
-          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [], nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico } }));
+          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [], nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico },
+          /* identidade · etapa 3: com a chave do Mestre vivo, o homônimo fica (porId) */
+          porId: $E.porId === true }));
       } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra }).aqui; }
       const quantos = aqui.length;
       const confid = $ref.confidencias || [];
+      /* identidade · etapa 3: dois de mesmo primeiro nome são ditos pelo rótulo
+         que os distingue (rotulosDosHomonimos), e a ficha do registo vem pelo id
+         (a chave numerada do homônimo) — só com a chave do Mestre vivo */
+      const porIdG = $E.porId === true;
+      let rotH = new Map();
+      if (porIdG) { try { rotH = rotulosDosHomonimos(aqui.filter((x) => x && typeof x === "object")); } catch (e) { calou("o rótulo do homônimo", e); } }
+      const fichaPorId = (x) => (porIdG && x && typeof x === "object" && typeof x.id === "string" && x.id.startsWith("npc|") && $ref.npcs[x.id.slice(4)]) || null;
       return aqui.map((x) => {
         const nome = typeof x === "string" ? x : x.nome;
-        const n = $ref.npcs[nome] || {};
+        const n = fichaPorId(x) || $ref.npcs[nome] || {};
         const l = garantirLaco(n.laco);
         const daBaseEla = ((daBase && daBase.gente) || []).find((g) => g.nome === nome) || {};
         const noGrupo = (p0.grupo || []).some((g) => (g.nome || "") === nome);
         return {
-          nome,
+          nome: (porIdG && x && typeof x === "object" && rotH.get(x.id)) || nome,
           papel: n.papel || daBaseEla.papel || "",
           temperamento: n.traco || daBaseEla.traco || "",
           quer: daBaseEla.vontade || n.notas || "",
