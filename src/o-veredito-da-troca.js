@@ -98,6 +98,9 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
      guardar segredo, ficar quieto. Esta é a ÚNICA lista do suborno: o catálogo
      (desafios.js, lerAcao) pergunta a oSubornoDaFrase em vez de ter a sua. */
   suborno: /\b(?:para|pra)\s+(?:(?:ele|ela|eles|elas|o guarda|a guarda)\s+)?(?:me\s+|nos\s+)?(?:fingir|fechar os olhos|fazer vista grossa|olhar (?:para|pro) (?:o )?outro lado|esquecer|nao (?:me |nos )?ver|nao (?:me |nos )?ter visto|deixar (?:eu |a gente )?(?:passar|entrar|subir|sair)|(?:me|nos) deixar (?:passar|entrar|subir|sair)|ficar calad[oa]|ficar quiet[oa]|calar|guardar (?:o |esse |este )?segredo|manter a boca fechada|nao (?:me |nos )?(?:gritar|contar|dizer|falar|chamar|denunciar|entregar|dedurar|acusar|delatar))\b/,
+  /* a bancada da troca (L10): «suborno a Charity com vinte moedas pra ela me contar…» — o verbo dito é suborno,
+     qualquer que seja o favor pedido (antes só os favores da lista de cima contavam, e a frase ficava sem dado) */
+  subornoDito: /\b(suborno|suborna|subornar|subornamos|subornei)\b/,
   quantiaVaga: /\b(algum dinheiro|umas moedas|umas pratas|alguma moeda|algumas moedas|uns cobres)\b/,
   /* O FIADO: o que se leva hoje e se paga depois */
   fiado: /\b(fiado|fiada|pendur[ao]|na conta|a credito|pago (?:amanha|depois|mais tarde|na volta|outro dia|quando (?:voltar|puder))|pagar (?:amanha|depois|mais tarde))\b/,
@@ -507,7 +510,7 @@ export function aCompraPorMoeda(frase, moeda) {
 export function oSubornoDaFrase(frase, moeda) {
   try {
     const t = sem(frase);
-    if (!t || !V.suborno.test(t)) return false;
+    if (!t || !(V.suborno.test(t) || V.subornoDito.test(t))) return false;
     return quantiaNa(t, moeda) > 0 || V.quantiaVaga.test(t) || /\b(dinheiro|moedas?|suborno|subornar)\b/.test(t);
   } catch { return false; }
 }

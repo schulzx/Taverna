@@ -25,6 +25,7 @@ import { aPortaUnica, oFocoDaConversa, UMA_PORTA_SO } from "../src/motor/uma-por
 import { aCenaDoOuvido, osPratosDaCasa, oVereditoDoOuvido } from "../src/motor/a-cena-do-ouvido.js";
 import { oOuvido } from "../src/o-ouvido.js";
 import { aPropostaDaFrase } from "../src/motor/a-proposta-da-frase.js";
+import { oSubornoDaFrase } from "../src/o-veredito-da-troca.js";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -338,6 +339,54 @@ sec("§7 a bancada da troca — o que o jogo jogado mostrou");
   /* B30 B31 B49 L02: a quantia dita saía duas vezes — a porta única aplicava, e a cobrança da frase pagava de novo depois da prosa */
   t("a frase que a porta única leu como troca não paga de novo pela cobrança do pedido",
     /if \(mestreVivoLigado\(\) && ovC && ovC\.lido && ovC\.troca\) pedidoDaCobranca = "";/.test(APP) && /aplicarResposta\(resp, persAtual, \{ envelopes: [^}]*pedido: pedidoDaCobranca,/.test(APP));
+  /* X01: fora dos muros (lugar com distância que não é «dentro») as bancas, o balcão e a casa ficam na cidade */
+  const rt = (() => { const i = APP.indexOf("  const retratoDoOuvido = "); return APP.slice(i, APP.indexOf("\n  };\n", i)); })();
+  t("fora dos muros, o retrato não traz bancas, balcão nem casa", /foraDosMuros = !jornadaRef\.current && !!\(lgM && lgM\.distancia && lgM\.distancia !== "dentro"\)/.test(rt) && /bancas = foraDosMuros \? \[\] :/.test(rt) && (rt.match(/!foraDosMuros/g) || []).length >= 2);
+
+  /* a praça da bancada: o mercador Cornelius ao lado d'O Sino Rachado, Prudence, e as duas Mercy longe */
+  const PRACA_B = (f, ant) => cena({ lugar: { nome: "A Balança dos Que Voltaram", tipo: "" }, pessoas: [{ nome: "Cornelius", papel: "mercador(a)" }, { nome: "Prudence", papel: "batedor de carteiras" }], ausentes: [{ nome: "Mercy Quintus" }, { nome: "Mercy Ottoline" }], ficha: f, anteriores: ant });
+  const FB = ficha(30, [SIMBOLO]);
+  const P = (frase, ant, f) => aPortaUnica(frase, PRACA_B(f || FB, ant), CTX);
+  const casos = [
+    ["Cornelius, me vende a corda", (r) => cartao(r, "compra", 2), "o mercador atende a praça: a corda do armazém, pelo cartão (B03)"],
+    ["Cornelius, me vende uma dessas cordas? Dou duas moedas.", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 28 && /Corda/.test(r.leitura.coisa), "«dessas» não é coisa: a corda, com a quantia dita (B11)"],
+    ["Peço desculpas à Prudence", (r) => !r.troca && !r.veredito, "pedir desculpas é falar (B121)"],
+    ["Deixa pra lá a corda. Lavinia, deixa que eu carrego a mochila.", (r) => !r.troca && !r.veredito && !r.cartao, "«deixa pra lá» desiste: nenhum cartão (B122)"],
+    ["Cornelius, me dá um pedaço dessa corda", (r) => r.leitura.subtipo === "pedir" && /Corda/.test(r.leitura.coisa) && r.caminho === "dado", "«um pedaço dessa corda» se pede: a coisa é a corda, e o dado (B50)"],
+    ["peço à Prudence o nome do homem de manto cinza", (r) => !r.troca && !r.veredito, "pedir um nome é conversa, nunca um item inventado (L07)"],
+    ["dou duas moedas à Mercy Quintus", (r) => r.caminho === "nao" && /Mercy Quintus não está aqui/.test(r.veredito.linha), "quem está longe: a linha diz que não está (B45)"],
+    ["devolvo o símbolo sagrado riscado à Mercy", (r) => r.caminho === "nao" && /Mercy não está aqui/.test(r.veredito.linha), "«à Mercy» (com crase) também é o nome de fora (B80)"],
+    ["pego a corda da banca e saio andando", (r) => r.caminho === "nao" && /só sai da banca pago/.test(r.veredito.linha), "o que está à venda não se leva da banca (B64)"],
+    ["dou três flechas à Lavinia", (r) => r.caminho === "nao" && /não tem flecha/.test(r.veredito.linha), "o número antes do nome: «flechas» é coisa, e você não tem (B44)"],
+    ["Lavinia, fica com o símbolo, de presente", (r) => r.caminho === "aplicado" && r.leitura.subtipo === "dar", "«de presente» é dar (B41)"],
+    ["Cornelius, você me deve cinco moedas. Estou cobrando.", (r) => r.leitura.subtipo === "cobrar" && r.caminho === "dado", "«me deve… estou cobrando» é cobrar, com o dado (B110)"],
+    ["ofereço vinte moedas à Prudence para ela me deixar passar", (r) => r.caminho === "dado" && r.intencao && r.intencao.tipo === "suborno", "o propósito com dois pronomes é suborno: o dado, e a moeda não sai antes (B91)"],
+    ["compro a corda e duas tochas", (r) => r.caminho === "cartao" && r.cartao.leitura.compras[0].itens[0].quantos === 1 && /Corda/.test(r.cartao.leitura.compras[0].itens[0].nome), "o «duas» é das tochas: a corda vai uma (B13)"],
+  ];
+  for (const [frase, ok, nota] of casos) { const r = P(frase); t(`${nota}: «${frase}»`, ok(r) && ok1(r), J([r.caminho, r.leitura && r.leitura.subtipo, r.leitura && r.leitura.coisa, linhaOuFato(r)])); }
+  /* Q10: o «ela» não entrega à loja de quem se comprou antes (a banca só é o «ela» de quem negocia com ela) */
+  const q10 = P("dou a ela a corda", { jogador: "compro a corda do Sino Rachado" }, ficha(30, [{ nome: "Corda de cânhamo" }]));
+  t("«dou a ela a corda»: a loja não recebe presente (Q10)", q10.leitura.quem !== "O Sino Rachado" && !(q10.veredito && /Sino Rachado/.test(q10.veredito.linha)), J([q10.caminho, q10.leitura.quem]));
+  /* L01: a casa é de todos os que servem — a serviçal também */
+  const lamp = cena({ lugar: { nome: "A Lâmpada dos Sonhos", tipo: "taverna" }, pessoas: [{ nome: "Tabitha", papel: "taverneiro(a)" }, { nome: "Charity Mordaunt", papel: "serviçal" }], ficha: ficha(20, [SIMBOLO]), casa: CASA });
+  const sopa = aPortaUnica("Charity, me serve uma sopa", lamp, CTX);
+  t("a serviçal serve a casa: «Charity, me serve uma sopa» é o cartão de ◉ 3 (L01)", cartao(sopa, "compra", 3), J([sopa.caminho, linhaOuFato(sopa)]));
+  t("…e o clique aplica (a casa é banca de quem serve)", aPortaUnica("Charity, me serve uma sopa", lamp, { ...CTX, confirmado: sopa.cartao }).veredito.ficha.moedas === 17);
+  /* L10: o verbo «suborno» é suborno, qualquer que seja o favor (o catálogo pede o dado por ele) */
+  /* L03: «na minha conta» é fiado — o dado decide, e o cartão não cobra */
+  const fiado = aPortaUnica("Charity, me serve uma caneca de cerveja, na minha conta", lamp, CTX);
+  t("«…na minha conta» é o fiado: o dado, nunca o cartão (L03)", fiado.caminho === "dado" && !fiado.cartao, J([fiado.caminho]));
+  /* Q07: sem o mercador nomeado, a coisa é da banca que a vende (o escambo com a banca é o cartão) */
+  const q07 = P("troco a corda pelo amuleto de osso", null, ficha(13, [{ nome: "Corda de cânhamo" }]));
+  t("o escambo sem ninguém nomeado é com a banca, não com o mercador que atende (Q07)", q07.caminho === "cartao" && q07.cartao.tipo === "escambo" && /Âncora/.test(q07.cartao.leitura.escambo.quem), J([q07.caminho, q07.cartao && q07.cartao.leitura]));
+  /* B08: a compra condicionada ao preço perguntado é a pergunta do preço */
+  const b08 = P("quanto custa uma corda? Se for menos de três, eu compro");
+  t("«quanto custa…? Se for menos de três, eu compro» é a pergunta do preço (B08)", !b08.troca && b08.caminho === "falar" && /◉ 2/.test(b08.fato), J([b08.caminho, b08.fato]));
+  /* B92, Q09, L10: a fiação do dado — a troca negada não rola; a que vai ao dado não vira procura de gente */
+  const adj = (() => { const i = APP.indexOf("  const adjudicarAcao = "); return APP.slice(i, i + 6000); })();
+  t("a troca que a porta única negou não rola dado no catálogo (B92, Q09)", /ovD\.fechou && ovD\.veredito && ovD\.veredito\.estado === "negada"\) return false;/.test(adj) && adj.indexOf("ovD.fechou") < adj.indexOf("alvoLocalPedido(acao)"));
+  t("a troca que a porta única mandou ao dado não abre a procura de gente (L10)", /if \(!trocaAoDado && procurarAlguem\(acao\)\) return true;/.test(adj));
+  t("«suborno a Charity com vinte moedas pra ela me contar…» é suborno (L10)", oSubornoDaFrase("suborno a Charity com vinte moedas pra ela me contar quem esteve aqui") === true && oSubornoDaFrase("pago duas moedas à Charity") === false);
 }
 
 console.log("\n" + bons + " ok, " + maus + " XX");

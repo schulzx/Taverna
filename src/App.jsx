@@ -19131,9 +19131,13 @@ export default function Taverna() {
     /* 23/11 (a décima sexta sessão, frases 4 e 7): quem a tela põe em cena também está — «Mercy» era
        Mercy Quintus, à vista, e o ouvido a resolvia para a Mercy Ottoline, longe (quemONomeDiz: presente ganha) */
     try { for (const n of presentesDaTela()) if (n && !pessoas.some((p) => p && p.nome === n)) pessoas = [...pessoas, { nome: n, papel: "" }]; } catch (e) { calou("o ouvido · quem a tela põe em cena", e); }
-    try { bancas = [...(bancasDaCena() || [])]; } catch (e) { calou("o ouvido · as bancas", e); bancas = []; }
+    /* a bancada da troca (X01): fora dos muros (a Fenda de Névoa, «perto» da cidade) as bancas, o balcão e a casa
+       ficaram lá dentro — «compro uma tocha» ali não abre o cartão do balcão da praça */
+    let foraDosMuros = false;
+    try { const lgM = lugarRef.current; foraDosMuros = !jornadaRef.current && !!(lgM && lgM.distancia && lgM.distancia !== "dentro"); } catch (e) { calou("o ouvido · fora dos muros", e); foraDosMuros = false; }
+    try { bancas = foraDosMuros ? [] : [...(bancasDaCena() || [])]; } catch (e) { calou("o ouvido · as bancas", e); bancas = []; }
     try {
-      const cidB = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
+      const cidB = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !foraDosMuros ? cidadeDoMapa(cidadeAtualRef.current) : null;
       const balc = cidB ? balcaoAqui(cidB) : [];
       const bb = oBalcaoComoBanca(balc);
       /* o balcão vai com o id do uso: a ração comprada entra nos suprimentos, e não na mochila */
@@ -19152,7 +19156,7 @@ export default function Taverna() {
     /* a conversa: a frase anterior e a última fala do Mestre (o «ele/ela» de uma mesa) */
     try { anteriores = { jogador: fraseAnteriorDoJogador(mensagensRef.current), mestre: falasDoMestre(mensagensRef.current, 1)[0] || "" }; } catch (e) { calou("o ouvido · a conversa", e); anteriores = {}; }
     /* a casa: o que a taverna serve, pelos preços comuns do cenário e o fator do pouso */
-    try { if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current) casa = osPratosDaCasa((PRECOS_COMUNS || []).map((p) => ({ id: p.id, rx: p.rx, preco: precoComum(p.id, fatorDoPouso()) }))); } catch (e) { calou("o ouvido · a casa", e); casa = []; }
+    try { if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !foraDosMuros) casa = osPratosDaCasa((PRECOS_COMUNS || []).map((p) => ({ id: p.id, rx: p.rx, preco: precoComum(p.id, fatorDoPouso()) }))); } catch (e) { calou("o ouvido · a casa", e); casa = []; }
     return { lugar: { nome: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "", tipo: (lugarRef.current && lugarRef.current.tipo) || "" }, pessoas, grupo: f0.grupo || [], bancas, ausentes, conhecidos, chao, anteriores, casa, ficha: f0 };
   };
   /* ---------------- UMA PORTA SÓ (23/11, a décima sexta sessão) ----------------
@@ -19845,6 +19849,10 @@ export default function Taverna() {
   };
 
   const adjudicarAcao = (acao) => {
+    /* a bancada da troca (B92, Q09): «suborno o Cornelius com cem moedas» com ◉ 63 — a porta única já negou
+       («Não chega»), e o catálogo ainda rolava Persuasão pelo mesmo suborno. A troca que a porta fechou com
+       um «não» não rola dado (como o momento do turno, que já não se lê com ela fechada). */
+    try { const ovD = ouvidoDoTurnoRef.current; if (mestreVivoLigado() && ovD && ovD.frase === acao && ovD.fechou && ovD.veredito && ovD.veredito.estado === "negada") return false; } catch (e) { calou("a porta única · a troca negada não rola", e); }
     /* MC3: a nota como estava antes deste ato (o «sim» do oráculo e a vigia
        somam-se a ela); «mudar de ideia» repõe-na, porque nada aconteceu */
     try { notaAntesDoAtoRef.current = notaRef.current; } catch (e) { calou("MC3 · a nota antes do ato", e); }
@@ -19880,7 +19888,12 @@ export default function Taverna() {
     /* a procura vem ANTES: se a frase nomeia gente, ela nunca foi um desafio
        de vasculhar, e deixar o catalogo julgar primeiro era exatamente o
        caminho que pagava tesouro por perguntar de alguem */
-    if (procurarAlguem(acao)) return true;
+    /* a bancada da troca (L10): «suborno a Charity com vinte moedas pra ela me contar quem esteve aqui» — a
+       porta única leu um suborno que vai ao dado, e o «quem esteve aqui» do favor abria a procura de gente,
+       que resolvia o turno sem dado nem linha. A troca que a porta mandou ao dado é do dado. */
+    let trocaAoDado = false;
+    try { const ovP = ouvidoDoTurnoRef.current; trocaAoDado = !!(mestreVivoLigado() && ovP && ovP.frase === acao && ovP.troca && !ovP.fechou && ovP.intencao); } catch (e) { calou("a porta única · a troca vai ao dado", e); trocaAoDado = false; }
+    if (!trocaAoDado && procurarAlguem(acao)) return true;
     const v = veredictoDaAcao(acao);
     if (!v) return false;
     if (m && !m.rola && v.tipo === "teste") {
