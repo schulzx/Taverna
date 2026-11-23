@@ -24,8 +24,9 @@
    PURO E DETERMINÍSTICO. `null` e lixo dão a lista vazia, nunca exceção.
    Provado em testes/teste-s5-tres-minutos.mjs. Ligado no App (a soleira).
    ============================================================ */
+import { proximaPerna } from "./lei-da-forma.js";
 
-const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
+const obj =(x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
 const txt = (x) => (typeof x === "string" ? x.replace(/\s+/g, " ").trim() : "");
 const chave = (s) => txt(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -63,6 +64,10 @@ export const PROPOSTAS_DA_ABERTURA = Object.freeze({
      revirar o lugar onde o herói já está (o quartel que é a própria cidade)
      — a porta é a busca, pela frase da ação «Vasculhar» (desafios.js) */
   vasculhar: Object.freeze({ verbo: "Vasculhar {nome}", frase: "Vasculho o lugar com atenção." }),
+  /* 23/11 (a próxima perna): na Torre, o portal deste andar só abre quando
+     o guardião cair — o caminho para cima é ele (a pauta já o nomeia: «quem
+     guarda este andar», leiParaPauta) */
+  guardiao: Object.freeze({ verbo: "Enfrentar {nome}", frase: "Vou enfrentar {nome}, que guarda a passagem deste andar." }),
   /* os predicados de quem o rumo vai buscar à casa dela (os de
      A_PESSOA_DO_PASSO.daQuest que não são levar) */
   irTer: Object.freeze(["conversou", "consultou", "conheceu"]),
@@ -128,8 +133,9 @@ export function asPropostasDaAbertura(entrada) {
    Some ao chegar (o lugar onde já se está não é para onde ir), na luta e na
    estrada.
 
-   oRumoDaBusca({ passos, aqui, cidade, grupo, emLuta, naEstrada, presentes })
-   → { id, tipo, verbo, frase } | null   (`presentes`: [nome] em cena, opcional)
+   oRumoDaBusca({ passos, aqui, cidade, grupo, emLuta, naEstrada, presentes, partida })
+   → { id, tipo, verbo, frase } | null   (`presentes`: [nome] em cena, opcional;
+   `partida`: o contexto da trava — veja aPartida, abaixo)
 
    17/11 (os dois becos da quest), a régua de cada porta, pela ordem:
      1. quem o passo pede AO LADO e ainda não anda com o herói (`grupo`):
@@ -144,10 +150,35 @@ export function asPropostasDaAbertura(entrada) {
    `nome` do destino, a `cidade` dele e a `acao` («ir», «partir», «levar») —
    para a ponte do passo (motor/a-ponte-do-passo.js) dizer ao Narrador
    EXATAMENTE o destino do botão. A tela só lê `verbo` e `frase`. */
+/* 23/11 (a décima sétima sessão, §4): A PARTIDA LÊ A TRAVA. «Partir para
+   Andar 21» com o herói no Andar 1 abria o aviso «não há caminho direto», e
+   o «Partir» do cartão não fazia nada por 21 frases. Com `partida` (o
+   contexto de travaDaPartida, lei-da-forma.js, sem `de` nem `para`), a porta
+   é a próxima perna que a lei deixa fazer agora: o andar seguinte, o salto
+   seguinte, o porto de maré aberta — e `rumo` diz o destino final. Na Torre,
+   com o portal daqui fechado, a porta é o guardião do andar. Sem perna
+   nenhuma (a maré que só abre daqui a dias), não há porta: um botão que não
+   leva a lugar nenhum não aparece. Sem `partida`, a porta de sempre. */
+const aPartida = (P, cid, e) => {
+  const pa = obj(e.partida);
+  if (!pa) return Object.freeze({ id: `rumo|partir|${chave(cid)}`, tipo: "rumo", verbo: encher(P.partir.verbo, cid), frase: encher(P.partir.frase, cid), acao: "partir", nome: cid, cidade: cid });
+  const pp = proximaPerna({ ...pa, de: txt(e.cidade), para: cid });
+  if (!pp || pp.livre) return Object.freeze({ id: `rumo|partir|${chave(cid)}`, tipo: "rumo", verbo: encher(P.partir.verbo, cid), frase: encher(P.partir.frase, cid), acao: "partir", nome: cid, cidade: cid });
+  if (pp.perna && cabe(txt(pp.perna))) {
+    const n = txt(pp.perna);
+    return Object.freeze({ id: `rumo|partir|${chave(n)}`, tipo: "rumo", verbo: encher(P.partir.verbo, n), frase: encher(P.partir.frase, n), acao: "partir", nome: n, cidade: n, rumo: cid });
+  }
+  const g = obj(pp.guardiao);
+  if (g && cabe(txt(g.nomeCurto))) {
+    const n = txt(g.nomeCurto);
+    return Object.freeze({ id: `rumo|guardiao|${chave(n)}`, tipo: "rumo", verbo: encher(P.guardiao.verbo, n), frase: encher(P.guardiao.frase, n), acao: "guardiao", nome: n, guardiao: txt(g.nome) || n, cidade: txt(e.cidade), rumo: cid });
+  }
+  return null;
+};
 const oDestino = (P, nome, cidade, e) => {
   const aqui = chave(e.aqui);
   const cid = txt(cidade);
-  if (cid && txt(e.cidade) && chave(cid) !== chave(e.cidade) && cabe(cid)) return Object.freeze({ id: `rumo|partir|${chave(cid)}`, tipo: "rumo", verbo: encher(P.partir.verbo, cid), frase: encher(P.partir.frase, cid), acao: "partir", nome: cid, cidade: cid });
+  if (cid && txt(e.cidade) && chave(cid) !== chave(e.cidade) && cabe(cid)) return aPartida(P, cid, e);
   if ((aqui && chave(nome) === aqui) || chave(nome) === chave(e.cidade)) return null;
   return Object.freeze({ id: `rumo|${chave(nome)}`, tipo: "rumo", verbo: encher(P.passo.verbo, nome), frase: encher(P.passo.frase, nome), acao: "ir", nome: txt(nome), cidade: cid || txt(e.cidade) });
 };

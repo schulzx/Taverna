@@ -1398,7 +1398,10 @@ export function aPautaDoTurno(estado, entrada, portas) {
           let sabem = [];
           try { sabem = quemSabeDoCaso(osQuadrosDoEstado({ ...estadoDosPassos, quadro: $ref.quadro }, { mundo: mundoDaBase() })); } catch (e3) { calou("quem sabe do caso", e3); sabem = []; }
           ponte = aPonteDoPasso({ passos: passosDoRumo, aqui: ($ref.lugar && $ref.lugar.nome) || "", cidade: $ref.cidadeAtual || "", grupo: grupoP, emLuta: !!$ref.combate, naEstrada: !!$ref.jornada,
-            presentes: ((quem ? quemAgeAqui(quem) : aqui) || []).map((x) => x && x.nome).filter(Boolean), sabem });
+            presentes: ((quem ? quemAgeAqui(quem) : aqui) || []).map((x) => x && x.nome).filter(Boolean), sabem,
+            /* 23/11 (a décima sétima sessão, §2): a partida lê a trava — a ponte diz a
+               próxima perna que a lei deixa, a mesma do botão quando o App lhe passa isto */
+            partida: { molde: moldeMundo(), semente: sementeMundo(), mapa: $ref.mapa, forma: $ref.forma, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), dia: $ref.dia } });
         } catch (e2) { calou("a ponte do passo", e2); ponte = ""; }
         const rumo = linhaDoRumo({
           pedido: lerOPedido(acaoDoTurno),

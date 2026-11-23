@@ -69,6 +69,12 @@ export const A_PONTE_DO_PASSO = Object.freeze({
      (`caminho`, o-caminho-alcancavel.js) — sem o nome do escondido */
   vasculhar: "{nome} — o que o caso pede se acha revirando aqui",
   caminho: "; o caminho: {caminho}",
+  /* 23/11 (a próxima perna, §2 da mesma sessão): o lugar do passo fica onde a
+     lei não deixa ir direto — o botão leva à perna seguinte, e o Narrador
+     sabe que é uma perna, e para onde ela leva; na Torre de portal fechado,
+     que o caminho é o guardião */
+  perna: "{nome} — a próxima parte do caminho até {rumo}, onde o caso continua; dali para lá não se vai direto",
+  guardiao: "{guardiao} guarda a passagem deste andar — o caso continua em {rumo}, e o caminho para cima só abre quando cair",
   teto: 200,
 });
 
@@ -89,9 +95,15 @@ export function quemSabeDoCaso(quadros) {
 export function aPonteDoPasso(entrada) {
   try {
     const e = obj(entrada) || {};
-    const r = oRumoDaBusca({ passos: e.passos, aqui: e.aqui, cidade: e.cidade, grupo: e.grupo, emLuta: e.emLuta, naEstrada: e.naEstrada, presentes: e.presentes });
+    const r = oRumoDaBusca({ passos: e.passos, aqui: e.aqui, cidade: e.cidade, grupo: e.grupo, emLuta: e.emLuta, naEstrada: e.naEstrada, presentes: e.presentes, partida: e.partida });
     if (!r || !r.acao || !txt(r.nome)) return "";
     const P = A_PONTE_DO_PASSO;
+    /* a próxima perna: o botão leva a um degrau do caminho, e não ao destino */
+    if (r.acao === "guardiao" || (r.acao === "partir" && txt(r.rumo))) {
+      const m = r.acao === "guardiao" ? P.guardiao : P.perna;
+      const f = encher(m, { nome: txt(r.nome), guardiao: txt(r.guardiao) || txt(r.nome), rumo: txt(r.rumo) });
+      return f.length > P.teto ? f.slice(0, P.teto - 1) + "…" : f;
+    }
     const molde = P[r.acao];
     if (!molde) return "";
     const cam = arr(e.passos).map((p) => obj(obj(p) && p.caminho)).find((c) => c && txt(c.texto));

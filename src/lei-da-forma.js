@@ -253,6 +253,65 @@ export function travaDaPartida(ctx) {
   return null;
 }
 
+/* ---------------- A PRÓXIMA PERNA (23/11/2026) ----------------
+   A décima sétima sessão do Mestre vivo: a segunda quest nasceu no Andar 21
+   com o herói no Andar 1, e o botão «Partir para Andar 21» abria o aviso «não
+   há caminho direto» — um botão morto por 21 frases. Uma varredura de 520
+   campanhas deu 489 de 493 quests de ato ≥ 1 com o primeiro passo num andar
+   travado. Onde a quest nasce não muda (é a semente); muda o que se oferece:
+   a próxima perna do caminho que a lei DEIXA fazer agora.
+
+   proximaPerna(ctx) → null | { livre: true, perna } | { perna, destino }
+                       | { guardiao, destino } | { espera, destino }
+                       | { semCaminho: true, destino }   (`null`: entrada inválida)
+     `ctx`: o de travaDaPartida (molde, semente, mapa, forma, lex, genero,
+     de, para, dia).
+     · a lei deixa ir direto: `livre`, e a perna é o próprio destino;
+     · Torre: o andar seguinte, se o portal daqui está aberto; fechado, o
+       guardião deste andar (é ele o caminho);
+     · rota de salto: o primeiro salto do caminho mais curto pelas rotas;
+     · maré: o primeiro porto vizinho de maré aberta de onde o destino se
+       alcança pelas rotas; nenhum, a espera (os dias até abrir).
+   Na dúvida (sem lei, sem mapa, destino desconhecido), `livre` — a mesma
+   regra do porteiro: falso positivo é jogador preso. */
+const PERNA_MAX_SALTOS = 64;
+const distanciasPelasRotas = (mapa, para) => {
+  const dist = new Map([[semA(para), 0]]);
+  const fila = [para];
+  for (let i = 0; i < fila.length && i < 4096; i++) {
+    const d = dist.get(semA(fila[i]));
+    if (d >= PERNA_MAX_SALTOS) continue;
+    for (const v of vizinhosDe(mapa, fila[i])) if (!dist.has(semA(v))) { dist.set(semA(v), d + 1); fila.push(v); }
+  }
+  return dist;
+};
+export function proximaPerna(ctx) {
+  try {
+    const o = ctx && typeof ctx === "object" ? ctx : {};
+    const { mapa, de, para } = o;
+    if (!de || !para) return null;
+    const trava = travaDaPartida(o);
+    if (!trava) return { livre: true, perna: para };
+    if (trava.lei === "guardiao") {
+      const prox = proximoAndar(mapa, de);
+      if (!prox) return { semCaminho: true, destino: para };
+      const t2 = semA(prox.nome) === semA(para) ? trava : travaDaPartida({ ...o, para: prox.nome });
+      if (!t2) return { perna: prox.nome, destino: para };
+      if (t2.guardiao) return { guardiao: t2.guardiao, destino: para };
+      return { semCaminho: true, destino: para };
+    }
+    if (trava.lei === "rota" || trava.lei === "mare") {
+      const dist = distanciasPelasRotas(mapa, para);
+      const viz = vizinhosDe(mapa, de)
+        .filter((v) => semA(v) !== semA(para) && dist.has(semA(v)) && !travaDaPartida({ ...o, para: v }))
+        .sort((a, b) => dist.get(semA(a)) - dist.get(semA(b)) || semA(a).localeCompare(semA(b)));
+      if (viz.length) return { perna: viz[0], destino: para };
+      return trava.lei === "mare" ? { espera: trava.abreEm || 0, destino: para } : { semCaminho: true, destino: para };
+    }
+    return { semCaminho: true, destino: para };
+  } catch { return null; }
+}
+
 /* ---------------- A CHAVE ----------------
    Chamada pelo registro de mortes: se quem caiu é o guardião do andar
    em que o herói está, a forma marca o andar vencido e devolve o

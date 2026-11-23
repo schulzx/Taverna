@@ -18,6 +18,20 @@ import { oRumoDaBusca, PROPOSTAS_DA_ABERTURA } from "../src/propostas-da-abertur
 import { aPonteDoPasso, A_PONTE_DO_PASSO } from "../src/motor/a-ponte-do-passo.js";
 import { aMesaDasQuests } from "../src/motor/quests-do-turno.js";
 import { oCaminhoAlcancavel, O_CAMINHO_ALCANCAVEL } from "../src/o-caminho-alcancavel.js";
+import { travaDaPartida, proximaPerna } from "../src/lei-da-forma.js";
+import { oTurnoDasQuests } from "../src/motor/quests-do-turno.js";
+import { esqueletoDaCampanha, comOEsqueleto } from "../src/esqueleto.js";
+import { garantirHistoria, ESTRUTURAS } from "../src/historia.js";
+import { gerarGeografia } from "../src/geografia.js";
+import { estenderEspinha } from "../src/saga.js";
+import { nucleoDaCampanha } from "../src/nucleo.js";
+import { chefesDoMundo } from "../src/mundo-base.js";
+import { garantirFactos } from "../src/livro-de-factos.js";
+import { MOLDES } from "../src/moldes.js";
+
+
+const J = (x) => JSON.stringify(x);
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -97,6 +111,95 @@ sec("1 · o passo cujo alvo está escondido aponta o caminho alcançável");
   t("qualquer passo com alternativa: o ramo sem o escondido vira caminho", !!c && c.texto === "falar com Ama Velha e ir até O Poço", c && c.texto);
   t("sem escondido, não há desvio (o passo é o de sempre)", oCaminhoAlcancavel(falta, { escondido: () => false }) === null);
   t("todo verbo do caminho tem {nome}", Object.values(O_CAMINHO_ALCANCAVEL.verbos).every((v) => v.includes("{nome}")));
+}
+
+/* ============================================================ */
+sec("2 · o destino lê a trava: a próxima perna que a lei deixa");
+{
+  /* a Torre da sessão: herói no Andar 1, «Ver o que resta de Passagem do Sino» no Andar 21 */
+  const andares = Array.from({ length: 22 }, (_, i) => ({ nome: i === 0 ? "Andar 1 — do Sal" : i === 20 ? "Andar 21 — das Cinzas" : `Andar ${i + 1}`, z: i + 1 }));
+  const mapa = { cidades: andares, rotas: [] };
+  const passos = [{ quest: "o_ultimo_a_sair", etapa: "ver", texto: "Ver o que resta de Passagem do Sino", lugares: [{ nome: "Passagem do Sino", cidade: "Andar 21 — das Cinzas" }], candidatos: { pessoa: [], lugar: [], item: [] }, quem: [] }];
+  const base = { passos, aqui: "", cidade: "Andar 1 — do Sal", grupo: [], presentes: [] };
+  const antes = oRumoDaBusca(base);
+  t("sem a trava (o de antes), o botão manda ao Andar 21 — e a lei não deixa", !!antes && antes.acao === "partir" && !!travaDaPartida({ molde: "torre", semente: "s", mapa, forma: { vencidos: { "Andar 1 — do Sal": true } }, de: base.cidade, para: antes.nome }));
+  const aberto = { molde: "torre", semente: "s", mapa, forma: { vencidos: { "Andar 1 — do Sal": true } }, genero: "", dia: 3 };
+  const r1 = oRumoDaBusca({ ...base, partida: aberto });
+  t("com o portal daqui aberto, o botão é subir ao andar seguinte", !!r1 && r1.acao === "partir" && r1.nome === "Andar 2" && r1.rumo === "Andar 21 — das Cinzas", JSON.stringify(r1));
+  t("…e esse botão a lei deixa", !travaDaPartida({ ...aberto, de: base.cidade, para: r1.nome }));
+  const p1 = aPonteDoPasso({ ...base, partida: aberto });
+  t("a ponte diz a perna e para onde ela leva", p1.includes("Andar 2") && p1.includes("Andar 21") && p1.length <= A_PONTE_DO_PASSO.teto, p1);
+  const fechado = { ...aberto, forma: null };
+  const r2 = oRumoDaBusca({ ...base, partida: fechado });
+  t("com o guardião vivo, o botão é enfrentá-lo (é ele o caminho)", !!r2 && r2.acao === "guardiao" && r2.frase.includes(r2.nome), JSON.stringify(r2));
+  const p2 = aPonteDoPasso({ ...base, partida: fechado });
+  t("…e o Narrador sabe que o caminho para cima passa por ele", p2.includes("guarda a passagem") && p2.includes("Andar 21"), p2);
+  t("descer é livre: o andar de baixo é o próprio destino", proximaPerna({ ...fechado, de: "Andar 21 — das Cinzas", para: "Andar 2" }).livre === true);
+  /* a rota de salto: o primeiro salto do caminho mais curto */
+  const est = { cidades: [{ nome: "A" }, { nome: "B" }, { nome: "C" }, { nome: "D" }], rotas: [{ de: "A", para: "B" }, { de: "B", para: "C" }, { de: "C", para: "D" }] };
+  const pe = proximaPerna({ molde: "estelar", semente: "s", mapa: est, de: "A", para: "D" });
+  t("no Braço Estelar, o primeiro salto do caminho até o destino", !!pe && pe.perna === "B" && pe.destino === "D", JSON.stringify(pe));
+  const ilha = { cidades: [{ nome: "A" }, { nome: "B" }, { nome: "Z" }], rotas: [{ de: "A", para: "B" }] };
+  t("sem caminho nenhum, nenhum botão (um botão que não leva a lugar nenhum não aparece)", oRumoDaBusca({ passos: [{ lugares: [{ nome: "Doca", cidade: "Z" }] }], cidade: "A", partida: { molde: "estelar", semente: "s", mapa: ilha } }) === null);
+}
+
+sec("2b · A CATRACA: em campanhas de todos os moldes, nenhum botão morto");
+{
+  const ESP = ESTRUTURAS.filter((e) => e.espinha).map((e) => e.id);
+  const POR_MOLDE = 24;
+  const ligadas = (mapa, de, para) => {
+    const vistos = new Set([norm(de)]), fila = [de];
+    const viz = (n) => (mapa.rotas || []).flatMap((r) => (norm(r.de) === norm(n) ? [r.para] : norm(r.para) === norm(n) ? [r.de] : []));
+    for (let i = 0; i < fila.length; i++) for (const v of viz(fila[i])) if (!vistos.has(norm(v))) { vistos.add(norm(v)); fila.push(v); }
+    return vistos.has(norm(para));
+  };
+  const linhas = [];
+  let mortosAntes = 0, mortosDepois = 0, semBotao = 0, total = 0, isoladas = 0;
+  for (const molde of MOLDES) {
+    let q = 0, ma = 0, md = 0;
+    for (let i = 0; i < POR_MOLDE; i++) {
+      const semente = `Perna|${molde.id}|${i}`;
+      const mapa = gerarGeografia(semente, molde, null);
+      let espinha, esq;
+      try {
+        espinha = estenderEspinha({ semente, mapa, estrutura: ESP[i % ESP.length], cidadeInicial: mapa.cidades[0].nome, antecedente: "", dia: 1 });
+        const nucleo = nucleoDaCampanha(semente, mapa, { espinha, antecedente: "", grupo: [] });
+        esq = esqueletoDaCampanha({ semente, mapa, espinha, antecedente: "", nucleo, chefes: chefesDoMundo(semente, mapa), molde });
+      } catch { esq = null; }
+      if (!esq) continue;
+      for (const a of esq.atos) {
+        if (!a.quest || a.ato < 1) continue;
+        /* o herói ainda na cidade do ato de antes, quando a quest nova abre */
+        const de = (esq.atos.find((x) => x.ato === a.ato - 1) || {}).cidade || mapa.cidades[0].nome;
+        let E = { nomeCampanha: "p", mundo: { genero: "", molde: molde.id }, espinha: comOEsqueleto(espinha, esq), historia: garantirHistoria({ estrutura: esq.estrutura, etapa: a.ato }), mapa, cidadeAtual: de, lugar: null, jornada: null, personagem: { nome: "W", grupo: [], inventario: [] }, npcs: {}, dia: 1, minuto: 600, npcTurno: 0, factos: garantirFactos(null) };
+        const r = oTurnoDasQuests(E, { mundo: { semente } });
+        if (r) E = { ...E, ...r.estado };
+        const passos = osPassosDasQuests(E, { mundo: { semente } });
+        if (!passos.length) continue;
+        for (const venc of [false, true]) {
+          const partida = { molde: molde.id, semente, mapa, forma: venc ? { vencidos: { [de]: true } } : null, genero: "", dia: 1 + i };
+          const morto = (x) => !!x && x.acao === "partir" && !!travaDaPartida({ ...partida, de, para: x.nome });
+          const e = { passos, aqui: "", cidade: de, grupo: [], presentes: [] };
+          total++; q++;
+          if (morto(oRumoDaBusca(e))) { mortosAntes++; ma++; }
+          const d = oRumoDaBusca({ ...e, partida });
+          if (morto(d)) { mortosDepois++; md++; }
+          if (!d) {
+            /* sem botão: só vale quando o mapa da semente não liga as duas cidades */
+            const destino = (passos[0].lugares[0] || {}).cidade || (passos[0].candidatos.pessoa[0] || {}).cidade || "";
+            if (molde.lei && molde.lei.id !== "guardiao" && destino && !ligadas(mapa, de, destino)) isoladas++;
+            else { semBotao++; if (semBotao <= 4) console.log(`      sem botão: ${semente} ${de} → ${destino} ${JSON.stringify(proximaPerna({ ...partida, de, para: destino }))}`); }
+          }
+        }
+      }
+    }
+    linhas.push(`${molde.id}: ${q} (mortos ${ma} → ${md})`);
+  }
+  console.log("      " + linhas.join(" · ") + ` · isoladas pelo mapa: ${isoladas}`);
+  t(`${total} quests abertas de ato ≥ 1 (${MOLDES.length} moldes × ${POR_MOLDE} campanhas × 2 estados do portal)`, total >= MOLDES.length * POR_MOLDE);
+  t("antes: havia botões que a lei não deixava seguir (a prova de que a catraca morde)", mortosAntes > 0, String(mortosAntes));
+  t("depois: nenhum botão morto", mortosDepois === 0, String(mortosDepois));
+  t("toda quest cujo destino o mapa alcança tem um botão", semBotao === 0, String(semBotao));
 }
 
 /* ============================================================ */
