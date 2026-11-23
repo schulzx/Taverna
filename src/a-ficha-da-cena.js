@@ -305,9 +305,22 @@ export function osPrecosDaPergunta(frase, bancas) {
    em todo turno com cena, numa linha curta de NÃO PODE — no máximo `teto`
    nomes, pelo primeiro nome. `ausentes`: os de osAusentes ({ nome, onde });
    `daHistoria`: os nomes; `fora`: quem já tem o veto dele neste turno. */
+/* 23/11 (a décima sétima sessão, frases 1 a 4): QUEM ESTÁ NOUTRO SÍTIO DAQUI. O
+   ausente marcado `sitio` (osAusentes com o Mestre vivo: o elenco conhecido com
+   posto noutro sítio desta cidade) entra mesmo fora da gente da história, e a
+   linha diz ONDE ele está («Brannoc aparecer ou falar aqui: está na Feira») —
+   no lugar de «noutro lugar». `letras`: o teto da linha com o sítio, que é o
+   pior caso da linha de sempre (dois primeiros nomes de 12 letras: 74); passando
+   dele, volta à de sempre — o pior caso da pauta não cresce.
+   `naoPodeOnde`/`naoPodeOndes`: as duas formas com o sítio; `cada`: cada nome
+   com o sítio dele. */
 export const A_GENTE_DA_HISTORIA_LONGE = Object.freeze({
   naoPode: "{lista} aparecer ou falar aqui: está noutro lugar",
   naoPodeVarios: "{lista} aparecerem ou falarem aqui: estão noutro lugar",
+  naoPodeOnde: "{lista} aparecer ou falar aqui: está {emOnde}",
+  naoPodeOndes: "{lista} aparecerem ou falarem aqui: {cada}",
+  cada: "{nome} {emOnde}",
+  letras: 74,
   teto: 2,
 });
 export function pautaDosAusentesDaHistoria(ausentes, daHistoria, fora) {
@@ -319,13 +332,22 @@ export function pautaDosAusentesDaHistoria(ausentes, daHistoria, fora) {
     for (const a of arr(ausentes)) {
       if (!obj(a) || a.morto || !txt(a.nome)) continue;
       const p = primeiro(a.nome);
-      if (!nomes.has(p) || jaVetado.has(p) || longe.some((x) => primeiro(x) === p)) continue;
-      longe.push(txt(a.nome).split(/[\s,()]+/).filter(Boolean)[0] || txt(a.nome));
+      if ((!nomes.has(p) && !a.sitio) || jaVetado.has(p) || longe.some((x) => primeiro(x.nome) === p)) continue;
+      longe.push({ nome: txt(a.nome).split(/[\s,()]+/).filter(Boolean)[0] || txt(a.nome), onde: a.sitio ? txt(a.onde) : "" });
     }
     if (!longe.length) return null;
     const lista = longe.slice(0, G.teto);
-    const dito = lista.length > 1 ? `${lista.slice(0, -1).join(", ")} e ${lista[lista.length - 1]}` : lista[0];
-    return Object.freeze({ acabou: [], naoPode: [(lista.length > 1 ? G.naoPodeVarios : G.naoPode).replace("{lista}", dito)] });
+    const e = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} e ${xs[xs.length - 1]}` : xs[0]);
+    const dito = e(lista.map((x) => x.nome));
+    const deSempre = (lista.length > 1 ? G.naoPodeVarios : G.naoPode).replace("{lista}", dito);
+    let linha = deSempre;
+    if (lista.every((x) => x.onde)) {
+      const comOnde = lista.length > 1
+        ? G.naoPodeOndes.replace("{lista}", dito).replace("{cada}", e(lista.map((x) => G.cada.replace("{nome}", x.nome).replace("{emOnde}", emOLugar(x.onde)))))
+        : G.naoPodeOnde.replace("{lista}", dito).replace("{emOnde}", emOLugar(lista[0].onde));
+      if (comOnde.length <= Math.max(deSempre.length, G.letras)) linha = comOnde;
+    }
+    return Object.freeze({ acabou: [], naoPode: [linha] });
   } catch {
     return null;
   }

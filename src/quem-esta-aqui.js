@@ -249,6 +249,44 @@ export function quemEstaAqui(estado) {
   return { aqui, longe: longe2, doPasso, doSitio, noSitio, fora, grupo: grupo.map((g) => nomeDe(g)), postosLonge };
 }
 
+/* QUEM ESTÁ NOUTRO SÍTIO DAQUI (23/11/2026, a décima sétima sessão, frases 1 a 4)
+   quemEstaNoutroSitio(q, ctx) → [{ nome, onde }]
+   O elenco CONHECIDO (o registo de gente, nesta cidade) que tem posto noutro
+   sítio da mesma cidade. Com o herói num sítio, é o `longe` de `dias: 0` com o
+   posto (`laFora`) — quemEstaAqui já o pôs lá. Sem sítio (a rua, a chegada),
+   quemEstaAqui deixa toda a gente do registo «aqui» (o morador da cidade é
+   plausível na rua); mas quem tem POSTO — a casa da base (aCasaNaBase), ou o
+   `local` da ficha a nomear um sítio conhecido (`ctx.lugares`) — está no posto,
+   e não na rua com o herói: nas frases 1 a 4 Brannoc falou sem estar ali. O
+   grupo, o companheiro, quem o passo ou o sítio põem em cena, nunca.
+   ctx: { gente (a base da cidade), lugares ([{ nome }], os sítios daqui) }.
+   Não muda quemEstaAqui (a tela segue igual); quem lê é a poda do ausente e a
+   linha da pauta, com o Mestre vivo. */
+export function quemEstaNoutroSitio(q, ctx) {
+  try {
+    const x = ehObj(q) ? q : {};
+    const c = ehObj(ctx) ? ctx : {};
+    if (x.fora) return [];
+    const grupo = new Set(arr(x.grupo).map((g) => sem(nomeDe(g))));
+    const dentro = [...arr(x.doPasso), ...arr(x.doSitio)].map(nomeDe);
+    const fica = (nome) => !nome || grupo.has(sem(nome)) || dentro.some((d) => mesmo(d, nome));
+    const out = [];
+    const por = (nome, onde) => { if (!fica(nome) && str(onde).trim() && !out.some((y) => mesmo(y.nome, nome))) out.push(Object.freeze({ nome, onde: str(onde).trim() })); };
+    for (const n of arr(x.longe)) if (ehObj(n) && Number(n.dias) === 0 && str(n.laFora).trim() && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora);
+    if (!x.noSitio) {
+      const sitios = arr(c.lugares).filter((l) => ehObj(l) && nomeDe(l) && str(l.onde) !== QUEM_ESTA_AQUI_TABELA.ondeArredor);
+      for (const n of arr(x.aqui)) {
+        if (!ehObj(n) || /companheir/i.test(str(n.relacao)) || /morto/i.test(str(n.status))) continue;
+        let casa = null;
+        try { casa = aCasaNaBase(nomeDe(n), c.gente); } catch { casa = null; }
+        const posto = casa && str(casa.local).trim() ? casa.local : (sitios.find((l) => nomeiaSitio(n.local, l.nome)) || {}).nome;
+        if (posto) por(nomeDe(n), posto);
+      }
+    }
+    return out;
+  } catch { return []; }
+}
+
 /* S4c · QUEM AGE AQUI: a lista que o Intérprete (A GENTE) lê. Num sítio da
    cidade, só quem o sistema põe nele (o grupo, o posto, o passo) — o
    morador de paradeiro «a cidade» é plausível na rua, mas não age na

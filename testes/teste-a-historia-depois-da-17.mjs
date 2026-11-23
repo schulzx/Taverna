@@ -30,6 +30,9 @@ import { garantirFactos } from "../src/livro-de-factos.js";
 import { MOLDES } from "../src/moldes.js";
 
 import { osQuadrosDoEstado, aCartaDoTeste, CARTA_DO_TESTE } from "../src/quadro-da-quest.js";
+import { quemEstaAqui, quemEstaNoutroSitio, quemAgeAqui, pessoasDasCartas } from "../src/quem-esta-aqui.js";
+import { osAusentes, podarOAusente } from "../src/motor/poda-do-ausente.js";
+import { pautaDosAusentesDaHistoria, A_GENTE_DA_HISTORIA_LONGE } from "../src/a-ficha-da-cena.js";
 
 const J = (x) => JSON.stringify(x);
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -223,6 +226,48 @@ sec("3 · o teste de troca não vira carta de consulta");
   const certo = teste("Convenço a Hilda a me contar quem da guarda recebe por fora.", true);
   t("convencê-la a falar do caso continua a virar a carta", !!certo && certo.caminho === "falar", JSON.stringify(certo));
   t("as âncoras abertas continuam a pedir o assunto (a tabela de antes)", J(CARTA_DO_TESTE.assunto) === J(["cidade", "nenhuma"]) && CARTA_DO_TESTE.trocaQueNaoConsulta.includes("deGraca"));
+}
+
+/* ============================================================ */
+sec("4 · quem do elenco está noutro sítio desta cidade (com o Mestre vivo)");
+{
+  const QUARTEL = "O Quartel do Degrau", FEIRA = "A Feira";
+  const npcs = { "Brannoc Filho da Névoa": { nome: "Brannoc Filho da Névoa", papel: "catador de espólios", local: `${QUARTEL}, em ${CID}`, conhecidoEm: 1, status: "vivo", relacao: "neutro" } };
+  const gente = [{ nome: "Brannoc Filho da Névoa", papel: "catador de espólios", local: QUARTEL }, { nome: "Jora Vento-Cinza", papel: "vendedora", local: FEIRA }];
+  const lugares = [{ nome: QUARTEL }, { nome: FEIRA }];
+  const mapa = { cidades: [{ nome: CID, x: 0, y: 0 }], rotas: [] };
+  const base = { npcs, cidadeAtual: CID, mapa, personagem: { nome: "Osric", grupo: [{ nome: "Loras" }] }, lugares, gente };
+  /* as frases 1 a 4: o herói sem sítio */
+  const qRua = quemEstaAqui({ ...base, lugar: null });
+  t("sem sítio, quemEstaAqui deixa Brannoc «aqui» (a tela segue igual)", qRua.aqui.some((n) => /Brannoc/.test(n.nome)));
+  const noutro = quemEstaNoutroSitio(qRua, { gente, lugares });
+  t("…mas ele tem posto no quartel: está noutro sítio daqui", noutro.length === 1 && /Brannoc/.test(noutro[0].nome) && noutro[0].onde === QUARTEL, J(noutro));
+  const semChave = osAusentes(qRua, { gente, npcs, heroi: { nome: "Osric" } });
+  t("sem a chave do Mestre vivo, a poda é a de sempre (Brannoc não é ausente)", !semChave.some((a) => /Brannoc/.test(a.nome)));
+  const comChave = osAusentes(qRua, { gente, npcs, heroi: { nome: "Osric" }, lugares, tambemSemSitio: true });
+  const b = comChave.find((a) => /Brannoc/.test(a.nome));
+  t("com a chave, sem sítio, Brannoc é ausente, com o posto", !!b && b.sitio === true && b.onde === QUARTEL, J(comChave));
+  const prosa = "A rua cheira a sal e a corda molhada, e as lonas das bancas estalam ao vento que sobe do vão. Brannoc se aproxima e diz que a carroça parte ao anoitecer. Um cão magro atravessa a praça atrás de restos, e ninguém olha duas vezes para o Tiefling de capa escura.";
+  const pod = podarOAusente(prosa, comChave, { frase: "Olho em volta." });
+  t("a poda tira a frase em que ele age, com o herói sem sítio", pod.podadas.some((p) => /Brannoc/.test(p.nome)) && !/Brannoc/.test(pod.narrativa), J(pod));
+  const linha = pautaDosAusentesDaHistoria(comChave, [], []);
+  t("o Narrador recebe onde ele está, e não aqui", !!linha && /Brannoc aparecer ou falar aqui: está no Quartel do Degrau/.test(linha.naoPode[0]), linha && linha.naoPode[0]);
+  /* o herói num sítio (a Feira): o longe de dias 0 já existia; a linha diz o posto */
+  const qFeira = quemEstaAqui({ ...base, lugar: { nome: FEIRA, cidade: CID } });
+  const comChaveF = osAusentes(qFeira, { gente, npcs, heroi: { nome: "Osric" }, lugares, tambemSemSitio: true });
+  const lf = pautaDosAusentesDaHistoria(comChaveF, [], []);
+  t("na Feira, a linha diz que Brannoc está no quartel", !!lf && /no Quartel do Degrau/.test(lf.naoPode[0]), lf && lf.naoPode[0]);
+  const semChaveF = osAusentes(qFeira, { gente, npcs, heroi: { nome: "Osric" } });
+  t("sem a chave, a linha é a de sempre (só a gente da história, «noutro lugar»)", pautaDosAusentesDaHistoria(semChaveF, [], []) === null
+    && /noutro lugar/.test(pautaDosAusentesDaHistoria(semChaveF, ["Brannoc"], []).naoPode[0]));
+  /* o pior caso: a linha com o sítio nunca passa do pior caso da de sempre */
+  const G = A_GENTE_DA_HISTORIA_LONGE;
+  const doze = "Abcdefghijkl", doze2 = "Mnopqrstuvwx";
+  const piorDeSempre = G.naoPodeVarios.replace("{lista}", `${doze} e ${doze2}`).length;
+  t(`o teto da linha com o sítio (${G.letras}) não passa do pior caso da de sempre (${piorDeSempre})`, G.letras <= piorDeSempre);
+  const longos = [{ nome: `${doze} X`, onde: "A Grande Casa de Contagem do Porto Velho", sitio: true }, { nome: `${doze2} Y`, onde: "O Pátio das Trocas de Pedra Antiga", sitio: true }];
+  const lpior = pautaDosAusentesDaHistoria(longos, [], []).naoPode[0];
+  t("com sítios de nome comprido, a linha volta à de sempre (não cresce)", lpior.length <= piorDeSempre && /noutro lugar/.test(lpior), lpior);
 }
 
 /* ============================================================ */

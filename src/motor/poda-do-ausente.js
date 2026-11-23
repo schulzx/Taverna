@@ -32,6 +32,7 @@
 
    Puro, sem React, determinístico. Provado em testes/teste-poda-do-ausente.mjs.
    ============================================================ */
+import { quemEstaNoutroSitio } from "../quem-esta-aqui.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -97,11 +98,19 @@ const AGE = S(T.age), FALA = S(T.fala), PULA = S(T.pula), FECHA = S(T.fecha), PR
    sítio ou fora dos muros, a gente da base posta noutro local; e o morto
    do registo. Nunca quem está (aqui, posto, passo), nem o grupo.
    ============================================================ */
+/* 23/11 (a décima sétima sessão, frases 1 a 4): `ctx.tambemSemSitio` (o Mestre
+   vivo) — com o herói sem sítio, o elenco conhecido que tem posto noutro sítio
+   desta cidade (quemEstaNoutroSitio, quem-esta-aqui.js) deixa de contar como
+   presente e passa a candidato, com o posto por `onde` e `sitio: true`. Sem a
+   opção, a lista de sempre. `ctx.lugares`: os sítios daqui (opcional). */
 export function osAusentes(q, ctx) {
   const x = ehObj(q) ? q : {};
   const c = ehObj(ctx) ? ctx : {};
+  let noutro = [];
+  if (c.tambemSemSitio === true && !x.noSitio && !x.fora) { try { noutro = quemEstaNoutroSitio(x, { gente: c.gente, lugares: c.lugares }); } catch { noutro = []; } }
+  const foiPostoNoutro = (n) => noutro.some((y) => palavrasDoNome(y.nome) === palavrasDoNome(nomeDe(n)));
   const presentes = [...arr(x.doSitio), ...arr(x.doPasso), ...arr(x.grupo)].map(nomeDe)
-    .concat(x.noSitio ? arr(x.aqui).filter((n) => arr(x.grupo).some((g) => palavrasDoNome(g) === palavrasDoNome(nomeDe(n)))).map(nomeDe) : arr(x.aqui).map(nomeDe))
+    .concat(x.noSitio ? arr(x.aqui).filter((n) => arr(x.grupo).some((g) => palavrasDoNome(g) === palavrasDoNome(nomeDe(n)))).map(nomeDe) : arr(x.aqui).filter((n) => !foiPostoNoutro(n)).map(nomeDe))
     .concat([nomeDe(c.heroi)], arr(c.protegidos).map(nomeDe))
     /* quem anda comigo (o companheiro do registo) anda com o herói */
     .concat(Object.values(ehObj(c.npcs) ? c.npcs : {}).filter((n) => ehObj(n) && /companheir/i.test(str(n.relacao)) && !/morto/i.test(str(n.status))).map(nomeDe))
@@ -112,12 +121,13 @@ export function osAusentes(q, ctx) {
      qualquer outro Godfrey (o portão morde só o necessário) */
   const primeirosAqui = new Set(presentes.map((n) => palavrasDoNome(n).split(" ")[0]).filter(Boolean));
   const out = [];
-  const por = (nome, onde, morto) => {
+  const por = (nome, onde, morto, sitio) => {
     const k = palavrasDoNome(nome);
     if (!k || pres.has(k) || primeirosAqui.has(k.split(" ")[0]) || out.some((y) => palavrasDoNome(y.nome) === k)) return;
-    out.push({ nome: str(nome).trim(), onde: str(onde).trim(), morto: !!morto });
+    out.push({ nome: str(nome).trim(), onde: str(onde).trim(), morto: !!morto, ...(sitio && c.tambemSemSitio === true ? { sitio: true } : {}) });
   };
-  for (const n of arr(x.longe)) if (ehObj(n) && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora || n.onde || n.local, false);
+  for (const n of noutro) por(n.nome, n.onde, false, true);
+  for (const n of arr(x.longe)) if (ehObj(n) && !/morto/i.test(str(n.status))) por(nomeDe(n), n.laFora || n.onde || n.local, false, Number(n.dias) === 0 && !!str(n.laFora).trim() && !x.fora);
   if (x.noSitio || x.fora) {
     const sitio = sem(nomeDe(c.lugar));
     for (const p of arr(c.gente)) {
