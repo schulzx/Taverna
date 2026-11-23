@@ -56,6 +56,7 @@
 import { elencoDaCena, masmorraAberta } from "./cena.js";
 import { fichaDaPessoa } from "./gente-por-dentro.js";
 import { quemAtende } from "./elenco-do-lugar.js";
+import { oficioNoGenero } from "./nomes.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -127,7 +128,8 @@ export function pessoasDasCartas(quadros, ctx) {
       const daBase = gente.find((p) => ehObj(p) && mesmo(p.nome, nome));
       const onde = str((ficha && ficha.local) || (daBase && daBase.local) || "").trim();
       if (!onde) continue;
-      out.push({ nome, onde, rotulo: str(daBase && (daBase.papel || daBase.oficio) || (ficha && ficha.papel) || "").trim() });
+      /* 23/11 (a décima sétima sessão): o ofício no gênero da pessoa — «sacerdote(isa)» cru não vai à tela */
+      out.push({ nome, onde, rotulo: oficioNoGenero(str(daBase && (daBase.papel || daBase.oficio) || (ficha && ficha.papel) || "").trim(), str((daBase && (daBase.genero_pessoa || daBase.genero)) || (ficha && ficha.genero))) });
     }
   }
   return out;
@@ -186,6 +188,24 @@ export function quemEstaAqui(estado) {
     }
     aqui.push(n);
   }
+  /* 23/11 (a décima sétima sessão): O PAPEL DA QUEST. Brannoc aparecia como
+     «catador de espólios» (o papel da base) enquanto a quest e a prosa o tratavam
+     por quem deixou as chaves da guarda. Quem o herói já conhece (está no
+     registo) e tem papel numa quest aberta (`passos`, osPassosDasQuests: o
+     rótulo do papel em frase de mundo) leva o rótulo da quest; os outros, o
+     ofício no gênero da pessoa (oficioNoGenero). Sem `passos`, só o gênero. */
+  const daQuest = (nome) => {
+    for (const p of arr(e.passos)) for (const c of [...arr(ehObj(p) && ehObj(p.candidatos) ? p.candidatos.pessoa : []), ...arr(ehObj(p) ? p.quem : [])]) {
+      if (ehObj(c) && str(c.rotulo).trim() && mesmo(c.nome, nome)) return str(c.rotulo).trim();
+    }
+    return "";
+  };
+  for (let i = 0; i < aqui.length; i++) {
+    const n = aqui[i];
+    if (!ehObj(n) || noGrupo.has(sem(n.nome))) continue;
+    const r = daQuest(nomeDe(n)) || oficioNoGenero(str(n.papel), str(n.genero));
+    if (r && r !== n.papel) aqui[i] = { ...n, papel: r };
+  }
   /* a pessoa do passo, e a da carta com o herói no sítio dela */
   const doPasso = arr(e.doPasso).filter((x) => ehObj(x) && nomeDe(x));
   if (L) {
@@ -222,7 +242,7 @@ export function quemEstaAqui(estado) {
       if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => mesmo(x.nome, nome) || ident(x.nome) === ident(nome)) || doSitio.some((x) => mesmo(x.nome, nome) || ident(x.nome) === ident(nome))) return;
       if (ausentes.some((a) => mesmo(a, nome)) || !deTurno(nome, rotulo, local)) return;
       if (doSitio.length >= QUEM_ESTA_AQUI_TABELA.doSitio.max) return;
-      doSitio.push({ nome, rotulo: str(rotulo).trim(), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde });
+      doSitio.push({ nome, rotulo: oficioNoGenero(str(rotulo).trim(), str(genero).trim()), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde });
     };
     for (const n of aqui) if (ehObj(n) && ali(localDe(n))) { const c = casaDe(n); por(c ? c.nome : nomeDe(n), n.papel, n.genero, localDe(n)); }
     for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero, p.local);
@@ -235,7 +255,7 @@ export function quemEstaAqui(estado) {
       let fig = [];
       try { fig = quemAtende(conhecido || L, { semente: R ? R.semente : str(N.semente), cidade, minuto: R ? R.minuto : undefined, genero: N.genero, lex: N.lex, gente: e.gente }); } catch { fig = []; }
       if (!fig.length && conhecido && conhecido !== L) { try { fig = quemAtende(L, { semente: R ? R.semente : str(N.semente), cidade, minuto: R ? R.minuto : undefined, genero: N.genero, lex: N.lex, gente: e.gente }); } catch { fig = []; } }
-      for (const f of fig) if (!ausentes.some((a) => mesmo(a, f.nome)) && !noGrupo.has(sem(f.nome))) doSitio.push({ nome: f.nome, rotulo: f.rotulo, genero: f.genero, aqui: true, deOnde: f.deOnde });
+      for (const f of fig) if (!ausentes.some((a) => mesmo(a, f.nome)) && !noGrupo.has(sem(f.nome))) doSitio.push({ nome: f.nome, rotulo: oficioNoGenero(f.rotulo, f.genero), genero: f.genero, aqui: true, deOnde: f.deOnde });
     }
   }
   /* quem entra pelo passo, pela carta ou pelo posto não fica no longe */
@@ -297,7 +317,7 @@ export function quemAgeAqui(q) {
   const grupo = new Set(arr(x.grupo).map(sem));
   const base = x.noSitio ? arr(x.aqui).filter((n) => ehObj(n) && grupo.has(sem(n.nome))) : arr(x.aqui).filter(ehObj);
   const out = [...base];
-  for (const p of [...arr(x.doSitio), ...arr(x.doPasso)]) if (ehObj(p) && nomeDe(p) && !out.some((n) => mesmo(n.nome, p.nome))) out.push({ nome: nomeDe(p), papel: str(p.rotulo), deOnde: p.deOnde });
+  for (const p of [...arr(x.doSitio), ...arr(x.doPasso)]) if (ehObj(p) && nomeDe(p) && !out.some((n) => mesmo(n.nome, p.nome))) out.push({ nome: nomeDe(p), papel: oficioNoGenero(str(p.rotulo), str(p.genero)), deOnde: p.deOnde });
   return out;
 }
 

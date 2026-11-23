@@ -879,6 +879,8 @@ export function aPautaDoTurno(estado, entrada, portas) {
       gente: $ref.lugar ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
       /* S4e: os nomes do mundo, para o figurante que atende o sítio (elenco-do-lugar.js) */
       nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico },
+      /* 23/11 (a décima sétima sessão): quem o herói conhece e tem papel numa quest aberta leva o rótulo dela */
+      passos: vale("QUEM ESTÁ · os passos", () => osPassosDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() }, { mundo: mundoDaBase() }), []),
     });
   };
   const contextoDoEmCena = (frase, quem) => {

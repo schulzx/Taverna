@@ -271,5 +271,30 @@ sec("4 · quem do elenco está noutro sítio desta cidade (com o Mestre vivo)");
 }
 
 /* ============================================================ */
+sec("5 · o ofício que a tela mostra: no gênero, e o papel da quest");
+{
+  const mapa = { cidades: [{ nome: CID, x: 0, y: 0 }], rotas: [] };
+  const TEMPLO = "O Templo do Degrau";
+  const gente = [{ nome: "Morwen Cinza", papel: "sacerdote(isa)", genero_pessoa: "mulher", local: TEMPLO }];
+  const q = quemEstaAqui({ npcs: {}, cidadeAtual: CID, mapa, personagem: { nome: "Osric", grupo: [] }, lugar: { nome: TEMPLO, cidade: CID }, lugares: [{ nome: TEMPLO }], gente });
+  const m = (q.doSitio || []).find((x) => x.nome === "Morwen Cinza");
+  t("no sítio dela, a sacerdotisa vai à lista no gênero dela (não «sacerdote(isa)»)", !!m && m.rotulo === "sacerdotisa", J(q.doSitio));
+  const age = quemAgeAqui(q).find((x) => x.nome === "Morwen Cinza");
+  t("…e quem pergunta «quem está aqui» lê o mesmo", !!age && age.papel === "sacerdotisa", J(age));
+  const cartas = pessoasDasCartas([{ cartas: [{ tipo: "essencial", forma: "pessoa", estado: "costas", escreve: { nome: "Morwen Cinza" } }] }], { gente });
+  t("a pessoa da carta também", cartas.length === 1 && cartas[0].rotulo === "sacerdotisa", J(cartas));
+  /* o papel da quest: Brannoc, conhecido, com papel em «As Chaves da Guarda» */
+  const S = estadoS17(true);
+  const passos = osPassosDasQuests(S, { mundo: S.mundo });
+  const npcs = { "Brannoc Filho da Névoa": { nome: "Brannoc Filho da Névoa", papel: "catador de espólios", local: CID, conhecidoEm: 1, status: "vivo", relacao: "neutro", genero: "homem" } };
+  const semQuest = quemEstaAqui({ npcs, cidadeAtual: CID, mapa, personagem: { nome: "Osric", grupo: [] }, lugar: null });
+  const comQuest = quemEstaAqui({ npcs, cidadeAtual: CID, mapa, personagem: { nome: "Osric", grupo: [] }, lugar: null, passos });
+  const b0 = semQuest.aqui.find((n) => /Brannoc/.test(n.nome)), b1 = comQuest.aqui.find((n) => /Brannoc/.test(n.nome));
+  t("sem a quest, o papel da base (como antes)", !!b0 && b0.papel === "catador de espólios");
+  t("com a quest aberta, o rótulo que a quest dá a ele", !!b1 && b1.papel === "quem te deixou as chaves", b1 && b1.papel);
+  t("o registo não muda (o estado é substituído, nunca mutado)", npcs["Brannoc Filho da Névoa"].papel === "catador de espólios");
+}
+
+/* ============================================================ */
 console.log(`\na história depois da 17: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);
