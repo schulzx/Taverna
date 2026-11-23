@@ -59,6 +59,10 @@ export const PROPOSTAS_DA_ABERTURA = Object.freeze({
      herói. A porta é partir: a frase que o mapa entende (detectarPartida),
      com o veredito da estrada antes do passo */
   partir: Object.freeze({ verbo: "Partir para {nome}", frase: "Parto para {nome}." }),
+  /* 23/11 (a décima sétima sessão, o caminho alcançável): o passo pede
+     revirar o lugar onde o herói já está (o quartel que é a própria cidade)
+     — a porta é a busca, pela frase da ação «Vasculhar» (desafios.js) */
+  vasculhar: Object.freeze({ verbo: "Vasculhar {nome}", frase: "Vasculho o lugar com atenção." }),
   /* os predicados de quem o rumo vai buscar à casa dela (os de
      A_PESSOA_DO_PASSO.daQuest que não são levar) */
   irTer: Object.freeze(["conversou", "consultou", "conheceu"]),
@@ -163,6 +167,41 @@ export function oRumoDaBusca(entrada) {
       if (longe || (txt(c.onde) && chave(c.onde) !== aqui)) { const r = oDestino(P, txt(c.onde) || txt(c.cidade), c.cidade, e); if (r) return r; }
       return Object.freeze({ id: `rumo|levar|${chave(c.nome)}`, tipo: "rumo", verbo: encher(P.levar.verbo, txt(c.nome)), frase: encher(P.levar.frase, txt(c.nome)), acao: "levar", nome: txt(c.nome), cidade: txt(e.cidade) });
     }
+    /* 1b. 23/11 (a décima sétima sessão, §1): O CAMINHO ALCANÇÁVEL. O alvo
+       direto do passo está escondido (o servo do vilão, que o herói ainda não
+       viu) e o passo tem outro ramo (`caminho`, o-caminho-alcancavel.js): as
+       portas são as desse ramo, pela ordem dele — quem consultar está aqui,
+       fala-se; noutro sítio, vai-se à casa; o lugar a revirar é este (ou a
+       cidade inteira), vasculha-se; é outro, vai-se até lá. O covil do
+       escondido e o próprio escondido ficam para quando ele tiver rosto. */
+    const presentes = new Set(arr(e.presentes).map((x) => chave(obj(x) ? x.nome : x)).filter(Boolean));
+    for (const p0 of arr(e.passos)) {
+      const cam = obj(obj(p0) && p0.caminho);
+      for (const c of arr(cam && cam.passos).map(obj).filter(Boolean)) {
+        const nome = txt(c.nome);
+        if (!cabe(nome)) continue;
+        if (c.tipo === "pessoa") {
+          if (doGrupo.has(chave(nome))) continue;
+          if (presentes.has(chave(nome))) return Object.freeze({ id: `rumo|falar|${chave(nome)}`, tipo: "rumo", verbo: encher(P.pessoa.verbo, nome), frase: encher(P.pessoa.frase, nome), acao: "falar", nome, cidade: txt(e.cidade) });
+          if (cabe(txt(c.onde)) || (txt(c.cidade) && txt(e.cidade) && chave(c.cidade) !== chave(e.cidade))) {
+            const r = oDestino(P, txt(c.onde) || txt(c.cidade), c.cidade, e);
+            if (r) return r;
+          }
+          continue;
+        }
+        if (c.tipo === "lugar") {
+          const cid = txt(c.cidade);
+          const outra = cid && txt(e.cidade) && chave(cid) !== chave(e.cidade);
+          const jaAqui = !outra && (chave(nome) === aqui || chave(nome) === chave(e.cidade) || c.id === `cidade|${chave(e.cidade)}`);
+          if (jaAqui && c.predicado === "descobriu") {
+            const onde = txt(e.aqui) && cabe(txt(e.aqui)) ? txt(e.aqui) : nome;
+            return Object.freeze({ id: `rumo|vasculhar|${chave(onde)}`, tipo: "rumo", verbo: encher(P.vasculhar.verbo, onde), frase: P.vasculhar.frase, acao: "vasculhar", nome: onde, cidade: txt(e.cidade) });
+          }
+          const r = oDestino(P, nome, cid, e);
+          if (r) return r;
+        }
+      }
+    }
     /* 2. o covil, depois os lugares */
     for (const p0 of arr(e.passos)) {
       const p = obj(p0);
@@ -187,9 +226,8 @@ export function oRumoDaBusca(entrada) {
        a pessoa de que o passo depende (`quem`, a-quest-manda.js — o vilão só
        depois de visto) ficava sem porta. Com ela entre `presentes` (quem está em
        cena), a porta é falar com ela */
-    const presentes = new Set(arr(e.presentes).map((x) => chave(obj(x) ? x.nome : x)).filter(Boolean));
     for (const p0 of arr(e.passos)) {
-      const q = arr(obj(p0) && p0.quem).map(obj).find((x) => x && cabe(txt(x.nome)) && !doGrupo.has(chave(x.nome)) && presentes.has(chave(x.nome)));
+      const q =arr(obj(p0) && p0.quem).map(obj).find((x) => x && cabe(txt(x.nome)) && !doGrupo.has(chave(x.nome)) && presentes.has(chave(x.nome)));
       if (q) return Object.freeze({ id: `rumo|falar|${chave(q.nome)}`, tipo: "rumo", verbo: encher(P.pessoa.verbo, txt(q.nome)), frase: encher(P.pessoa.frase, txt(q.nome)), acao: "falar", nome: txt(q.nome), cidade: txt(e.cidade) });
     }
     return null;

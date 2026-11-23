@@ -162,6 +162,7 @@ import { diasDoPasso, FASES } from "../vilao.js";
 import { firmarLaco, romperLaco } from "../npcs.js";
 import { anotarTurno, favoresDoLivro } from "../livro-de-factos.js";
 import { avaliarCondicao, resolverPapeis, COMBINADORES } from "../condicoes-da-quest.js";
+import { oCaminhoAlcancavel } from "../o-caminho-alcancavel.js";
 import { pagaDaQuest, achadosDaEtapa, achadoEscondido, despertarArtefacto, espolioNaPauta, raridadeQuePodePagar, gravarNaLenda, RELIQUIA_DO_CONFRONTO, LINHA_DO_ESPOLIO } from "../espolios.js";
 import { reliquiaNoNivel } from "../relicas.js";
 import { porNoChao, varrerSeMudou, achadoDeEquipamento, achadoDeConsumivel } from "../chao.js";
@@ -1087,7 +1088,19 @@ export function aMesaDasQuests(estado, opcoes) {
         const c = a ? arr(a.caminhos).find((k) => k && k.texto && arr(k.predicados).some((p) => T.passo.algumIr.includes(p))) : null;
         return c ? { texto: c.texto } : null;
       };
-      const f = um ? (arr(um.falta).find((x) => x && x.texto && x.predicado !== "algum") || doAlgum(um.falta)) : null;
+      /* 23/11 (a décima sétima sessão, §1): O CAMINHO ALCANÇÁVEL. Quando o alvo
+         direto do passo é do vilão e o herói ainda não o viu, a coisa que falta
+         é o ramo que não passa por ele (quem consultar, onde vasculhar) — o
+         mesmo que o botão da tela mostra (oRumoDaBusca) */
+      const caminhoDe = (v, R) => {
+        if (!v || !R) return null;
+        const F = questPorId(R.id);
+        const doFio = (p) => !!(F && obj(F.papeis) && obj(F.papeis[p]) && F.papeis[p].de === "fio");
+        const viu = (p) => arr(v.gente).some((g) => obj(g) && g.papel === p);
+        const c = oCaminhoAlcancavel(v.falta, { papeis: obj(R.papeis) || {}, escondido: (at) => { const a = obj(arr(at.args)[0]); return !!(a && a.tipo === "pessoa" && doFio(a.papel) && !viu(a.papel)); } });
+        return c ? { texto: c.texto } : null;
+      };
+      const f = um ? (arr(um.falta).find((x) => x && x.texto && x.predicado !== "algum") || caminhoDe(um, R1) || doAlgum(um.falta)) : null;
       passo = cabe([
         T.passo.cabeca + (um ? um.etapaTexto : v2.etapaTexto),
         f ? encher(T.passo.falta, { falta: f.texto }) : "",

@@ -63,6 +63,12 @@ export const A_PONTE_DO_PASSO = Object.freeze({
      passo pede está em cena (o Thaddeus, frases 13 a 19) */
   laEsta: "; {pessoa} está lá, e não aqui",
   falar: "{nome} está aqui, em cena — é dele ou dela que o caso depende agora",
+  /* 23/11 (a décima sétima sessão, §1): O CAMINHO ALCANÇÁVEL. O alvo do passo
+     está escondido e a condição tem outro ramo: a porta `vasculhar` (revirar
+     onde já se está) e, em qualquer porta, o ramo inteiro em frase de mundo
+     (`caminho`, o-caminho-alcancavel.js) — sem o nome do escondido */
+  vasculhar: "{nome} — o que o caso pede se acha revirando aqui",
+  caminho: "; o caminho: {caminho}",
   teto: 200,
 });
 
@@ -88,22 +94,33 @@ export function aPonteDoPasso(entrada) {
     const P = A_PONTE_DO_PASSO;
     const molde = P[r.acao];
     if (!molde) return "";
-    if (r.acao === "falar") { const f = encher(molde, { nome: txt(r.nome) }); return f.length > P.teto ? f.slice(0, P.teto - 1) + "…" : f; }
+    const cam = arr(e.passos).map((p) => obj(obj(p) && p.caminho)).find((c) => c && txt(c.texto));
+    /* o caminho vai inteiro, logo depois do destino; o resto (quem mora lá,
+       quem sabe o caminho) só entra se couber no teto */
+    const cauda = cam ? encher(P.caminho, { caminho: txt(cam.texto) }) : "";
+    const comCaminho = (base, extras) => {
+      let f = base + cauda;
+      /* sem caminho, a ponte de sempre, byte a byte */
+      for (const x of arr(extras)) if (x && (!cam || (f + x).length <= P.teto)) f += x;
+      return f.length > P.teto ? f.slice(0, P.teto - 1) + "…" : f;
+    };
+    if (r.acao === "falar" || r.acao === "vasculhar") return comCaminho(encher(molde, { nome: txt(r.nome) }));
     const daqui = r.acao === "ir" && txt(r.cidade) && chave(r.cidade) !== chave(r.nome);
-    let s = encher(molde, { nome: txt(r.nome), emCidade: daqui ? encher(P.emCidade, { cidade: txt(r.cidade) }) : "" });
+    const s = encher(molde, { nome: txt(r.nome), emCidade: daqui ? encher(P.emCidade, { cidade: txt(r.cidade) }) : "" });
+    const extras = [];
     /* quem o passo pede e mora no destino: a casa dela (ir) ou a cidade dela (partir) */
     const noDestino = (x) => (r.acao === "partir" ? chave(x.cidade) === chave(r.cidade) && chave(x.cidade) !== chave(e.cidade)
       : r.acao === "ir" && chave(x.onde) === chave(r.nome));
     const dela = arr(e.passos).flatMap((p) => [...arr(obj(p) && obj(p.candidatos) && p.candidatos.pessoa), ...arr(obj(p) && p.quem)])
       .map(obj).find((x) => x && txt(x.nome) && x.predicado !== "acompanha" && noDestino(x));
-    if (dela) s += encher(P.laEsta, { pessoa: txt(dela.nome) });
+    if (dela) extras.push(encher(P.laEsta, { pessoa: txt(dela.nome) }));
     /* quem em cena pode apontar: primeiro quem o caso já fez falar; na
        mesma cidade, quem mais estiver aqui (o sítio é público) */
     const doGrupo = new Set(arr(e.grupo).map((g) => chave(obj(g) ? g.nome : g)).filter(Boolean));
     const aqui = arr(e.presentes).map(txt).filter((n) => n && !doGrupo.has(chave(n)) && chave(n) !== chave(r.nome));
     const sabe = arr(e.sabem).map(txt).find((n) => aqui.some((a) => chave(a) === chave(n)))
       || (r.acao === "ir" ? aqui[0] : "");
-    if (sabe) s += encher(P.quem, { quem: sabe });
-    return s.length > P.teto ? s.slice(0, P.teto - 1) + "…" : s;
+    if (sabe) extras.push(encher(P.quem, { quem: sabe }));
+    return comCaminho(s, extras);
   } catch { return ""; }
 }

@@ -44,6 +44,7 @@ import { garantirEsqueleto } from "./esqueleto.js";
 import { garantirHistoria } from "./historia.js";
 import { anotarTurno } from "./livro-de-factos.js";
 import { perguntaDoSistemaPorId, grauPorId, chaveDoFato } from "./oraculo.js";
+import { oCaminhoAlcancavel } from "./o-caminho-alcancavel.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -217,6 +218,13 @@ export function oPassoDaQuest(ficha, registo, contexto) {
           ...(tipo === "pessoa" && typeof pp.cidade === "string" && pp.cidade.trim() ? { cidade: pp.cidade.trim() } : {}) });
       }
     }
+    /* O CAMINHO ALCANÇÁVEL (23/11, a décima sétima sessão): o alvo direto do
+       passo é do vilão e o herói ainda não o viu — o passo aponta o ramo da
+       condição que não passa por ele (quem consultar, onde vasculhar) */
+    const caminho = oCaminhoAlcancavel(v.falta, {
+      papeis,
+      escondido: (at) => { const a = obj(arr(at.args)[0]); return !!(a && a.tipo === "pessoa" && doFio(a.papel) && !viuOPapel(a.papel)); },
+    });
     const especie = O_PASSO_NO_ORACULO.haRastro.rx.test(semAc(`${v.etapa} ${v.etapaTexto}`)) ? "rasto" : "segredo";
     /* S7 · O CLÍMAX: a etapa de confronto que ainda pede a besta em cena (o
        «encontrou» por cumprir) diz quem é, como o herói o conhece (o nome só
@@ -244,6 +252,7 @@ export function oPassoDaQuest(ficha, registo, contexto) {
       lugares: Object.freeze(lugares.map((l) => Object.freeze(l))),
       candidatos: Object.freeze(candidatos),
       quem: Object.freeze(quem),
+      caminho,
     });
   } catch { return null; }
 }
