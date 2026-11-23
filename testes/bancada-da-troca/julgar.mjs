@@ -20,6 +20,19 @@ const APLICA = /agora é de|passa a você|\bVendido\b|\bComprad[oa]\b|\bVocê (d
 const PERGUNTA = /^✋|Qual delas|Diga o que você dá ou pede|^A quem você|^O que você faz com|\?\s*1\.\s/;
 const DADO = /^🎯|Precisa de \d+/;
 
+/* QUANTAS AÇÕES A FRASE DIZ (23/11, defeito do juiz, não do jogo): «dou uma moeda pra Prudence e compro uma
+   ração do Cornelius» são duas ações, e um mestre real responde às duas — a linha da moeda e o cartão da ração.
+   O juiz contava isso como «mais de uma resposta» (N08). Conta-se aqui, sem o código do jogo: o trecho depois de
+   «e», «depois» ou «então» que abre com um verbo de troca na primeira pessoa é outra ação. A frase de uma ação
+   só continua a valer 1, e lá a regra de uma resposta não afrouxa. */
+const VERBO_DE_TROCA = "(dou|compro|pago|vendo|levo|troco|empresto|devolvo|pego|entrego|passo|ofereco|suborno|cobro|peco|quero levar|quero comprar)";
+export function acoesDaFrase(frase) {
+  const partes = norm(frase).replace(/[.!?]+$/, "").split(/\s*,?\s+(?:e|depois|entao)\s+/);
+  const primeira = new RegExp("\\b" + VERBO_DE_TROCA + "\\b").test(partes[0] || "") ? 1 : 0;
+  const outras = partes.slice(1).filter((p) => new RegExp("^(eu |tambem |depois |entao )*(me |te |lhe )?" + VERBO_DE_TROCA + "\\b").test(p)).length;
+  return Math.max(1, primeira + outras);
+}
+
 /* o que é UMA linha de sistema, para esta bancada */
 export function tipoDaLinha(linha, ouvido) {
   const l = String(linha || "").trim();
@@ -125,7 +138,7 @@ function divergenciasDaFicha(spec, obs) {
 }
 
 /* o que as linhas e o cartão DIZEM que mudou, contra o que a ficha mostra */
-function linhaContraFicha(textos, antes, depois) {
+function linhaContraFicha(textos, antes, depois, acoes = 1) {
   const dv = [];
   let delta = null; const finais = [];
   for (const l of textos) {
@@ -143,7 +156,8 @@ function linhaContraFicha(textos, antes, depois) {
   }
   const obs = (depois.moedas || 0) - (antes.moedas || 0);
   if (delta !== null && delta !== obs) dv.push(`as linhas somam ◉ ${delta}, a ficha mudou ◉ ${obs}`);
-  for (const f of finais) if (f !== depois.moedas) dv.push(`a linha diz «bolsa ◉ ${f}», a ficha tem ◉ ${depois.moedas}`);
+  /* com duas ações, a bolsa que a primeira linha disse era a de então: só a última tem de ser a de agora */
+  for (const f of acoes > 1 ? finais.slice(-1) : finais) if (f !== depois.moedas) dv.push(`a linha diz «bolsa ◉ ${f}», a ficha tem ◉ ${depois.moedas}`);
   return dv;
 }
 
@@ -173,8 +187,10 @@ export function comparar(f, r) {
   const textos = [...r.linhas1, ...(r.linhas2 || [])];
   const claims = [...textos];
   if (r.cartaoAberto && r.confirmou && /^clicou/.test(r.confirmou)) claims.push(r.cartaoAberto.texto.replace(/^.*?(a bolsa fica com ◉\s*\d+).*$/i, "$1"));
-  const linhaVsFicha = linhaContraFicha(claims.filter((x) => /◉|agora é de|Vendido/.test(x)), r.fichaAntes, r.fichaDepois);
-  const multiplas = r.fase1.nResp > 1 || r.fase2.nAplica > 1 || (r.fase1.respostas.some((x) => x.k === "aplica") && r.fase2.nAplica > 0 && r.tipo === "cartao");
+  const acoes = acoesDaFrase(f.frase);
+  const linhaVsFicha = linhaContraFicha(claims.filter((x) => /◉|agora é de|Vendido/.test(x)), r.fichaAntes, r.fichaDepois, acoes);
+  /* uma resposta por ação: a frase de uma ação só continua com uma (e o cartão que já aplicou antes do clique é dupla) */
+  const multiplas = r.fase1.nResp > acoes || r.fase2.nAplica > 1 || (acoes < 2 && r.fase1.respostas.some((x) => x.k === "aplica") && r.fase2.nAplica > 0 && r.tipo === "cartao");
   const ouvido = divergenciasDoOuvido(f.ouvido, r.ouvido);
   const semResposta = !lista.includes("nada") && r.tipo === "nada";
   const textoDaResposta = norm([...r.fase1.respostas, ...(r.fase2.respostas || [])].map((x) => x.texto).join(" | "));

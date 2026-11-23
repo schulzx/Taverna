@@ -573,6 +573,10 @@
    "ficha": {
     "moedas": -12
    },
+   "fichaPorTipo": {
+    "nega": {}
+   },
+   "revisto": "Lavinia é companheira e a bolsa do grupo é uma só (a mesma regra da casa que reviu X02, darMoedaAoGrupo): o mestre real lê o «toma» como dar e diz que o dinheiro fica na bolsa comum — o tipo «nega» já era aceito, e a ficha que vai com ele é a que não muda",
    "ouvido": {
     "familia": "trocar",
     "subtipo": "dar",
