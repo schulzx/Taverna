@@ -179,7 +179,7 @@ export const O_OUVIDO = Object.freeze({
   /* o verbo sem gesto que só diz um sentido (a coisa sai de quem age, ou vem para ele): vale depois da
      posse e da preposição. O imperativo do balcão («manda», «traz») é quem age dando. */
   sentidoSemGesto: Object.freeze([
-    Object.freeze({ sentido: "da", formas: Object.freeze(["passo", "passar", "passa", "passe", "jogo", "jogar", "joga", "lanco", "lancar", "lanca", "atiro", "atirar", "arremesso", "deixo", "deixar", "deixa", "deixe", "boto", "botar", "bota", "ponho", "poe", "coloco", "colocar", "coloca", "manda", "mande", "traz", "traga", "desce", "serve", "sirva", "sirvam", "solta", "ve"]) }),
+    Object.freeze({ sentido: "da", formas: Object.freeze(["passo", "passar", "passa", "passe", "jogo", "jogar", "joga", "lanco", "lancar", "lanca", "atiro", "atirar", "arremesso", "deixo", "deixar", "deixa", "deixe", "boto", "botar", "bota", "ponho", "poe", "coloco", "colocar", "coloca", "traz", "traga", "desce", "serve", "sirva", "sirvam", "solta", "ve", "manda", "mande"]) }),
     Object.freeze({ sentido: "recebe", formas: Object.freeze(["levo", "levar", "leva", "leve", "tomo", "tomar", "tomamos", "toma", "tome", "segura", "segure", "aceito", "aceitar", "aceita", "aceite", "fico com", "fica com", "fique com", "ficar com"]) }),
   ]),
   /* o gesto dito por locução («bato a carteira», «molho a mão»): a classe do lema que ela equivale */
