@@ -47,7 +47,8 @@ sec("0. O APP E O SERVIDOR LEEM A PEÇA");
 
 sec("1. O TIPO DO TURNO, ANTES DA RESPOSTA");
 {
-  const i = APP.indexOf("oPedidoDoTurno(estadoDoPedido(),");
+  /* 23/11/2026 (identidade, etapa 3): o estado do pedido passou a `{ ...estadoDoPedido(), porId: … }`; a âncora é a chamada com o estado espalhado. */
+  const i = APP.indexOf("oPedidoDoTurno({ ...estadoDoPedido()");
   /* S7b (17/11): a resposta passou a `let` — a poda do ausente troca-a pela
      podada logo depois da chamada; a âncora é a chamada, não o `const` */
   const j = APP.indexOf("let resp = pedidoDoAtor ?", i);

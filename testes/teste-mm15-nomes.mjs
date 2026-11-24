@@ -325,8 +325,9 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
      provada pelo que devolve. O que chega a `nomeComDono` é o mesmo objeto. */
   const { contextoDoNomeCom } = await import("../src/motor/aplicar.js");
   const somado = contextoDoNomeCom({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], aqui: ["a"], heroi: "h" }, { local: "L", genero: "ela", papel: "p", notas: "n", status: "vivo", descricao: "d" });
+  /* 23/11/2026 (identidade, etapa 3): o retorno ganhou `porId` no fim (a chave do Mestre vivo, lida em try/calou logo acima); o resto do retorno é o mesmo. */
   t("o retorno leva conhecidos, recentes, grupo, papel e notas ao motor novo",
-    app.includes('return { importantes, conhecidos, recentes, grupo: (fichaAgora || personagem || {}).grupo || [], aqui: [cidadeAgora, lugarAgora && lugarAgora.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (fichaAgora || personagem || {}).nome || "" };')
+    app.includes('return { importantes, conhecidos, recentes, grupo: (fichaAgora || personagem || {}).grupo || [], aqui: [cidadeAgora, lugarAgora && lugarAgora.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (fichaAgora || personagem || {}).nome || "", porId };')
     && app.includes("const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);")
     && JSON.stringify(somado) === JSON.stringify({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], local: "L", genero: "ela", papel: "p", notas: "n · vivo · d", aqui: ["a"], heroi: "h" }));
 

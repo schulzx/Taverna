@@ -153,7 +153,8 @@ sec("5. a tela e a pauta: a MESMA conta");
   const ctxDe = (src) => { const i = src.indexOf("const contextoDoEmCena = (frase, quem) =>"); return i < 0 ? "" : src.slice(i, src.indexOf("\n  };", i)); };
   for (const [nome, src] of [["a tela (App)", app]]) {
     const c = ctxDe(src);
-    t(`${nome}: o contexto do EM CENA espalha contextoDeQuemEsta`, c.includes("...contextoDeQuemEsta(q)"));
+    /* 23/11/2026 (identidade, etapa 3): o argumento passou a `vale(..., () => (mestreVivoLigado() ? comRotuloDoHomonimo(q) : q), q)` — o `q` continua a ser o que entra (o rótulo só o enriquece, com `q` de reserva se estourar). A régua exige o espalhar de contextoDeQuemEsta sobre esse vale, sempre com `q` como reserva. */
+    t(`${nome}: o contexto do EM CENA espalha contextoDeQuemEsta`, /\.\.\.contextoDeQuemEsta\((q|vale\("EM CENA · o rótulo do homônimo", \(\) => \(mestreVivoLigado\(\) \? comRotuloDoHomonimo\(q\) : q\), q\))\)/.test(c));
     t(`${nome}: e não tem presentes/longe/doPasso próprios`, !/\n\s+(presentes|longe|doPasso):/.test(c));
   }
   t("as fichas da tela montam-se da conta única", /const quem = vale\("FICHAS · quem está aqui", \(\) => quemAgora\(\)/.test(app));

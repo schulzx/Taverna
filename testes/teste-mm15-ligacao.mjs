@@ -419,7 +419,8 @@ bloco(() => {
     ag > 0 && minutosAqui > ag && primeiroEnviarDepois > minutosAqui);
   const en = APP.indexOf("const enviar = useCallback(async (conteudo, persAtual, histBase) => {");
   /* MOVIDA (trilha A, 29/10), E O MOTIVO: a âncora era `talvezAndarNaCidade(conteudo);`, que saiu de `enviar` com o prelúdio: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). A caminhada anda dentro da peça (a 4.ª coisa dela); no App, a âncora é a chamada ao prelúdio. */
-  const anda = APP.indexOf("= await oPreludioDoTurno(estadoDoPreludio()", en);
+  /* 23/11/2026 (identidade, etapa 3): o estado do prelúdio passou a `{ ...estadoDoPreludio(), porId: … }`; a âncora é a chamada ao prelúdio com o estado espalhado, e a ordem provada (prelúdio antes da chamada ao Mestre) é a mesma. */
+  const anda = APP.indexOf("= await oPreludioDoTurno({ ...estadoDoPreludio()", en);
   /* EM2 (11/11): a chamada ganhou o 3.º argumento (o tamanho do turno,
      tamanho-da-resposta.js); a âncora perdeu o parêntese de fecho e acha a
      mesma chamada, com ou sem ele — a ordem que se prova é a mesma. */
