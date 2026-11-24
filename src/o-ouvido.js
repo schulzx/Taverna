@@ -36,6 +36,7 @@
    Módulo puro, determinístico, sem React. → oOuvido(frase, cena)
    ============================================================ */
 import { quemONomeDiz } from "./quem-esta-aqui.js";
+import { aFormaDaTroca, aDirecaoDaTroca } from "./a-forma-da-troca.js";
 
 /* ---------------- a tabela ---------------- */
 export const O_OUVIDO = Object.freeze({
@@ -83,7 +84,9 @@ export const O_OUVIDO = Object.freeze({
     treze: 13, quatorze: 14, catorze: 14, quinze: 15, dezesseis: 16, dezessete: 17, dezoito: 18, dezenove: 19, vinte: 20, trinta: 30,
     quarenta: 40, cinquenta: 50, sessenta: 60, setenta: 70, oitenta: 80, noventa: 90, cem: 100, cento: 100, duzentos: 200, duzentas: 200, trezentos: 300, quinhentos: 500, mil: 1000,
   }),
-  /* o jeito de dizer que vale mais que o verbo: o começo da oração (sem acento) → [família, subtipo].
+  /* o jeito de dizer que vale mais que o verbo: o começo da oração (sem acento) → [família, lema do gesto].
+     Desde a etapa 8 (a forma da troca) a locução de troca não diz o tipo: diz o gesto (o lema que ela vale,
+     em gestoDoJeito), e a forma diz o tipo.
      A ordem importa: a primeira que casa vence («jogo conversa fora» antes de «jogo conversa»). */
   jeitosDeDizer: Object.freeze([
     /* a bancada da troca (B121, L16, X06, B122): pedir desculpas é falar, e «deixa pra lá» desiste — nenhum dos dois é troca */
@@ -98,12 +101,6 @@ export const O_OUVIDO = Object.freeze({
   ]),
   /* o imperativo do pedido ao balcão («manda um ensopado aí»): compra do que se vende */
   pedidoAoBalcao: Object.freeze(["manda", "traz", "traga", "desce", "bota", "solta", "serve", "sirva", "sirvam", "mande"]),
-  /* O PEDIDO DIRIGIDO (23/11, a décima sexta sessão: «Mordecai, empresta a vassoura?», «Thaddeus,
-     me devolve o livro», «entregue ele a mim»). O herói narra na primeira pessoa («empresto»,
-     «devolvo», «dou»); o verbo de troca que não está nela (o imperativo ou a segunda pessoa:
-     «empresta», «devolve», «entregue», «dá») e se dirige a alguém (o vocativo, o «me», o «a mim»)
-     é o herói pedindo DELA. O subtipo do pedido, pelo lema do verbo dito: */
-  pedidoDirigido: Object.freeze({ emprestar: "emprestar", devolver: "pedir", dar: "pedir", vender: "comprar", pegar: "pedir" }),
   /* a primeira pessoa do verbo (o herói fala de si): «-o», «-ei», «-i», «-ou», e os curtos */
   primeiraPessoa: /(o|ei|i|ou)$/,
   aMim: /\b(a mim|pra mim|para mim|pro mim)\b/,
@@ -141,10 +138,6 @@ export const O_OUVIDO = Object.freeze({
   infinitivo: /(?:ar|er|ir|or)$/,
   /* o fim de palavra que não é infinitivo apesar de parecer */
   naoInfinitivo: Object.freeze(["lugar", "bar", "mar", "jantar", "colher", "mulher", "par", "altar", "lar", "ar", "por", "favor", "senhor", "valor", "melhor", "pior", "maior", "menor", "flor", "dor", "amor", "calor", "cor", "interior", "exterior", "anterior", "redor"]),
-  /* AS REGRAS DE ESTRUTURA (23/11, as 50 frases novas da bancada — causas, não frases):
-     a OFERTA NO IMPERATIVO, dita a quem está: «toma», «pega», «segura», «fica com» + a quantia de
-     moeda dita (ou a coisa minha) é dar — o menu «Dar / Emprestar / Vender» só quando falta saber */
-  ofertaImperativa: Object.freeze(["toma", "tome", "pega", "pegue", "segura", "segure", "aceita", "aceite", "fica com", "fique com", "leva", "leve"]),
   /* o pedido com a marca de que não se paga: «me dá… tô sem grana» é pedir (o dado), nunca o cartão de compra */
   semPagar: /\b(estou sem (moeda|moedas|grana|dinheiro|um tostao|nada)|sem (grana|dinheiro|um tostao|um centavo)|nao tenho (grana|dinheiro|moeda|moedas|como pagar)|de graca|por caridade|na amizade|na faixa|sem pagar|pelo amor de deus)\b/,
   /* o verbo de estado sobre a coisa, sem gesto do herói: «esse dente custa uma fortuna» é conversa
@@ -155,15 +148,72 @@ export const O_OUVIDO = Object.freeze({
     Object.freeze({ rx: /\b(todas as (moedas|pratas)|todo o (dinheiro|ouro)|toda a (grana|prata)|todo meu dinheiro|todas minhas moedas|tudo (o )?que (eu )?tenho|o que (eu )?tenho|tudo que sobrou|o resto da bolsa)\b/, parte: 1 }),
     Object.freeze({ rx: /\bmetade\b/, parte: 0.5 }),
   ]),
-  /* a coisa minha que vai a alguém «por» preço, moeda ou «uns trocados» é VENDA: o preço dito ou o do mercado (o cartão) */
-  vendaPorPreco: Object.freeze({ alcance: 3 }),
-  /* a dúvida entre dar e vender (a coisa minha a alguém, com dinheiro na frase e sem «por»): o Mestre pergunta */
-  dinheiroNaFrase: /\b(pago|paga|pagar|pagando|pagamento|preco|quanto|cobro|cobra|cobrar|cobrando|vendo|vende|vender|venda)\b/,
   /* a moeda oferecida em troca de um favor condicionado («vinte moedas se você ficar calada»): suborno.
      O «se» de quem paga («se eu pagar…») não é favor de ninguém */
   favorCondicionado: Object.freeze({ naoSujeito: Object.freeze(["eu", "nos", "a gente"]), daMoeda: /\b(dou|te dou|lhe dou|pago|te pago|lhe pago|ganha|ganhas|sao suas|sao tuas|e sua|e seu|fica com)\b/ }),
   /* o mesmo verbo com mais de uma coisa («levo a corda e o dente»): todas vão à mesma resposta */
   maisCoisas: Object.freeze(["comprar", "vender"]),
+  /* A FORMA DA TROCA (23/11, identidade e posse · etapa 8). O ouvido deixa de decidir o tipo da troca:
+     entrega os traços (quem tem a coisa, o que volta em troca, a preposição, a dívida) e o GESTO — o
+     verbo reduzido ao que ele diz de consentimento e direção —, e a tabela de a-forma-da-troca.js diz o
+     tipo. O gesto de cada verbo da tabela VERBOS (pelo lema): a classe, e o que QUEM AGE faz com a
+     coisa («da» ou «recebe»). O lema que não está aqui não tem gesto (a posse decide). */
+  gestoDoLema: Object.freeze({
+    dar: Object.freeze({ classe: "oferecer", sentido: "da" }),
+    emprestar: Object.freeze({ classe: "oferecer", sentido: "da", prazo: true }),
+    devolver: Object.freeze({ classe: "oferecer", sentido: "da", retorno: true }),
+    pagar: Object.freeze({ classe: "divida", sentido: "da" }),
+    rachar: Object.freeze({ classe: "divida", sentido: "da" }),
+    cobrar: Object.freeze({ classe: "divida", sentido: "recebe" }),
+    pedir: Object.freeze({ classe: "pedir", sentido: "recebe" }),
+    /* querer é pedir, e o que tem preço se paga («quero o colar») */
+    querer: Object.freeze({ classe: "pedir", sentido: "recebe", comPreco: true }),
+    furtar: Object.freeze({ classe: "tomar", sentido: "recebe", forca: true }),
+    pegar: Object.freeze({ classe: "tomar", sentido: "recebe" }),
+    comprar: Object.freeze({ classe: "trocar", sentido: "recebe" }),
+    vender: Object.freeze({ classe: "trocar", sentido: "da" }),
+    /* «troco X por Y»: X sai de quem propõe — mas a posse vale mais (o sentido é fraco) */
+    trocar: Object.freeze({ classe: "trocar", sentido: "da", fraco: true, contraImplicita: "item" }),
+    subornar: Object.freeze({ classe: "trocar", sentido: "da", favor: true }),
+  }),
+  /* o verbo sem gesto que só diz um sentido (a coisa sai de quem age, ou vem para ele): vale depois da
+     posse e da preposição. O imperativo do balcão («manda», «traz») é quem age dando. */
+  sentidoSemGesto: Object.freeze([
+    Object.freeze({ sentido: "da", formas: Object.freeze(["passo", "passar", "passa", "passe", "jogo", "jogar", "joga", "lanco", "lancar", "lanca", "atiro", "atirar", "arremesso", "deixo", "deixar", "deixa", "deixe", "boto", "botar", "bota", "ponho", "poe", "coloco", "colocar", "coloca", "manda", "mande", "traz", "traga", "desce", "serve", "sirva", "sirvam", "solta", "ve"]) }),
+    Object.freeze({ sentido: "recebe", formas: Object.freeze(["levo", "levar", "leva", "leve", "tomo", "tomar", "tomamos", "toma", "tome", "segura", "segure", "aceito", "aceitar", "aceita", "aceite", "fico com", "fica com", "fique com", "ficar com"]) }),
+  ]),
+  /* o gesto dito por locução («bato a carteira», «molho a mão»): a classe do lema que ela equivale */
+  gestoDoJeito: Object.freeze({ furtar: "furtar", subornar: "subornar", pagar: "pagar" }),
+  /* a forma de um verbo sem lema de troca que tem gesto: tomar de alguém é tomar sem consentimento */
+  gestoDaForma: Object.freeze({ quero: "querer", queremos: "querer" }),
+  /* tomar DE alguém é sem consentimento; tomar o que se vende é consumir (o preço) */
+  tomarDe: Object.freeze(["tomo", "tomar", "tomamos"]),
+  /* o que tem forma de coisa e é um favor (o que se «compra» de alguém sem que nada mude de mão) */
+  favores: Object.freeze(["silencio", "lealdade", "favor", "ajuda", "vista grossa", "boca", "bico", "protecao", "discricao", "cumplicidade"]),
+  /* a coisa que volta depois (o prazo), dita sem o verbo de emprestar */
+  prazo: /\b(emprestad[oa]s?|(eu |ja )?(te |lhe )?devolvo (ja|depois|amanha|logo|na volta)|por (um|uns) (instante|minuto|minutos|dia|dias)|ate (amanha|a volta|o fim do dia))\b/,
+  /* tomar sem consentimento, dito pela maneira (a força ou a surdina) */
+  aForca: /\b(sem (ele|ela|ninguem|que (ele|ela|ninguem)) (ver|perceber|notar)|escondid\w*|as escondidas|de fininho|na surdina|a forca|das? maos?)\b/,
+  /* a preposição depois de «por» que não é contrapartida («por favor», «por bem») */
+  porSemContra: Object.freeze(["favor", "bem", "aqui", "ali", "la", "enquanto", "isso", "que", "acaso", "sorte", "fim", "cima", "dentro", "fora", "perto", "baixo", "tras"]),
+  /* a coisa que volta a quem a tinha, dita sem o verbo de devolver */
+  retorno: /\bde volta\b/,
+  /* a contrapartida dita por locução (o mesmo papel do «por») */
+  emTrocaDe: Object.freeze(["em troca de", "em troca do", "em troca da", "em troca dos", "em troca das", "a troco de"]),
+  /* A DÍVIDA DITA (o gesto de apelar à dívida, em qualquer oração): quem deve a quem */
+  dividaDita: Object.freeze({
+    aoHeroi: /\b(me|nos) (deve|devem|devia|deviam|esta devendo|estao devendo|ta devendo)\b/,
+    doHeroi: /\b(te|lhe|vos) (devo|devemos|estou devendo)\b|\bo que (eu )?devo\b/,
+  }),
+  /* a coisa que é a própria dívida («a conta», «o que devo»): quem a acerta entrega moeda */
+  contas: Object.freeze(["conta", "contas", "divida", "dividas", "debito", "debitos"]),
+  /* o lugar onde se põe a coisa («no chapéu da Dorva», «na mão do Pio»): o dono do lugar recebe */
+  noLugar: Object.freeze(["no", "na", "nos", "nas", "em", "num", "numa", "dentro"]),
+  /* o modal na terceira pessoa, dito ao outro («pode me dar», «poderia me vender»): quem age é o outro */
+  modalDoOutro: Object.freeze(["pode", "podia", "poderia", "quer", "queria", "consegue", "conseguiria"]),
+  /* a forma manda (e não o ouvido) nestes subtipos: a régua em sombra mediu, subtipo a subtipo, que a
+     forma acerta tanto quanto o ouvido ou mais (veja a-forma-da-troca.js e a suíte) */
+  aFormaManda: Object.freeze(["comprar", "vender", "pagar", "dar", "pedir", "pegar", "furtar", "emprestar", "devolver", "subornar", "escambo", "cobrar"]),
 });
 
 /* ---------------- os verbos (a forma-base sem acento → família e subtipo) ----------------
@@ -292,7 +342,10 @@ function arrumarCena(cena) {
   const temFoco = Object.prototype.hasOwnProperty.call(c, "foco");
   const foco = temFoco ? str(c.foco).trim() || null : null;
   const doCompanheiro = arr(h.companheiroCarrega).map(str).filter(Boolean);
-  return { pessoas, companheiro, ausentes, mortos, idsAusentes, idsMortos, carrega, coisas, moeda, catalogo, tipo: str(c.tipo), lugar: str(c.lugar), bancas, temFoco, foco, doCompanheiro };
+  /* 23/11 (etapa 8): quem deve a quem, pelo registro de posse — a cena do jogo o traz (`dividas`:
+     [{ nome, id?, deveAoHeroi: [{ tipo, nome }], heroiDeve: [...] }]); a de exame não o traz */
+  const dividas = arr(c.dividas).filter((d) => d && str(d.nome).trim());
+  return { dividas, pessoas, companheiro, ausentes, mortos, idsAusentes, idsMortos, carrega, coisas, moeda, catalogo, tipo: str(c.tipo), lugar: str(c.lugar), bancas, temFoco, foco, doCompanheiro };
 }
 const palavrasDoNome2 = (n) => sem(n).replace(/[^a-z0-9-]+/g, " ").trim().split(" ").filter(Boolean);
 
@@ -706,6 +759,13 @@ function ler(L, frase) {
     const outra = cand.find((o) => o !== principal && abreComTroca(o));
     if (outra) principal = outra;
   }
+  /* a oração que é só o verbo («Lavinia, toma, fica com doze moedas») não é a ação quando a seguinte traz a
+     coisa: a ação continua nela */
+  if (principal && principal.length === 1 && !negada && !condicional) {
+    const i0 = cand.indexOf(principal);
+    const prox = i0 >= 0 ? cand[i0 + 1] : null;
+    if (prox && prox.some((k) => { const x = marcaEm(k); return x && x.i === k && ["COISA", "MOEDA", "N"].includes(x.tipo); })) principal = prox;
+  }
   if (!principal || !principal.length) principal = toks.map((_, k) => k);
   const todos = toks.map((_, k) => k);
   const ks = principal;
@@ -989,16 +1049,12 @@ function ler(L, frase) {
     ctx("trocar", od && od.tipo === "dele" ? "comprar" : "pedir");
   }
   /* O PEDIDO DIRIGIDO (23/11, frases 14, 18, 24): o verbo de troca fora da primeira pessoa, dito a
-     alguém e sem outro destinatário, é o herói pedindo dela — e a pessoa do vocativo é o quem */
+     alguém, é o outro agindo. Até a etapa 8 um mapa dizia o tipo pelo lema («empresta» → emprestar na
+     direção de quem recebe, «devolve» → pedir); hoje quem age entra na forma da troca (o gesto do outro),
+     e aqui fica só a marca de que o pedido foi dirigido (a porta a lê) */
   {
     const dirigido = !!vocativo || clitico === "me" || O_OUVIDO.aMim.test(txtTudo);
-    const sub = lema ? O_OUVIDO.pedidoDirigido[lema] : null;
-    if (v && sub && familia === "trocar" && !modal && vk != null && dirigido && !O_OUVIDO.primeiraPessoa.test(vs) && !ehInfinitivo(vs) && !destino()) {
-      const od = coisaDe(depois, 0, "dele");
-      ctx("trocar", sub === "pedir" && lema !== "devolver" && od && od.tipo === "dele" ? "comprar" : sub);
-      if (sub === "emprestar") direcao = "recebe";
-      base.pedidoDirigido = true;
-    }
+    if (v && O_OUVIDO.gestoDoLema[lema] && familia === "trocar" && !modal && vk != null && dirigido && !O_OUVIDO.primeiraPessoa.test(vs) && !ehInfinitivo(vs) && !destino()) base.pedidoDirigido = true;
   }
   /* TOMAR (23/11, frase 22): «arranco o livro da mão dele» — tirar da mão de alguém é força contra
      quem segura: vai ao dado, como o furto */
@@ -1019,7 +1075,9 @@ function ler(L, frase) {
     const iniP = (() => { const out = []; for (let j = k1; j < ks.length; j++) { const k = ks[j]; const m = marcaEm(k); if (m && m.tipo === "PESSOA") { if (m.i === k) { if (["o", "a"].includes(out[out.length - 1])) out.pop(); out.push("<p>"); } continue; } out.push(toks[k].s); } return out.join(" "); })();
     const casa = (p, x) => x === sem(p) || x.startsWith(sem(p) + " ");
     const jd = O_OUVIDO.jeitosDeDizer.find(([p]) => casa(p, ini) || casa(p, iniP));
-    if (jd) { ctx(jd[1], jd[2] || null); base.jeito = true; }
+    /* a locução de troca («bato a carteira», «racho a conta») diz a família e o GESTO (o lema que ela vale);
+       o tipo é da forma */
+    if (jd) { ctx(jd[1], null); base.jeito = true; base.jeitoSub = jd[2] || null; }
   }
   if (!base.jeito) {
     const objPrim = coisaDe(depois, 0, "minha", false);
@@ -1047,16 +1105,6 @@ function ler(L, frase) {
   const pessoaAquiDe = () => { const p = vocativo || primeiraPessoa(todos); return p && p.estado === "aqui" ? p : null; };
   /* a quantia de moeda dita («doze moedas») a partir da palavra `desde` e antes de `ate` */
   const moedaDitaEm = (desde, ate = 1e9) => { for (const x of marcas) { if (x.tipo !== "N" || x.i < desde || x.i >= ate) continue; const p = marcaEm(x.j); if (p && p.i === x.j && p.tipo === "MOEDA") return x.valor; } return null; };
-  /* a) a oferta no imperativo, a quem está: «Tabitha, toma duas moedas», «Lavinia, toma, fica com doze moedas» */
-  if (!base.jeito && !O_OUVIDO.aMim.test(txtTudo) && clitico !== "me" && !(familia === "trocar" && subtipo && subtipo !== "pegar" && !base.pedidoDirigido)) {
-    const kOf = toks.findIndex((t, k) => (k === 0 || /^[,.;:!?"—]$/.test(toks[k - 1].s)) && (O_OUVIDO.ofertaImperativa.includes(t.s) || (k + 1 < toks.length && O_OUVIDO.ofertaImperativa.includes(t.s + " " + toks[k + 1].s))));
-    const pAqui = kOf >= 0 ? pessoaAquiDe() : null;
-    if (pAqui) {
-      const q = moedaDitaEm(kOf);
-      const cm = q ? null : coisaDe(todos.filter((k) => k > kOf), 0, "minha", false);
-      if (q || (cm && cm.tipo === "minha")) { ctx("trocar", "dar"); base.pedidoDirigido = false; base.oferta = q ? { nome: "moeda", tipo: "moeda", dono: null, preco: null } : cm; }
-    }
-  }
   /* b) a moeda dita por um favor condicionado de quem está: «Lavinia, vinte moedas se você ficar calada» */
   if (familia !== "trocar" || !subtipo) {
     const kSe = todos.find((k) => k > 0 && O_OUVIDO.condicionais.includes(toks[k].s));
@@ -1064,23 +1112,173 @@ function ler(L, frase) {
     const suj = kSe != null && toks[kSe + 1] ? toks[kSe + 1].s : "";
     if (pAqui && moedaDitaEm(0, kSe) && !O_OUVIDO.favorCondicionado.naoSujeito.includes(suj)) { ctx("trocar", "subornar"); base.oferta = { nome: "moeda", tipo: "moeda", dono: null, preco: null }; }
   }
-  /* d) a coisa minha a alguém «por» moeda, preço ou «uns trocados» é VENDA; com dinheiro na frase e
-     sem o «por», é a dúvida — e na dúvida o item não sai: o Mestre pergunta (Dar, Emprestar, Vender) */
-  if (familia === "trocar" && subtipo === "dar" && !base.oferta) {
-    const cm = coisaDe(depois.length ? depois : ks, 0, "minha");
-    if (cm && cm.tipo === "minha") {
-      const kp = todos.find((k) => k > cm.k && O_OUVIDO.emTroca.includes(toks[k].s));
-      const din = kp != null && Array.from({ length: O_OUVIDO.vendaPorPreco.alcance }, (_, d) => kp + 1 + d).some((k) => { const x = marcaEm(k); if (!x || x.i !== k) return false; if (x.tipo === "MOEDA") return true; if (x.tipo !== "N") return false; const p = marcaEm(x.j); return !(p && p.i === x.j && p.tipo === "COISA"); });
-      if (din) ctx("trocar", "vender");
-      else if (O_OUVIDO.dinheiroNaFrase.test(txtTudo)) { familia = "trocar"; subtipo = null; confianca = C.estrutura; base.duvidaVenda = true; }
+  /* A FORMA DA TROCA (etapa 8): os traços da frase, sem decidir o tipo — o gesto (a classe do verbo e
+     quem age), a coisa e quem a tem, o que volta em troca, a preposição, a dívida, o prazo, a força.
+     A tabela de a-forma-da-troca.js diz o tipo; onde a forma manda (O_OUVIDO.aFormaManda), é ele que
+     vai na leitura, e sempre vai à parte (`forma`) para a régua em sombra. */
+  const osTracosDaForma = () => {
+    const G = O_OUVIDO.gestoDoLema;
+    const lemaJ = base.jeitoSub ? O_OUVIDO.gestoDoJeito[base.jeitoSub] : null;
+    let g = (lemaJ && G[lemaJ]) || (vk != null && O_OUVIDO.gestoDaForma[vs] && G[O_OUVIDO.gestoDaForma[vs]]) || (lema && G[lema]) || null;
+    if (!g && !v && vk != null && clitico === "me" && ["da", "de"].includes(vs)) g = G.dar;
+    /* o modal na terceira pessoa («pode me dar»): o gesto é o do infinitivo, e quem age é o outro */
+    let modalDoOutro = false;
+    if (!g && vk != null && O_OUVIDO.modalDoOutro.includes(vs)) {
+      for (const k of depois.slice(0, 3)) { const vi = verboDe(toks[k].s); if (vi && G[vi.lema] && (ehInfinitivo(toks[k].s) || vi.formas.includes(toks[k].s))) { g = G[vi.lema]; modalDoOutro = true; break; } }
     }
-  }
-
+    let sentidoFraco = null;
+    if (!g && vk != null) {
+      const vs2 = vk + 1 < toks.length ? vs + " " + toks[vk + 1].s : "";
+      const s = O_OUVIDO.sentidoSemGesto.find((x) => x.formas.includes(vs) || x.formas.includes(vs2));
+      if (s) sentidoFraco = s.sentido;
+    }
+    /* quem age: o herói narra na primeira pessoa; o verbo fora dela, dito a alguém, é o outro agindo */
+    const aMim = O_OUVIDO.aMim.test(txtTudo);
+    const dirigido = !!vocativo || clitico === "me" || aMim || /\b(voce|senhor|senhora)\b/.test(txtTudo);
+    const primeira = !!modal || (vk != null && (O_OUVIDO.primeiraPessoa.test(vs) || ehInfinitivo(vs)));
+    const agente = (modalDoOutro || !primeira) && dirigido ? "outro" : "heroi";
+    /* o verbo que ninguém previu com o «me» de quem recebe, dito ao outro («Olga, me cede um pão») */
+    if (!g && !v && clitico === "me" && agente === "outro" && !sentidoFraco) g = { ...G.dar, fraco: true };
+    /* a dívida dita: «ele me deve» é o outro devendo; «o que devo», o herói */
+    const dDita = O_OUVIDO.dividaDita.aoHeroi.test(txtTudo) ? "outroDeve" : O_OUVIDO.dividaDita.doHeroi.test(txtTudo) ? "heroiDeve" : null;
+    /* o «por» que é contrapartida (e não «por favor», «por bem») */
+    const kLoc = depois.find((k) => O_OUVIDO.emTrocaDe.some((x) => { const w = x.split(" "); return w.every((p, d) => toks[k + d] && toks[k + d].s === p); }));
+    const kPor = kLoc != null ? kLoc + (O_OUVIDO.emTrocaDe.find((x) => x.split(" ").every((p, d) => toks[kLoc + d] && toks[kLoc + d].s === p)).split(" ").length - 1) : depois.find((k) => O_OUVIDO.emTroca.includes(toks[k].s) && k + 1 < toks.length && !O_OUVIDO.porSemContra.includes(toks[k + 1].s));
+    const antes = kPor != null ? depois.filter((k) => k < (kLoc != null ? kLoc : kPor)) : depois;
+    /* a coisa que anda: o favor, a coisa marcada, a moeda, o nome comum */
+    let oQue = null, posse = {}, aVenda = false, nomeDaCoisa = null;
+    const kFavor = antes.find((k) => O_OUVIDO.favores.includes(toks[k].s) || (k + 1 < toks.length && O_OUVIDO.favores.includes(toks[k].s + " " + toks[k + 1].s)));
+    let kObj = null, mObj = null;
+    for (const k of antes) { const m = marcaEm(k); if (m && m.i === k && ["COISA", "MOEDA", "N"].includes(m.tipo)) { kObj = k; mObj = m; break; } }
+    const kConta = antes.find((k) => O_OUVIDO.contas.includes(toks[k].s));
+    let contaDita = false;
+    /* o favor só se compra com o gesto de troca ou com moeda dita; pedido, é só o que se pede */
+    const moedaNaOracao = ks.some((k) => { const x = marcaEm(k); return x && x.i === k && (x.tipo === "MOEDA" || x.tipo === "N"); });
+    if (kFavor != null && (kObj == null || kFavor < kObj) && !marcaEm(kFavor) && ((g && g.classe === "trocar") || moedaNaOracao)) oQue = { tipo: "favor" };
+    else if (kConta != null && (kObj == null || kConta < kObj)) { oQue = { tipo: "moedas" }; posse = { heroi: true, outro: true }; contaDita = true; }
+    else if (mObj) {
+      let m = mObj;
+      if (m.tipo === "N") { const p = marcaEm(m.j); m = p && p.i === m.j && (p.tipo === "COISA" || p.tipo === "MOEDA") ? p : { tipo: "MOEDA" }; }
+      if (m.tipo === "MOEDA") { oQue = { tipo: "moedas" }; posse = { heroi: true, outro: true }; }
+      else { const ls0 = m.leituras.some((l) => l.inteira) ? m.leituras.filter((l) => l.inteira) : m.leituras; const ts = new Set(ls0.map((l) => l.tipo)); oQue = { tipo: "item" }; posse = { heroi: ts.has("minha"), outro: ts.has("dele"), chao: ts.has("solta") }; aVenda = m.leituras.some((l) => l.tipo === "dele"); nomeDaCoisa = escolherLeitura(m, null).nome; }
+    } else {
+      const c0 = coisaDe(antes, 0, null);
+      if (c0) { oQue = { tipo: c0.tipo === "moeda" ? "moedas" : "item" }; nomeDaCoisa = c0.nome; if (c0.tipo === "moeda") posse = { heroi: true, outro: true }; }
+    }
+    /* a parte da coisa («um pedaço dessa corda») não é a peça que se vende: pede-se, não se compra */
+    { const c1 = coisaDe(antes, 0, null); if (c1 && c1.parte) aVenda = false; }
+    /* quem paga ou suborna entrega moeda: a coisa dita é o que se paga («pago a cerveja») */
+    if (g && (g.classe === "divida" || g.favor) && (!oQue || oQue.tipo !== "moedas")) { oQue = { tipo: "moedas" }; posse = { heroi: true, outro: true }; aVenda = false; }
+    /* a preposição: «de/do X» tira, «me»/«a mim» traz, «a/pra X» entrega; «com X» é o parceiro */
+    const pessoaCom = (preps) => { for (const k of depois) { const m = marcaEm(k); if (m && m.i === k && (m.tipo === "PESSOA" || m.tipo === "PRONOME") && toks[k - 1] && (preps.includes(toks[k - 1].s) || (["o", "a"].includes(toks[k - 1].s) && toks[k - 2] && preps.includes(toks[k - 2].s)))) return m; } return null; };
+    const noLugarDe = (m) => { let j = m.i - 2; if (j >= 0 && marcaEm(j) && marcaEm(j).tipo === "COISA") j = marcaEm(j).i; while (j >= 0 && !O_OUVIDO.noLugar.includes(toks[j].s) && !marcaEm(j) && j > m.i - 5 && !O_OUVIDO.entrega.includes(toks[j].s) && !O_OUVIDO.tira.includes(toks[j].s)) j--; return j >= 0 && O_OUVIDO.noLugar.includes(toks[j].s); };
+    let pTira = pessoaCom(O_OUVIDO.tira), pEntrega = pessoaCom(O_OUVIDO.entrega);
+    const parceiro = pessoaCom(["com"]);
+    if (pTira && noLugarDe(pTira)) { pEntrega = pEntrega || pTira; pTira = null; }
+    /* a pessoa objeto direto e a coisa depois do «com» («recompenso o Ledo com duas moedas»): a coisa vai a ela */
+    const kCom = antes.find((k) => toks[k].s === "com" && marcaEm(k + 1) && ["COISA", "MOEDA", "N"].includes(marcaEm(k + 1).tipo));
+    const pDireto = depois.length ? (() => { const k0 = depois[0], k1 = depois[1]; const m0 = marcaEm(k0); if (m0 && m0.i === k0 && m0.tipo === "PESSOA") return m0; const m1 = k1 != null ? marcaEm(k1) : null; return O_OUVIDO.artigos.includes(toks[k0].s) && m1 && m1.i === k1 && m1.tipo === "PESSOA" ? m1 : null; })() : null;
+    if (!pEntrega && pDireto && kCom != null && kCom > pDireto.i) pEntrega = pDireto;
+    const texto = { de: pTira ? (pTira.estado === "morto" ? "chao" : "outro") : null, para: (clitico === "me" && agente === "outro") || aMim ? "heroi" : pEntrega ? "outro" : null };
+    if (pTira && pTira.estado === "morto") posse = { ...posse, chao: true, outro: false };
+    /* o que volta em troca: a coisa ou a moeda depois do «por», o favor do «pra + infinitivo», o fiado */
+    let contra = null;
+    if (kPor != null) {
+      for (let j = kPor + 1; j <= kPor + 3 && j < toks.length && !contra; j++) {
+        const m = marcaEm(j);
+        if (!m || m.i !== j) continue;
+        /* a coisa solta da cena depois do «por» é por onde («pela grade»), e não o que volta — salvo na troca proposta */
+        if (m.tipo === "COISA") { if (g && g.classe === "trocar" || m.leituras.some((l) => l.tipo !== "solta")) contra = { tipo: "item" }; else break; }
+        else if (m.tipo === "MOEDA") contra = { tipo: "moedas" };
+        else if (m.tipo === "N") { const p = marcaEm(m.j); const w2 = m.j < toks.length ? toks[m.j].s : ""; const nomeComum = !p && w2.length >= 3 && !O_OUVIDO.naoECoisa.includes(w2) && !O_OUVIDO.artigos.includes(w2) && !O_OUVIDO.entrega.includes(w2) && !O_OUVIDO.tira.includes(w2) && w2 !== "cada"; contra = { tipo: (p && p.i === m.j && p.tipo === "COISA") || nomeComum ? "item" : "moedas" }; }
+      }
+      if (!contra) {
+        let j = kPor + 1;
+        if (j < toks.length && O_OUVIDO.artigos.includes(toks[j].s)) j++;
+        const w = j < toks.length ? toks[j].s : "";
+        /* o nome comum: na troca proposta ou no pagamento é o que volta; nos outros gestos, só o indefinido ou
+           o nu («por um quarto», «por lenha») — o definido é por onde («pela janela») */
+        const indefinido = j === kPor + 1 || ["um", "uma", "uns", "umas"].includes(toks[kPor + 1].s);
+        const vale = (g && ["trocar", "divida"].includes(g.classe)) || indefinido;
+        if (vale && w.length >= 3 && !O_OUVIDO.porSemContra.includes(w) && !ehInfinitivo(w) && !marcaEm(j)) contra = { tipo: oQue && oQue.tipo === "moedas" ? "servico" : "item" };
+      }
+    }
+    /* o «pra + infinitivo» é um favor comprado quando quem age é o outro («pra ele esquecer») e o herói
+       entrega; o do próprio herói («pra eu comer») ou o de quem pede é só o motivo */
+    const recebendo = g && (g.sentido === "recebe" ? agente === "heroi" : agente === "outro");
+    const propositoDoHeroi = /\b(pra|para) (eu|mim|me)\b/.test(txtTudo);
+    if (!contra && oQue && oQue.tipo === "moedas" && proposito && !recebendo && !propositoDoHeroi) contra = { tipo: "favor" };
+    if (!contra && g && g.favor) contra = { tipo: "favor" };
+    /* a condição posta ao outro («dez moedas se você esquecer o meu rosto») é o favor que a moeda compra */
+    {
+      const kSe = todos.find((k) => k > 0 && O_OUVIDO.condicionais.includes(toks[k].s));
+      const suj = kSe != null && toks[kSe + 1] ? toks[kSe + 1].s : "";
+      if (!contra && oQue && oQue.tipo === "moedas" && kSe != null && suj && !O_OUVIDO.favorCondicionado.naoSujeito.includes(suj) && !recebendo) contra = { tipo: "favor" };
+    }
+    /* a outra oração em que o OUTRO entrega ao herói com gesto de pagar ou trocar («ela me paga amanhã»): é o que
+       volta em troca da coisa que o herói dá */
+    if (!contra && oQue && oQue.tipo === "item") {
+      for (const k of todos) {
+        if (ks.includes(k)) continue;
+        const vo = verboDe(toks[k].s);
+        const go = vo && G[vo.lema];
+        if (!go || !["divida", "trocar"].includes(go.classe) || go.sentido !== "da" || O_OUVIDO.primeiraPessoa.test(toks[k].s) || ehInfinitivo(toks[k].s)) continue;
+        if (toks[k - 1] && ["me", "nos"].includes(toks[k - 1].s)) { contra = { tipo: go.classe === "divida" ? "moedas" : "item" }; break; }
+      }
+    }
+    if (!contra && O_OUVIDO.fiado.test(txtTudo)) contra = { tipo: "moedas" };
+    /* quem deve a quem (a cena do jogo traz o registro) */
+    const outroP = pTira || pEntrega || parceiro || pessoaDepois || vocativo;
+    let divida = null;
+    if (outroP && cn.dividas.length) {
+      const e = cn.dividas.find((d) => (outroP.id && d.id ? d.id === outroP.id : sem(d.nome) === sem(outroP.nome || "")));
+      const casaD = (x) => x && (!oQue || (oQue.tipo === "moedas" ? x.tipo === "moedas" : x.tipo !== "moedas" && (!nomeDaCoisa || mesmaPalavra(sem(str(x.nome)).split(" ")[0], sem(nomeDaCoisa).split(" ")[0]))));
+      if (e && arr(e.deveAoHeroi).some(casaD)) divida = "outroDeve";
+      else if (e && arr(e.heroiDeve).some(casaD)) divida = "heroiDeve";
+    }
+    if (!g && (dDita || contaDita)) g = { classe: "divida", sentido: dDita === "outroDeve" ? (agente === "outro" ? "da" : "recebe") : "da", fraco: !dDita };
+    const forca = !!(g && g.forca) || O_OUVIDO.aForca.test(txtTudo) || (vk != null && O_OUVIDO.tomarDe.includes(vs) && !!pTira && pTira.estado !== "morto");
+    /* «com X» é o parceiro do negócio: há consentimento, e o pegar vira receber (o preço, se houver) */
+    if (g && g.classe === "tomar" && !forca && parceiro) { g = null; sentidoFraco = "recebe"; }
+    /* a pergunta do preço de quem entrega uma coisa sua («passo o mapa pro Cado, quanto ele dá?»): a moeda volta */
+    if (!contra && oQue && oQue.tipo === "item" && O_OUVIDO.precoPergunta.some((w) => new RegExp("\\b" + w + "\\b").test(txtTudo))) contra = { tipo: "moedas", implicita: true, seEntrega: true };
+    /* a frase que é só o nome da coisa («uma cerveja, por favor», «Marta, mais uma cerveja»): o pedido sem verbo */
+    const k1 = ks[comeca(ks)];
+    const soNome = !v && k1 != null && (O_OUVIDO.artigos.includes(toks[k1].s) || toks[k1].s === "mais" || (marcaEm(k1) && ["COISA", "N"].includes(marcaEm(k1).tipo)));
+    if (soNome && !g && !sentidoFraco) g = { ...G.querer, fraco: true };
+    /* o verbo que só diz «dá», dito ao outro no imperativo («me traz», «manda»), é o outro oferecendo */
+    if (!g && sentidoFraco === "da" && agente === "outro") g = { ...O_OUVIDO.gestoDoLema.dar, fraco: true };
+    if (!contra && regateio) contra = { tipo: "moedas", implicita: true };
+    let gesto = g ? g.classe : forca ? "tomar" : null;
+    const sentido = g ? g.sentido : forca ? "recebe" : sentidoFraco;
+    const dir = aDirecaoDaTroca({ gesto, agente, sentido, fraco: (!g && !forca) || !!(g && g.fraco), posse, texto: { ...texto, paraMim: texto.para === "heroi" }, contra });
+    /* o outro que age para o herói («Cornelius, pega a corda pra mim») age a pedido dele: é ele oferecendo */
+    if (dir && dir.para === "heroi" && agente === "outro" && gesto === "tomar" && !forca) gesto = "oferecer";
+    if (contra && contra.seEntrega && !(dir && dir.de === "heroi")) contra = null;
+    let de = dir ? dir.de : null;
+    /* o que está solto na cena só vem para o herói com um gesto de pegar (ou o «pra mim»): sem ele, mexer na
+       coisa da cena não é troca («ajudo o Osk a consertar a carroça») */
+    if (de === "chao" && !gesto && !sentido && !aMim) de = null;
+    /* o outro de quem a coisa vem é o chão quando ela está solta ou o dono morreu */
+    if (de === "outro" && (!gesto || gesto === "tomar" || (g && g.fraco && !(gesto === "oferecer" && agente === "outro"))) && ((posse.chao && !posse.outro && !posse.heroi) || (pTira && pTira.estado === "morto"))) de = "chao";
+    const f = aFormaDaTroca({ gesto, agente, sentido, de, para: dir ? dir.para : null, oQue: oQue ? { tipo: oQue.tipo, aVenda: aVenda && de === "outro" } : null, contra, divida, prazo: !!(g && g.prazo) || O_OUVIDO.prazo.test(txtTudo), retorno: !!(g && g.retorno) || O_OUVIDO.retorno.test(txtTudo), forca, contraImplicita: (g && g.contraImplicita) || null, comPreco: !!(g && g.comPreco), semPagar: O_OUVIDO.semPagar.test(txtTudo), pedidoSemVerbo: soNome });
+    return Object.freeze({ subtipo: f.subtipo, consentimento: f.consentimento, porque: f.porque, oQue: f.oQue || (oQue ? oQue.tipo : null), gesto, agente, de: f.de || de, para: f.para || (dir ? dir.para : null), direcao: dir ? dir.porque : null, divida, contraDita: !!(contra && !contra.implicita), temCoisa: !!oQue, temGesto: !!(g || sentidoFraco || aMim) });
+  };
   /* sem verbo reconhecido: a estrutura decide */
   /* e) o verbo de estado sobre a coisa, sem gesto do herói: «esse dente custa uma fortuna, hein» é conversa */
   if (!familia) {
     const estado = ks.some((k) => { const x = marcaEm(k); return x && x.i === k && (x.tipo === "COISA" || x.tipo === "MOEDA") && x.j < toks.length && ks.includes(x.j) && O_OUVIDO.verbosDeEstado.includes(toks[x.j].o.toLowerCase()); });
     if (estado) ctx("falar");
+  }
+  /* A FORMA SEM VERBO (etapa 8): o verbo que ninguém previu não tem gesto, e a forma decide pela posse,
+     pela preposição e pela contrapartida — quando há coisa que anda e alguém do outro lado */
+  let formaSemVerbo = null;
+  if (!familia && !pergunta) {
+    try { formaSemVerbo = osTracosDaForma(); } catch { formaSemVerbo = null; }
+    const temCoisa = marcas.some((x) => ["COISA", "MOEDA", "N"].includes(x.tipo) && ks.includes(x.i)) || !!(formaSemVerbo && formaSemVerbo.temCoisa);
+    const temOutro = !!(vocativo || primeiraPessoa(todos)) || (formaSemVerbo && formaSemVerbo.contraDita);
+    if (formaSemVerbo && formaSemVerbo.subtipo && temCoisa && temOutro && O_OUVIDO.aFormaManda.includes(formaSemVerbo.subtipo)) { ctx("trocar", formaSemVerbo.subtipo); confianca = C.estrutura; }
+    if (formaSemVerbo && !(temCoisa && temOutro)) formaSemVerbo = null;
   }
   if (!familia) {
     const cMarc0 = coisaDe(ks, 0, "dele", false);
@@ -1114,10 +1312,25 @@ function ler(L, frase) {
     }
   }
 
-  /* c) (depois da estrutura, que também lê a compra sem verbo: «me passa uma corda») o pedido com a marca de que não se paga: «Cornelius, me dá uma tocha, tô sem grana» */
-  /*    Só o pedido feito A alguém («me dá», «me passa», «me vê»): quem diz «compro» ou «quero» sem ter com
-        que pagar está comprando, e a bolsa responde «não chega» (o selado o mediu: o «quero» virava pedido) */
-  if (familia === "trocar" && subtipo === "comprar" && (clitico === "me" || base.pedidoDirigido) && lema !== "comprar" && lema !== "vender" && O_OUVIDO.semPagar.test(txtTudo) && !O_OUVIDO.fiado.test(txtTudo)) ctx("trocar", "pedir");
+  let forma = formaSemVerbo && formaSemVerbo.subtipo ? formaSemVerbo : null;
+  if (!forma && ["agir", "usar", "esperar"].includes(familia) && !base.jeito && !pergunta) {
+    let fv = null;
+    try { fv = osTracosDaForma(); } catch { fv = null; }
+    const temOutro = !!(vocativo || primeiraPessoa(todos)) || O_OUVIDO.aMim.test(txtTudo);
+    const temCoisa = marcas.some((x) => ["COISA", "MOEDA", "N"].includes(x.tipo) && ks.includes(x.i));
+    if (fv && fv.subtipo && fv.temGesto && temCoisa && temOutro) {
+      forma = fv;
+      if (O_OUVIDO.aFormaManda.includes(fv.subtipo)) { familia = "trocar"; subtipo = fv.subtipo; confianca = C.estrutura; }
+    }
+  }
+  if (familia === "trocar") {
+    try { forma = osTracosDaForma(); } catch { forma = null; }
+    if (forma && forma.subtipo && O_OUVIDO.aFormaManda.includes(forma.subtipo)) {
+      subtipo = forma.subtipo;
+      /* o empréstimo na direção de quem recebe («me empresta», «empresta o mapa, Dona Ruth?») */
+      direcao = forma.subtipo === "emprestar" ? (forma.para === "heroi" ? "recebe" : null) : direcao;
+    }
+  }
   /* quem, coisa e quantia, segundo a família */
   let m = null, coisa = null, pessoaDepoisEscambo = null;
   const prefereDe = { comprar: "dele", pedir: "dele", furtar: "dele", pegar: "dele", cobrar: null, subornar: null, vender: "minha", dar: "minha", emprestar: direcao === "recebe" ? "dele" : "minha", devolver: "minha", escambo: "minha", pagar: "dele" };
@@ -1153,7 +1366,8 @@ function ler(L, frase) {
     }
     if (subtipo === "subornar" && coisa && coisa.tipo !== "moeda") { const cm = depois.map(marcaEm).find((x) => x && x.tipo === "MOEDA"); coisa = cm ? { nome: "moeda", tipo: "moeda" } : (temN ? { nome: "moeda", tipo: "moeda" } : null); }
     if (["cobrar", "pagar"].includes(subtipo) && !coisa && temN) coisa = { nome: "moeda", tipo: "moeda" };
-    if (subtipo === "cobrar" && coisa && coisa.tipo === "livre") coisa = null;
+    /* a cobrança de moeda não tem coisa; a de uma coisa emprestada («me devolve o símbolo») guarda o nome dela */
+    if (subtipo === "cobrar" && coisa && coisa.tipo === "livre" && !(forma && forma.oQue === "item")) coisa = null;
     if (subtipo === "pagar" && coisa && coisa.tipo === "minha") coisa = null;
     /* a pessoa: a quem vai (entrega), de quem vem (tira), ou a dita; senão o vocativo */
     if (subtipo === "escambo" && !pessoaDepois && !vocativo && !destino() && !origem()) { const pe = primeiraPessoa(ks); if (pe) pessoaDepoisEscambo = pe; }
@@ -1227,7 +1441,7 @@ function ler(L, frase) {
     }
     if (achadas.length) outrasCoisas = Object.freeze(achadas);
   }
-  return sai({ familia, subtipo, ...q, coisa, quantia, quantiaDe: base.quantiaDaBolsa ? "moeda" : quantiaDeQue(), confianca, direcao, regateio, quemPronomeSemDono: !!base.quemPronomeSemDono, ...(outrasCoisas ? { outrasCoisas } : {}) });
+  return sai({ familia, subtipo, ...q, coisa, quantia, quantiaDe: base.quantiaDaBolsa ? "moeda" : quantiaDeQue(), confianca, direcao, regateio, quemPronomeSemDono: !!base.quemPronomeSemDono, ...(outrasCoisas ? { outrasCoisas } : {}), ...(forma ? { forma } : {}) });
 }
 
 /* a coisa que vem depois de uma preposição de «em troca» («pela erva», «pelo rum do Pio») */

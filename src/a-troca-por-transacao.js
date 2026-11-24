@@ -6,8 +6,9 @@
    sistema que identifica e realiza trocas». A etapa 5 fez o mecanismo
    (quem-tem-o-que.js: a posse de todo mundo, a dívida, `aplicarTransacao`);
    esta é a ponte entre ele e a frase. A porta única (motor/uma-porta-so.js)
-   continua a decidir o que a frase é — o subtipo ainda vem do ouvido (a
-   etapa 8 o troca pela forma da transação) —, e o que ela decidiu deixa de
+   continua a decidir o que a frase é — o subtipo sai da forma da transação
+   (a-forma-da-troca.js, etapa 8), que lê daqui quem deve a quem
+   (asDividasDaCena) —, e o que ela decidiu deixa de
    ser «a ficha nova inteira» para ser uma lista de transações:
 
      { de, para, oQue, contra, consentimento, prazo?, origem, chave }
@@ -451,4 +452,34 @@ export function oVereditoDoQueVeio(res, nomes, veto, devida) {
   const Divida = !deviaAntes ? "" : resto ? tpl(A.tela.resta, { Resto: tpl(A.moeda, { N: resto }) }) : A.tela.pagou;
   const De = maiuscula(oNome(quem, nomes, "sujeito"));
   return Object.freeze({ tipo: "transacao", estado: "aplicada", ficha: r.ficha, mudou: Object.freeze(linhas), linha: tpl(A.tela.passou, { De, Coisa, Divida }), fato: tpl(A.fato.passou, { De, Coisa, Divida: !deviaAntes ? "" : resto ? tpl(A.fato.resta, { Resto: tpl(A.moeda, { N: resto }) }) : A.fato.pagou }), veto: Object.freeze(veto ? [veto] : []) });
+}
+
+/* ============================================================
+   asDividasDaCena(pessoas, ctx) → [{ nome, id, deveAoHeroi: [{ tipo, nome, quanto }], heroiDeve: [...] }]
+   Quem deve a quem, com as pessoas da cena (e o companheiro) — o traço que a
+   forma da troca lê (etapa 8): «você me deve duas moedas, paga logo» é
+   cobrar quando a dívida existe, e a cobrança sem base quando não existe;
+   nunca um pagamento do herói. ctx: o de aCobrancaDaLeitura ({ posses,
+   grupo, bancas, pessoas }). Só entra quem tem dívida aberta com o herói.
+   ============================================================ */
+export function asDividasDaCena(pessoas, ctx) {
+  try {
+    const c = obj(ctx) || {};
+    const D = dividasDe(c.posses, "heroi");
+    if (!D.deve.length && !D.aReceber.length) return [];
+    const out = [];
+    const vistos = new Set();
+    for (const p of arr(pessoas)) {
+      const nome = semAposto(nomeDe(p));
+      if (!nome) continue;
+      const id = (obj(p) && str(p.id)) || oLadoDaTroca(nome, c, null, "pessoa");
+      if (!id || ["nada", "heroi", "mundo"].includes(id) || vistos.has(id)) continue;
+      vistos.add(id);
+      const linha = (d) => Object.freeze({ tipo: d.oQue && d.oQue.tipo === "moedas" ? "moedas" : "item", nome: str(d.oQue && d.oQue.nome), quanto: inteiro(d.quanto) });
+      const deveAoHeroi = D.aReceber.filter((d) => d.de === id).map(linha);
+      const heroiDeve = D.deve.filter((d) => d.para === id).map(linha);
+      if (deveAoHeroi.length || heroiDeve.length) out.push(Object.freeze({ nome, id, deveAoHeroi: Object.freeze(deveAoHeroi), heroiDeve: Object.freeze(heroiDeve) }));
+    }
+    return out;
+  } catch { return []; }
 }

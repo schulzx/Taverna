@@ -405,7 +405,11 @@ sec("§7 a bancada da troca — o que o jogo jogado mostrou");
     /* 1. a coisa minha a alguém «por» moeda ou «uns trocados» é venda (o cartão com o preço), nunca presente */
     ["entrego o símbolo sagrado riscado à Prudence por umas moedas", (r) => cartao(r, "venda", 7) && r.leitura.subtipo === "vender", "venda «por umas moedas»: o cartão, e o símbolo não sai antes"],
     ["deixo o símbolo com o Cornelius por cinco pratas", (r) => r.leitura.subtipo === "vender" && r.leitura.quantia === 5 && !r.veredito, "venda com o preço dito: vender, e nada sai sem resposta"],
-    ["dou o símbolo sagrado riscado à Prudence, ela me paga amanhã", (r) => r.caminho === "pergunta" && /Vender/.test(r.pergunta.linha) && !r.veredito, "dar ou vender? na dúvida o item não sai: o Mestre pergunta"],
+    /* MOVIDA em 23/11 (identidade e posse, etapa 8: a forma da troca), e o motivo: «ela me paga» é a outra oração em
+       que o OUTRO entrega ao herói com gesto de pagar — a contrapartida da coisa —, e a forma diz venda; o menu «Dar /
+       Emprestar / Vender» saiu do ouvido (só a forma ambígua de verdade pergunta). A intenção fica: o item não sai sem o
+       jogador ver o preço — é o cartão da venda, e nada muda antes do clique (o prazo do pagamento é da etapa 9). */
+    ["dou o símbolo sagrado riscado à Prudence, ela me paga amanhã", (r) => r.caminho === "cartao" && r.leitura.subtipo === "vender" && !r.veredito, "dar ou vender? a outra oração diz a contrapartida: o cartão da venda, e o item não sai antes do clique"],
     /* 2. a oferta no imperativo, a quem está, com a quantia dita: dar, sem menu */
     ["Prudence, pega três moedas pela ajuda", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 27, "«pega três moedas» é dar (◉ 30 → 27)"],
     ["Cornelius, segura cinco moedas", (r) => r.caminho === "aplicado" && r.veredito.ficha.moedas === 25, "«segura cinco moedas» é dar (◉ 30 → 25)"],

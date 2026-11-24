@@ -141,10 +141,18 @@ sec("§4 a regra do improviso");
     t("falta o quê: pergunta, com as coisas da ficha", r.veredito === "pergunta" && r.motivo === "falta_o_que" && JSON.stringify(r.pergunta.opcoes) === JSON.stringify(CENA.heroi.carrega), JSON.stringify(r));
   }
   {
-    const r = responde("xumbrego a espada da Ana Cruz");
-    t("coisa dele + pessoa + verbo desconhecido: pergunta o que faz, com as ações", r.veredito === "pergunta" && JSON.stringify(r.pergunta.opcoes) === JSON.stringify(R.acoesDaCoisaDele), JSON.stringify(r));
+    /* MOVIDA em 23/11 (identidade e posse, etapa 8: a forma da troca), e o motivo: o menu «o que você faz
+       com…?» só existe quando a FORMA é ambígua de verdade, e nunca por faltar um verbo conhecido. «xumbrego
+       a espada da Ana Cruz»: só a Ana Cruz tem a espada, e ela tem preço — a forma diz que o herói recebe e
+       paga (comprar), e a bolsa responde (aqui, «não chega»). A intenção fica: o verbo que ninguém previu
+       nunca vira silêncio — com a coisa de quem vende, é a compra; com moeda, que os dois lados têm, sem
+       gesto e sem dívida, é a pergunta com as ações. */
+    const l = le("xumbrego a espada da Ana Cruz"), r = responde("xumbrego a espada da Ana Cruz");
+    t("coisa dele + pessoa + verbo desconhecido: a forma diz comprar (só ela tem, e tem preço), e a bolsa responde", l.subtipo === "comprar" && r.veredito === "nao" && r.motivo === "sem_moeda", JSON.stringify(r));
+    const o2 = oOuvidoNaTroca("xumbrego três moedas com o Ivo", CENA);
+    t("moeda (os dois lados têm) + verbo desconhecido, sem gesto nem dívida: pergunta o que faz, com as ações", o2.caminho === "pergunta" && o2.pergunta && o2.pergunta.opcoes.length >= 2 && !/veredito|ouvido|subtipo|motivo|fam[ií]lia|leitura|forma/i.test(o2.pergunta.texto), JSON.stringify(o2.resposta));
   }
-  t("a pergunta é texto de jogo: não fala do mecanismo", ["dou a corda pra Ana", "dou a corda", "dou isso pro Ivo", "xumbrego a espada da Ana Cruz"].every((f) => !/veredito|ouvido|subtipo|motivo|fam[ií]lia|leitura/i.test(responde(f).pergunta.texto)));
+  t("a pergunta é texto de jogo: não fala do mecanismo", ["dou a corda pra Ana", "dou a corda", "dou isso pro Ivo"].every((f) => !/veredito|ouvido|subtipo|motivo|fam[ií]lia|leitura/i.test(responde(f).pergunta.texto)));
   t("o que não é troca nem uso não recebe veredito", responde("olho o barril").veredito === null);
   t("a leitura pode vir como frase", aRespostaDoMestre("dou a corda pro Ivo", CENA).veredito === "sim_com_preco");
 }
@@ -209,6 +217,11 @@ function medir(itens) {
     const fam = l.familia === g.familia;
     conta("familia", fam); conta("familia:" + g.familia, fam);
     if (gt) { conta("subtipo", l.subtipo === g.subtipo); conta("subtipo:" + g.subtipo, l.subtipo === g.subtipo); conta("hoje:subtipo", h.subtipo === g.subtipo); }
+    /* a forma da troca em sombra (etapa 8): o tipo que a tabela da forma daria, contra o mesmo gabarito —
+       por subtipo, e as falsas trocas que ela abriria onde o gabarito não é troca */
+    const fo = l.forma && l.forma.subtipo ? l.forma.subtipo : null;
+    if (gt) { conta("forma", fo === g.subtipo); conta("forma:" + g.subtipo, fo === g.subtipo); if (fo !== g.subtipo) conta("formaErra:" + g.subtipo + "→" + (fo || "nada") + (l.subtipo === g.subtipo ? "" : "/ouvido também"), false); }
+    else conta("formaFalsa", !!(fo && l.familia !== "trocar"));
     conta("quem", igual(l.quem, g.quem)); conta("coisa", igual(l.coisa, g.coisa)); conta("quantia", (l.quantia == null ? null : l.quantia) === g.quantia);
     if (gt || g.familia === "usar") {
       const v = r.veredito === g.veredito;
@@ -234,6 +247,9 @@ function imprimir(nome, m) {
   for (const k of ["familia", "quem", "coisa", "quantia", "veredito", "motivo"]) console.log("    " + (k === "motivo" ? "veredito + motivo" : k).padEnd(29) + "   —   " + f1(m.pc(k)));
   const grupo = (pre) => Object.keys(m.c).filter((k) => k.startsWith(pre)).sort();
   console.log("    por família:   " + grupo("familia:").map((k) => k.slice(8) + " " + m.pc(k).toFixed(0) + "% (" + m.c[k][1] + ")").join(" · "));
+  console.log("    subtipo pela forma (sombra) " + f1(m.pc("forma")) + "   · falsas trocas da forma: " + (m.c.formaFalsa ? m.c.formaFalsa[0] : 0) + " de " + (m.c.formaFalsa ? m.c.formaFalsa[1] : 0));
+  console.log("    por subtipo (forma): " + grupo("forma:").map((k) => k.slice(6) + " " + m.pc(k).toFixed(0) + "% (" + m.c[k][1] + ")").join(" · "));
+  console.log("    onde a forma erra (gabarito→forma): " + grupo("formaErra:").map((k) => k.slice(10) + " ×" + m.c[k][1]).join(" · "));
   console.log("    por subtipo:   " + grupo("subtipo:").map((k) => k.slice(8) + " " + m.pc(k).toFixed(0) + "% (" + m.c[k][1] + ")").join(" · "));
   console.log("    por veredito:  " + grupo("veredito:").map((k) => k.slice(9) + " " + m.pc(k).toFixed(0) + "% (" + m.c[k][1] + ")").join(" · "));
   console.log("    por motivo:    " + grupo("motivo:").map((k) => k.slice(7) + " " + m.pc(k).toFixed(0) + "% (" + m.c[k][1] + ")").join(" · "));
