@@ -294,7 +294,7 @@ import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-p
 import { aTrocaDoOuvido, oRegistroDoOuvido, osPratosDaCasa } from "./motor/a-cena-do-ouvido.js";
 import { aPortaUnica, UMA_PORTA_SO } from "./motor/uma-porta-so.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
-import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui, aPresencaUnica } from "./quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui, aPresencaUnica, comRotuloDoHomonimo } from "./quem-esta-aqui.js";
 import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ausente.js";
 import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oChamadoDaPeca, ausentesDaPeca, foraDaCenaNaProsa, semAChegadaDaPeca } from "./pecas/no-jogo.js";
 import { oBatismo } from "./motor/o-batismo.js";
@@ -7451,7 +7451,7 @@ export default function Taverna() {
   };
   /* idem: com o Mestre vivo, quem está noutro sítio daqui também é ausente (poda-do-ausente.js) */
   const semSitioAgora = () => {
-    try { return mestreVivoLigado() ? { tambemSemSitio: true, lugares: lugaresDaqui() } : {}; }
+    try { return mestreVivoLigado() ? { tambemSemSitio: true, lugares: lugaresDaqui(), cidade: cidadeAtualRef.current || "" } : {}; }
     catch (e) { calou("o ausente noutro sítio", e); return {}; }
   };
   const quemAgora = () => {
@@ -7540,7 +7540,8 @@ export default function Taverna() {
       lugares: vale("EM CENA · os lugares", () => lugaresDaqui().map((l) => l.nome), []),
       /* S4: o registo daqui, o longe, a pessoa do passo e a da carta, e o
          fora dos muros — da conta única */
-      ...contextoDeQuemEsta(q),
+      /* identidade · etapa 3: com o Mestre vivo, o homônimo é dito pelo que o distingue (comRotuloDoHomonimo) */
+      ...contextoDeQuemEsta(vale("EM CENA · o rótulo do homônimo", () => (mestreVivoLigado() ? comRotuloDoHomonimo(q) : q), q)),
     };
   };
   /* ---------------- F2b · AS FICHAS DA CENA ----------------
@@ -10606,7 +10607,10 @@ export default function Taverna() {
     let recentes = [];
     try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }
     const mm = masmorraRef.current;
-    return { importantes, conhecidos, recentes, grupo: (fichaAgora || personagem || {}).grupo || [], aqui: [cidadeAgora, lugarAgora && lugarAgora.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (fichaAgora || personagem || {}).nome || "" };
+    /* identidade · etapa 3: com o Mestre vivo, o registo aceita o segundo homônimo (nomeComDono, contexto.porId) */
+    let porId = false;
+    try { porId = mestreVivoLigado() === true; } catch (e) { calou("a chave do contexto do nome", e); }
+    return { importantes, conhecidos, recentes, grupo: (fichaAgora || personagem || {}).grupo || [], aqui: [cidadeAgora, lugarAgora && lugarAgora.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (fichaAgora || personagem || {}).nome || "", porId };
   };
   const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);
 
@@ -11522,7 +11526,7 @@ export default function Taverna() {
        lista (o ponto da sorte conta as falas logo a seguir); o que o trecho
        empurrava com setTimeout vai pela porta adiar, à mesma hora. Fora de
        try, como o trecho era: estoura onde estourava. */
-    const { entradaDoPedido: { oficina, doCompasso, formaDaCena, daFrente, daVirada, daTrama, pedidoEsc, fioEsc } } = await oPreludioDoTurno(estadoDoPreludio(), { frase: conteudo, persAtual, histBase }, {
+    const { entradaDoPedido: { oficina, doCompasso, formaDaCena, daFrente, daVirada, daTrama, pedidoEsc, fioEsc } } = await oPreludioDoTurno({ ...estadoDoPreludio(), /* identidade · etapa 3: com o Mestre vivo, o homônimo fica e é dito pelo rótulo */ porId: mestreVivoLigado() === true }, { frase: conteudo, persAtual, histBase }, {
       aplicar: aplicarDoPreludio, calou, salvar, chamarModelo,
       pushMsgs: (novas) => { pushMsgs(novas); return mensagensRef.current; },
       adiar: (g) => setTimeout(g, 0), agora: () => Date.now(),
@@ -11541,7 +11545,7 @@ export default function Taverna() {
        que deixa o /api/turno montar o pedido em Node. O que ela escreve
        (o system incluído) volta aos refs pelo aplicar. Fora de try, como o
        trecho era: estoura onde estourava. */
-    const { saida: { pauta, nota, combateAntes, corpo, novoHist, base } } = oPedidoDoTurno(estadoDoPedido(), { frase: conteudo, persAtual, histBase, oficina, doCompasso, formaDaCena, daFrente, daVirada, daTrama, pedidoEsc, fioEsc }, { calou, pushMsgs, setNpcs, setPersonagem, aplicar: aplicarDoPedido });
+    const { saida: { pauta, nota, combateAntes, corpo, novoHist, base } } = oPedidoDoTurno({ ...estadoDoPedido(), /* identidade · etapa 3: idem */ porId: mestreVivoLigado() === true }, { frase: conteudo, persAtual, histBase, oficina, doCompasso, formaDaCena, daFrente, daVirada, daTrama, pedidoEsc, fioEsc }, { calou, pushMsgs, setNpcs, setPersonagem, aplicar: aplicarDoPedido });
     /* O NARRADOR ATOR (etapa 2, 03/11: src/motor/pedido-do-ator.js): no modo
        `ator` o pedido é o do ator — o ofício, as duas últimas trocas e a
        ficha do turno, montada da nota e do estado do fim da montagem —, e a

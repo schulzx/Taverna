@@ -17,7 +17,10 @@
    §5 o que decidia por nome decide pelo id;
    §6 a quest cujo papel é uma de duas homônimas só anda com a certa;
    §7 o fato gravado como npc|Nome conta para a pessoa da base pelo alias;
-   §8 um save antigo termina uma quest. */
+   §8 um save antigo termina uma quest;
+   §9 a fiação: os cinco fios do App (lidos como texto) e a porta única
+      jogada — a pergunta com os dois rótulos, e a resposta que fecha a
+      troca na pessoa certa, pelo id. */
 import fs from "node:fs";
 import { quemEstaAqui, rotulosDosHomonimos, oQualComRotulos, aEscolhaDoQual, comRotuloDoHomonimo, contextoDeQuemEsta,
   quemEstaNoutroSitio, naoEstaoAqui, oMesmoPorId, ROTULO_DO_HOMONIMO } from "../src/quem-esta-aqui.js";
@@ -223,6 +226,35 @@ sec("§8 um save antigo termina uma quest");
     const j = julgarEtapa({ id: "e1", conclui: ["conversou", "papel:x"] }, { estado: e, papeis: { x: { tipo: "pessoa", nome: "Lavinia Sallow" } } });
     t("a etapa fecha num save sem campo novo", j.feita === true, J(j.falta));
   }
+}
+
+/* ============================================================ */
+sec("§9 a fiação: o App leva a chave, e a porta única pergunta e fecha pelo rótulo");
+{
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("o prelúdio leva porId (a chave do Mestre vivo)", /oPreludioDoTurno\(\{ \.\.\.estadoDoPreludio\(\),[^}]*porId: mestreVivoLigado\(\) === true \}/.test(app));
+  t("o pedido leva porId", /oPedidoDoTurno\(\{ \.\.\.estadoDoPedido\(\),[^}]*porId: mestreVivoLigado\(\) === true \}/.test(app));
+  const base = app.slice(app.indexOf("const baseDoNome = (sobre = {}) =>"), app.indexOf("const baseDoNome = (sobre = {}) =>") + 4000);
+  t("o contexto do nome (baseDoNome) devolve porId pela chave", /porId = mestreVivoLigado\(\) === true/.test(base) && /heroi: [^\n]*, porId \};/.test(base));
+  t("o EM CENA da tela passa por comRotuloDoHomonimo atrás da chave", /contextoDeQuemEsta\([^\n]*mestreVivoLigado\(\) \? comRotuloDoHomonimo\(q\) : q/.test(app) && /import \{[^}]*comRotuloDoHomonimo[^}]*\} from "\.\/quem-esta-aqui\.js"/.test(app));
+  t("os ausentes levam a cidade, atrás da chave (semSitioAgora)", /mestreVivoLigado\(\) \? \{ tambemSemSitio: true, lugares: lugaresDaqui\(\), cidade: cidadeAtualRef\.current/.test(app));
+
+  /* a porta jogada: duas Tabitha no mesmo sítio, a frase que dá moedas ao nome */
+  const q = quemEstaAqui(estado(TAVERNA, { gente: JUNTAS }));
+  const [J1, J2] = idsDaGente(JUNTAS, CIDADE);
+  const retrato = { lugar: { nome: TAVERNA, tipo: "taverna" }, pessoas: q.doSitio.map((x) => ({ id: x.id, nome: x.nome, papel: x.rotulo })), grupo: [], bancas: [], ausentes: [], conhecidos: [], chao: [], ficha: { moedas: 20, inventario: [] } };
+  const r1 = aPortaUnica("dou duas moedas para a Tabitha", retrato, {});
+  const ops = (r1 && r1.pergunta && r1.pergunta.opcoes) || [];
+  t("a pergunta vem da porta já com dois rótulos distintos (o ofício)", r1.caminho === "pergunta" && ops.length === 2 && ops[0].rotulo !== ops[1].rotulo && /taverneira/i.test(ops[0].rotulo) && /recruta/i.test(ops[1].rotulo), J(ops));
+  t("e a linha que o jogador lê diz os dois rótulos", /taverneira/i.test(r1.pergunta.linha) && /recruta/i.test(r1.pergunta.linha), r1.pergunta.linha);
+  const fecha = (resposta) => aPortaUnica(resposta, retrato, { pendente: r1.pergunta });
+  const naCerta = (r, id, outro) => !!r && r.caminho && r.caminho !== "pergunta" && J(r).includes(`"quemId":"${id}"`) && !J(r).includes(`"quemId":"${outro}"`);
+  for (const [resp, id, outro] of [["2", J2, J1], ["1", J1, J2], [ops[1].rotulo, J2, J1], [ops[0].rotulo, J1, J2], ["a recruta", J2, J1], ["taverneira", J1, J2]]) {
+    const r = fecha(resp);
+    t(`a resposta «${resp}» fecha a troca na pessoa certa, pelo id`, naCerta(r, id, outro), J(r && { c: r.caminho, l: r.leitura && r.leitura.quemId }));
+  }
+  const r0 = fecha("Tabitha");
+  t("o nome que as duas têm não fecha em ninguém", !(r0 && r0.leitura && [J1, J2].includes(r0.leitura.quemId)), J(r0 && { c: r0.caminho, l: r0.leitura && r0.leitura.quemId }));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

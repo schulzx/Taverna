@@ -305,7 +305,9 @@ sec("5 · o ofício que a tela mostra: no gênero, e o papel da quest");
   console.log("\nA fiação no App");
   t("o rumo da tela recebe quem está presente e a trava da partida", /oRumoDaBusca\(\{[^\n]*presentes: presentesDaTela\(\), partida: aPartidaAgora\(\)/.test(app));
   t("a trava da partida é montada num calou", /const aPartidaAgora = \(\) => \{\s*try \{ return \{ molde: moldeMundo\(\)[^\n]*\}\s*catch \(e\) \{ calou\(/.test(app));
-  t("todo `osAusentes` do App leva o ausente noutro sítio (só com o Mestre vivo)", (app.match(/osAusentes\([^\n]*\.\.\.semSitioAgora\(\)/g) || []).length === (app.match(/osAusentes\(/g) || []).length && /mestreVivoLigado\(\) \? \{ tambemSemSitio: true, lugares: lugaresDaqui\(\) \} : \{\}/.test(app));
+  t("todo `osAusentes` do App leva o ausente noutro sítio (só com o Mestre vivo)", (app.match(/osAusentes\([^\n]*\.\.\.semSitioAgora\(\)/g) || []).length === (app.match(/osAusentes\(/g) || []).length && /mestreVivoLigado\(\) \? \{ tambemSemSitio: true, lugares: lugaresDaqui\(\)[^}\n]*\} : \{\}/.test(app));
+  /* 23/11 (identidade · etapa 3): a régua aceita campos depois de «lugares» — o semSitioAgora passou a levar também
+     a cidade (os ids da gente da base, poda-do-ausente.js); o que se prova continua a ser o ausente noutro sítio atrás da chave. */
   t("quem está aqui recebe os passos das quests (o rótulo do papel)", /passos: vale\("QUEM ESTÁ · os passos das quests", \(\) => passosDasQuestsAgora\(\), \[\]\)/.test(app));
   t("o tipo do sítio pede os locais à cidade (o objeto), e não ao nome dela", /const loc = locaisDaCidade\(sementeMundo\(\), cidadeSobOsPes\(\),/.test(app));
 }

@@ -50,6 +50,7 @@
 import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CENA_DO_OUVIDO } from "./a-cena-do-ouvido.js";
 import { ligarACena, asAcoesDaFrase } from "../o-ouvido.js";
 import { asTransacoesDoVeredito, aCobrancaDaLeitura, aTransacaoDoPedido, aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "../a-troca-por-transacao.js";
+import { oQualComRotulos, aEscolhaDoQual } from "../quem-esta-aqui.js";
 
 export const UMA_PORTA_SO = Object.freeze({
   /* o resultado lido na proposta da frase vale para o turno da mesma frase por este tempo (ms) */
@@ -202,7 +203,10 @@ function aPerguntaValida(o, cena, frase, vezes) {
   if (!valores.length) return { nenhum: true, campo };
   if (valores.length === 1) return { um: valores[0], umId: itens[0].id, campo };
   const rotulo = (v) => (campo === "subtipo" ? R.acao[v] : maiuscula(semAposto(v)));
-  const opcoes = itens.map((x) => Object.freeze({ rotulo: rotulo(x.v), valor: x.v, ...(x.id ? { id: x.id } : {}) }));
+  const opcoes0 = itens.map((x) => Object.freeze({ rotulo: rotulo(x.v), valor: x.v, ...(x.id ? { id: x.id } : {}) }));
+  /* identidade · etapa 3: dois de mesmo nome são ditos pelo que os distingue («1. Tabitha, taverneira · 2. Tabitha, recruta»);
+     o ofício da cena chega como papel, que é o que o rótulo lê (quem-esta-aqui.js#oQualComRotulos) */
+  const opcoes = motivo === "dois_com_o_nome" ? oQualComRotulos(opcoes0, arr(cena.pessoas).map((p) => (obj(p) ? { ...p, papel: str(p.papel || p.oficio) } : p))) : opcoes0;
   const lista = opcoes.map((x, i) => tpl(R.tela.opcao, { n: i + 1, rotulo: x.rotulo })).join(R.tela.separador);
   return {
     texto: r.pergunta.texto,
@@ -361,7 +365,8 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
     let o = null, fraseDoTurno = f, vezes = 0;
     if (pend && obj(pend.leitura)) {
       const ops = arr(obj(c.pendente) && c.pendente.opcoes);
-      const op = aOpcaoEscolhida(pend, ops, f);
+      /* identidade · etapa 3: o número, o nome inteiro, o rótulo, ou uma palavra que só um rótulo tem */
+      const op = aEscolhaDoQual(f, ops) || aOpcaoEscolhida(pend, ops, f);
       const v = op ? op.valor : null;
       if (v != null) {
         const l2 = completar(pend.leitura, pend.campo, v, cena, op && op.id);
