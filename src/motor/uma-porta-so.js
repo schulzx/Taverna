@@ -34,7 +34,14 @@
      cartao    — { tipo, total, chave, leitura }: a leitura é a que a proposta da
                  frase já sabe compor (compras, pagar, venda, escambo); a chave
                  volta em ctx.confirmado no clique, e só então a troca aplica;
-     frase     — a frase que parte como turno (a da escolha, se houve).
+     frase     — a frase que parte como turno (a da escolha, se houve);
+     transacoes — (etapa 6 da identidade e posse, 23/11) o que muda de mão, em
+                 transações com ids ({ de, para, oQue, contra, consentimento,
+                 prazo?, origem, chave }, a-troca-por-transacao.js): no
+                 «aplicado» e no «cartao», a troca inteira; no «dado», o que o
+                 dado decide. O App aplica cada uma por aplicarTransacao, uma
+                 vez; a porta já as provou contra a posse (ctx.aPosse) e, se a
+                 estrutura recusa, o caminho é «nao» com o motivo.
 
    Módulo puro, determinístico, sem React. Tudo o que é palavra mora em
    UMA_PORTA_SO; o resto é da ponte (a-cena-do-ouvido.js), do ouvido e da
@@ -42,6 +49,7 @@
    ============================================================ */
 import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CENA_DO_OUVIDO } from "./a-cena-do-ouvido.js";
 import { ligarACena, asAcoesDaFrase } from "../o-ouvido.js";
+import { asTransacoesDoVeredito, aCobrancaDaLeitura, aTransacaoDoPedido, aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "../a-troca-por-transacao.js";
 
 export const UMA_PORTA_SO = Object.freeze({
   /* o resultado lido na proposta da frase vale para o turno da mesma frase por este tempo (ms) */
@@ -343,6 +351,10 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
     const estoqueDaCasa = arr(r0.casa).map((x) => ({ nome: x.nome, preco: x.preco, consumo: true }));
     const casaBanca = !estoqueDaCasa.length ? [] : quemServe.length ? quemServe.map((p) => ({ nome: p.nome, estoque: estoqueDaCasa })) : [{ nome: str(cena.lugar) || A_CENA_DO_OUVIDO.aCasa, estoque: estoqueDaCasa }];
     const ctxT = { ficha, bancas: [...arr(r0.bancas), ...casaBanca], porta: "", vaiAoCorpo: arr(c.vaiAoCorpo), ofertaDe: c.ofertaDe, ofertaDoUso: c.ofertaDoUso, confirmado: obj(c.confirmado) ? str(c.confirmado.chave) : str(c.confirmado) };
+    /* etapa 6: a posse (o registro e o mundo de agora) e a base da chave: o turno, a frase, a ação */
+    const aPosse = obj(c.aPosse) || {};
+    ctxT.posse = { ...aPosse, bancas: ctxT.bancas };
+    ctxT.troca = { grupo: ficha.grupo, bancas: ctxT.bancas, pessoas: arr(cena.pessoas), posses: aPosse.posses || null, mercado: aPosse.mercado || null, ficha, posse: ctxT.posse, base: { turno: c.turno, frase: f, profundidade: c.profundidade } };
 
     /* 1. A PERGUNTA PENDENTE: a resposta completa a leitura (a estrutura), e não se cola ao texto */
     const pend = obj(c.pendente) && obj(c.pendente.pendente) ? c.pendente.pendente : obj(c.pendente);
@@ -496,18 +508,38 @@ function decidir(o, sai, ctxT, cena, r0, R) {
     const Nome = semAposto(l.companheiro).split(/\s+/)[0];
     return sai({ caminho: "nao", veredito: negada("grupo", tpl(R.tela.subornoAoGrupo, { Nome }), tpl(R.fato.subornoAoGrupo, { Nome })) });
   }
+  /* etapa 6 (identidade e posse): o que vem de quem deve ao herói é `devido` — com dívida aberta no
+     registro, aplica sem dado; o subtipo que só existe pela dívida (cobrar), sem ela, a estrutura recusa */
+  const cob = aCobrancaDaLeitura(l, { ...ctxT.troca, l });
+  if (cob && cob.transacoes.length) {
+    const nomes = { ...nomesDasTransacoes(null, cob.transacoes, l), [cob.transacoes[0].de]: semAposto(str(l.quem)) };
+    const prova = aplicarAsTransacoes(ctxT.troca.posses, ctxT.ficha, cob.transacoes, ctxT.posse);
+    if (!prova.ok) return sai({ caminho: "nao", veredito: oVereditoDaRecusa(prova, nomes, A_CENA_DO_OUVIDO.veto.nada) });
+    return sai({ caminho: "aplicado", veredito: Object.freeze({ ...oVereditoDoQueVeio(prova, nomes, A_CENA_DO_OUVIDO.veto.feita, cob.devido > 0), transacoes: Object.freeze(cob.transacoes) }), transacoes: Object.freeze(cob.transacoes) });
+  }
   /* o dado: o caminho de hoje rola o furto, o pedido de graça, o tomar, o suborno e o pegar de alguém */
   if (v === "dado") {
     const it = l.tomar ? Object.freeze({ tipo: "tomar", coisa: str(l.coisa) }) : o.intencao;
-    if (it && R.dadoDeHoje.includes(it.tipo)) return sai({ caminho: "dado", intencao: it });
+    if (it && R.dadoDeHoje.includes(it.tipo)) {
+      const tsD = aTransacaoDoPedido(l, it, { ...ctxT.troca, l });
+      return sai({ caminho: "dado", intencao: it, ...(tsD.length ? { transacoes: Object.freeze(tsD) } : {}) });
+    }
     return sai({ caminho: "dado", adiado: true });
   }
   const t = aTrocaDoOuvido(o, ctxT);
   if (t && t.estado === "aplicada") {
+    /* etapa 6: o que a ponte decidiu vira transações, provadas contra a posse ANTES do cartão e da ficha —
+       se a estrutura recusa (quem entrega não tem, não há dívida), o jogador lê o motivo e nada muda */
+    const ts = asTransacoesDoVeredito(t, { ...ctxT.troca, l });
+    if (ts.length) {
+      const prova = aplicarAsTransacoes(ctxT.troca.posses, ctxT.ficha, ts, { ...ctxT.posse, aceito: true });
+      if (!prova.ok && prova.motivo !== "jaAplicada") return sai({ caminho: "nao", veredito: oVereditoDaRecusa(prova, nomesDasTransacoes(t, ts, l), A_CENA_DO_OUVIDO.veto.nada) });
+    }
+    const comT = ts.length ? { transacoes: Object.freeze(ts) } : {};
     /* o veredito antes do clique: o preço que o jogador não disse vira o cartão, e só o clique aplica */
     const k = oCartao(l, t, ctxT.ficha);
-    if (k && k.chave !== ctxT.confirmado) return sai({ caminho: "cartao", cartao: k });
-    return sai({ caminho: "aplicado", veredito: t });
+    if (k && k.chave !== ctxT.confirmado) return sai({ caminho: "cartao", cartao: k, ...comT });
+    return sai({ caminho: "aplicado", veredito: ts.length ? Object.freeze({ ...t, transacoes: Object.freeze(ts) }) : t, ...comT });
   }
   if (t && t.estado === "negada") return sai({ caminho: "nao", veredito: t });
   /* sem caminho que aplique (nunca o silêncio, nunca item inventado): nada muda de mão */

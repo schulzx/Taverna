@@ -86,6 +86,8 @@ export const QUEM_TEM_O_QUE = Object.freeze({
   consentimentoPadrao: "dado",
   lados: Object.freeze({ heroi: "heroi", mundo: "mundo", nada: "nada", chao: "chao|", banca: "banca|", registo: "npc|" }),
   usos: Object.freeze(["racoes", "agua", "tochas", "flechas"]),
+  /* etapa 6: para onde vai a coisa que chega ao herói (a ficha tem as duas) */
+  destinos: Object.freeze(["inventario", "equipamento"]),
   semente: "posse",
   estados: Object.freeze({ aberta: "aberta", fechada: "fechada" }),
   /* o objeto que o núcleo carrega vira coisa na mão; a dívida e a culpa não */
@@ -281,7 +283,12 @@ function oQueLimpo(x) {
   const nome = o.tipo === "moedas" ? "moedas" : str(o.nome).trim().slice(0, Q.teto.nome);
   if (!nome) return null;
   if (o.tipo === "uso" && !Q.usos.includes(nome)) return null;
-  return { tipo: o.tipo, nome, quantos, ...(o.tipo === "item" && obj(o.item) ? { item: o.item } : {}) };
+  /* etapa 6: a forma em que a coisa chega (o objeto pronto, e se vai à mochila ou ao corpo) e, para o uso
+     que uma banca vende, o nome do item do estoque que o carrega */
+  const item = o.tipo === "item" && (obj(o.item) || (typeof o.item === "string" && o.item.trim())) ? { item: o.item } : {};
+  const destino = o.tipo === "item" && Q.destinos.includes(o.destino) ? { destino: o.destino } : {};
+  const deEstoque = o.tipo === "uso" && typeof o.deEstoque === "string" && o.deEstoque.trim() ? { deEstoque: o.deEstoque.trim().slice(0, Q.teto.nome) } : {};
+  return { tipo: o.tipo, nome, quantos, ...item, ...destino, ...deEstoque };
 }
 function dividaLimpa(d) {
   const o = obj(d);
@@ -440,7 +447,14 @@ function tirar(S, lado, oQue, c) {
       const M = comMercado(S);
       return { S: { ...S, mercado: { ...M, gastos: { ...(obj(M.gastos) || {}), [lado.banca]: { dia, moedas: gasto + q } } }, tocouMercado: true }, coisas: [] };
     }
-    if (oQue.tipo === "uso") return tirarDoDelta(S, lado.id, oQue, []);
+    if (oQue.tipo === "uso") {
+      /* etapa 6: o uso que a banca vende sai do estoque (o item que o carrega); o resto, do delta dela */
+      const k = oQue.deEstoque ? e.itens.findIndex((it) => casa(it, oQue.deEstoque)) : -1;
+      if (k < 0) return tirarDoDelta(S, lado.id, oQue, []);
+      const M = comMercado(S);
+      const comprados = obj(M.comprados) || {};
+      return { S: { ...S, mercado: { ...M, comprados: { ...comprados, [lado.banca]: [...arr(comprados[lado.banca]), nomeDe(e.itens[k])] } }, tocouMercado: true }, coisas: [] };
+    }
     /* o que se compra sai do estoque (comprados); o que ela comprou antes, do delta */
     let S2 = S;
     const coisas = [];
@@ -507,12 +521,14 @@ function tirarDoDelta(S, id, oQue, itensIniciais, inicial0) {
 const impressao = (x) => { let b; try { b = JSON.stringify(x); } catch { b = String(x); } return `ch${hashSemente(String(b)).toString(36)}`; };
 function por(S, lado, oQue, coisas0, c, deId) {
   const q = oQue.quantos;
-  const coisas = coisas0.map((x) => (obj(x) && temChave(x, "destino") && temChave(x, "coisa") ? x : { coisa: x, destino: "" }));
+  let coisas = coisas0.map((x) => (obj(x) && temChave(x, "destino") && temChave(x, "coisa") ? x : { coisa: x, destino: "" }));
   if (lado.tipo === "mundo" || lado.tipo === "nada") return { S };
   if (lado.tipo === "heroi") {
     const F = S.ficha;
     if (oQue.tipo === "moedas") return { S: { ...S, ficha: { ...F, moedas: inteiro(F.moedas) + q } } };
     if (oQue.tipo === "uso") { const sup = obj(F.suprimentos) || {}; return { S: { ...S, ficha: { ...F, suprimentos: { ...sup, [oQue.nome]: inteiro(sup[oQue.nome]) + q } } } }; }
+    /* etapa 6: a forma em que a coisa chega, quando a transação a diz, vale sobre a de quem a tirou */
+    if (oQue.tipo === "item" && (oQue.item != null || oQue.destino)) coisas = coisas.map((x) => ({ coisa: oQue.item != null ? oQue.item : x.coisa, destino: oQue.destino || x.destino }));
     const paraEqp = coisas.filter((x) => x.destino === "equipamento").map((x) => x.coisa);
     const paraInv = coisas.filter((x) => x.destino !== "equipamento").map((x) => x.coisa);
     return { S: { ...S, ficha: { ...F, inventario: [...arr(F.inventario), ...paraInv], ...(paraEqp.length ? { equipamento: [...arr(F.equipamento), ...paraEqp] } : {}) } } };

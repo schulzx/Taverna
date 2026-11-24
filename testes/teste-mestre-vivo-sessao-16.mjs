@@ -132,7 +132,10 @@ const CASOS = [
     /* 23/11 (o veredito antes do clique): era «aplicado» direto; a venda vira o cartão com o comprador, e o clique dá uma linha só */
     (r, deNovo) => cartao(r, "venda", 7) && r.cartao.leitura.venda.quem === "O Sino Rachado" && (() => { const c = noClique(r, deNovo); return c.caminho === "aplicado" && c.veredito.ficha.moedas === 18 && /Sino Rachado/.test(c.veredito.linha); })(), "uma venda, um cartão (◉ +7 ao Sino Rachado), e no clique uma linha só"],
   [32, "cobro de Thaddeus as dez moedas que já passei pra ele", POCO(ficha(19, [])),
-    (r) => r.caminho === "dado" && r.adiado, "cobrar: o teste decide (concordava)"],
+    /* MOVIDA em 23/11 (identidade e posse, etapa 6), e o motivo: as dez moedas foram DADAS («já passei pra ele»), não
+       emprestadas — não há dívida de Thaddeus com o herói, e cobrar o que não é devido é recusado pela estrutura (o
+       registro de dívidas), com o motivo e sem dado. Antes, o dado decidia uma cobrança que não existia. */
+    (r) => r.caminho === "nao" && r.veredito && r.veredito.motivo === "semDivida" && !r.veredito.ficha, "cobrar sem dívida: a estrutura recusa (concordava)"],
   [34, "devolvo o livro a Mercy Quintus, inteiro como estava", CAPELA(ficha(75, [LIVRO])),
     (r) => r.caminho === "nao" && r.veredito.motivo === "ausente" && /Mercy Quintus não está aqui/.test(r.veredito.fato), "a Mercy está na Lâmpada: não há a quem devolver, e o livro fica"],
   [35, "pego a poção de cura que ficou no chão", CAPELA(ficha(75, [LIVRO]), {}, [{ id: "p1", nome: POCAO.nome }]),
@@ -158,7 +161,11 @@ const CASOS = [
     /* 23/11 (o veredito antes do clique): era «aplicado» direto; a revenda é da tabela, não do jogador — o cartão primeiro */
     (r, deNovo) => cartao(r, "venda", 1) && (() => { const c = noClique(r, deNovo); return c.veredito.ficha.suprimentos.tochas === 5 && c.veredito.ficha.moedas === 67; })(), "duas tochas: o cartão (◉ +1), e no clique 7 → 5, ◉ 66 → 67 (concordava)"],
   [54, "devolvo o Livro dos Nomes a Mercy, já que ele ainda está comigo", LAMPADA_2(ficha(67, [LIVRO], { suprimentos: { tochas: 5 } })),
-    (r) => r.caminho === "aplicado" && !r.veredito.ficha.inventario.some((x) => x.nome === LIVRO.nome), "o livro sai da bolsa para a Mercy (concordava)"],
+    /* MOVIDA em 23/11 (identidade e posse, etapa 6), e o motivo: devolver é a entrega que paga uma dívida, e o registro
+       não tem empréstimo do livro (o empréstimo não existia antes desta etapa). Sem dívida, a estrutura recusa e o livro
+       fica — a mesma classe de T14, que entregava o que nunca foi emprestado. Custo conhecido: o item que a quest pôs na
+       mão do herói não é dívida no registro; lê-lo do livro de factos (recebeu) é da etapa 9. */
+    (r) => r.caminho === "nao" && r.veredito && r.veredito.motivo === "semDivida" && !r.veredito.ficha, "devolver sem empréstimo: a estrutura recusa (concordava)"],
   [55, "dou três poções de mana pra Charity", LAMPADA_2(ficha(67, [], { suprimentos: { tochas: 5 } })),
     (r) => r.caminho === "nao" && r.veredito.motivo === "nao_tem", "não tenho poção de mana: não (concordava)"],
   [56, "digo a Thomasine: \"pago o dobro, se você me contar o que sabe da torre\"", LAMPADA_2(ficha(67, [], { suprimentos: { tochas: 5 } })),
@@ -359,7 +366,9 @@ sec("§7 a bancada da troca — o que o jogo jogado mostrou");
     ["pego a corda da banca e saio andando", (r) => r.caminho === "nao" && /só sai da banca pago/.test(r.veredito.linha), "o que está à venda não se leva da banca (B64)"],
     ["dou três flechas à Lavinia", (r) => r.caminho === "nao" && /não tem flecha/.test(r.veredito.linha), "o número antes do nome: «flechas» é coisa, e você não tem (B44)"],
     ["Lavinia, fica com o símbolo, de presente", (r) => r.caminho === "aplicado" && r.leitura.subtipo === "dar", "«de presente» é dar (B41)"],
-    ["Cornelius, você me deve cinco moedas. Estou cobrando.", (r) => r.leitura.subtipo === "cobrar" && r.caminho === "dado", "«me deve… estou cobrando» é cobrar, com o dado (B110)"],
+    /* MOVIDA em 23/11 (etapa 6), e o motivo: a leitura continua cobrar; sem dívida de Cornelius no registro, a resposta
+       deixa de ser o dado e passa a ser a recusa da estrutura (a bancada aceita dado ou nega em B110) */
+    ["Cornelius, você me deve cinco moedas. Estou cobrando.", (r) => r.leitura.subtipo === "cobrar" && (r.caminho === "dado" || (r.caminho === "nao" && r.veredito.motivo === "semDivida")), "«me deve… estou cobrando» é cobrar: o dado, ou a recusa sem dívida (B110)"],
     ["ofereço vinte moedas à Prudence para ela me deixar passar", (r) => r.caminho === "dado" && r.intencao && r.intencao.tipo === "suborno", "o propósito com dois pronomes é suborno: o dado, e a moeda não sai antes (B91)"],
     ["compro a corda e duas tochas", (r) => r.caminho === "cartao" && r.cartao.leitura.compras[0].itens[0].quantos === 1 && /Corda/.test(r.cartao.leitura.compras[0].itens[0].nome), "o «duas» é das tochas: a corda vai uma (B13)"],
   ];

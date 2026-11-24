@@ -513,7 +513,9 @@ sec("1. NENHUM MÓDULO MUDO");
        atrás da chave do Mestre vivo. Credor: o `oficial` (com o backend),
        na etapa 6. A entrada sai quando o App ou o motor o importar.
        `teste-quem-tem-o-que.mjs` é o primeiro leitor. */
-    "quem-tem-o-que.js": "etapa 6 da identidade e posse (oficial)",
+    /* e paga na etapa 6 (23/11, oficial): `a-troca-por-transacao.js` (a ponte
+       que a porta única importa) e o App.jsx o importam, atrás da chave do
+       Mestre vivo. A entrada SAIU. `teste-a-troca-por-transacao.mjs` prova. */
   };
   const mudos = [];
   for (const f of arqs) {
