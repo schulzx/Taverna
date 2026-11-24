@@ -1,0 +1,15 @@
+{
+ "nota": "23/11 (identidade e posse, etapa 6): o outro lado da troca. Cada frase mede o que o registro de posse e de dívida faz depois de uma troca anterior (o campo «antes» roda no mesmo estado, antes da medida). A bancada não rola dado: o pedido sem dívida para no dado. Nenhum estado tem morto; o morto está provado na suíte (teste-a-troca-por-transacao.mjs).",
+ "frases": [
+  { "id": "P01", "estado": "balanca", "antes": ["dou quinze moedas à Prudence"], "frase": "Prudence, me devolve cinco dessas moedas", "tipo": ["dado", "nega"], "ficha": {}, "ouvido": { "familia": "trocar", "quem": "Prudence" }, "diz": [] },
+  { "id": "P02", "estado": "balanca", "antes": ["empresto cinco moedas à Prudence"], "frase": "Prudence, me devolve as cinco moedas que te emprestei", "tipo": "aplica", "ficha": { "moedas": 5 }, "ouvido": { "familia": "trocar", "quem": "Prudence" } },
+  { "id": "P03", "estado": "balanca", "antes": ["empresto cinco moedas à Prudence"], "frase": "cobro da Prudence as cinco moedas que emprestei", "tipo": "aplica", "ficha": { "moedas": 5 }, "ouvido": { "familia": "trocar", "subtipo": "cobrar", "quem": "Prudence" } },
+  { "id": "P04", "estado": "balanca", "antes": ["empresto cinco moedas à Prudence"], "frase": "cobro da Prudence oito moedas", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "cobrar", "quem": "Prudence" } },
+  { "id": "P05", "estado": "balanca", "frase": "devolvo o símbolo sagrado riscado à Prudence", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "devolver", "quem": "Prudence" } },
+  { "id": "P06", "estado": "balanca", "frase": "Prudence, você me deve cinco moedas, paga logo", "tipo": ["nega", "dado"], "ficha": {}, "ouvido": { "familia": "trocar", "quem": "Prudence" } },
+  { "id": "P07", "estado": "balanca", "antes": ["dou quinze moedas à Prudence"], "frase": "cobro da Prudence as quinze moedas", "tipo": ["nega", "dado"], "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "cobrar", "quem": "Prudence" } },
+  { "id": "P08", "estado": "balanca", "antes": ["empresto o símbolo sagrado riscado à Prudence"], "frase": "Prudence, me devolve o símbolo que te emprestei", "tipo": "aplica", "ficha": { "inv": { "+": ["Símbolo sagrado riscado"] } }, "ouvido": { "familia": "trocar", "quem": "Prudence" } },
+  { "id": "P09", "estado": "balanca", "antes": ["empresto o símbolo sagrado riscado à Lavinia"], "frase": "Lavinia, me devolve o símbolo", "tipo": "aplica", "ficha": { "inv": { "+": ["Símbolo sagrado riscado"] }, "grupo": { "Lavinia Sallow": { "-": ["Símbolo sagrado riscado"] } } }, "ouvido": { "familia": "trocar", "quem": "Lavinia" } },
+  { "id": "P10", "estado": "balanca-pobre", "frase": "devolvo a corda ao Cornelius", "tipo": ["aplica", "cartao"], "ficha": { "moedas": "?", "inv": { "-": ["Corda que sempre volta enrolada"] } }, "ouvido": { "familia": "trocar", "subtipo": "devolver", "quem": "Cornelius" } }
+ ]
+}

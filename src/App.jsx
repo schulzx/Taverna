@@ -124,6 +124,9 @@ import { montarEmCena, quemNaFrase } from "./em-cena.js";
 import { fichasDaCena, marcasDaProsa, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
 import { garantirFactos } from "./livro-de-factos.js";
 import { garantirPessoas } from "./quem-e-quem.js";
+import { garantirPosses } from "./quem-tem-o-que.js";
+import { aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "./a-troca-por-transacao.js";
+import { A_CENA_DO_OUVIDO } from "./motor/a-cena-do-ouvido.js";
 import { idDoLugar } from "./livro-de-factos.js";
 import { chamadoDoMomento, chamadoQueOMundoProvoca } from "./a-cena-do-jogo.js";
 import { lerAChaveDoMestreVivo, retratoDosRefs, oQueOMomentoFaz, vereditoDoQueAcontece, pautaDoMomento, lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, rolagemDoEspontaneo, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, oMestreVivoCalaOPedido, semFioNoMomento, marcarDoMomento, oQueAconteceSemDado, falaDoVeredictoNaMesa, falaDoCustoNaMesa, falaDoBarulhoNaMesa, falaDosBlefesNaMesa, oMomentoSemOAusente, oMomentoDaTrocaNegada } from "./o-mestre-vivo-no-jogo.js";
@@ -5969,6 +5972,7 @@ export default function Taverna() {
      fora do save: a gaveta, o momento da carta, a gota do sinal. */
   const quadroRef = useRef(garantirQuadro(null));
   const pessoasRef = useRef(null);                            // 23/11: o que o catálogo de pessoas não deriva (campo `pessoas` do save; quem-e-quem.js)
+  const possesRef = useRef(null);                             // 23/11 (identidade e posse · etapa 6): o registro de posse e dívida (campo `posses` do save; quem-tem-o-que.js)
   const [quadroAberto, setQuadroAberto] = useState(false);
   const [questDoQuadro, setQuestDoQuadro] = useState(null); /* a quest que o Diário pediu: sobrepõe-se à da vez enquanto a gaveta está aberta */
   const [pistaQueVira, setPistaQueVira] = useState(null);   /* { vira, misterio, n }: a carta que o sistema virou neste turno */
@@ -9353,7 +9357,7 @@ export default function Taverna() {
          lê este literal e falha se um campo nascer aqui sem nascer lá. */
       versao: ESTADO_VERSAO,
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cativeiro: cativeiroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, quadro: quadroRef.current, pessoas: pessoasRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cativeiro: cativeiroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, quadro: quadroRef.current, pessoas: pessoasRef.current, posses: possesRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -12279,7 +12283,7 @@ export default function Taverna() {
         noiteRef.current = null; torneioRef.current = null; vereditoRef.current = null;
       } catch (e) { calou("BQ7c · os motores da campanha nova", e); }
     }
-    if (!cap) factosRef.current = garantirFactos(null); if (!cap) { try { quadroRef.current = garantirQuadro(null); quadroVistoRef.current = null; } catch (e) { calou("o quadro da campanha nova", e); } } if (!cap) pessoasRef.current = null; /* BQ2: o livro de factos é da campanha; um capítulo novo guarda-o */
+    if (!cap) factosRef.current = garantirFactos(null); if (!cap) { try { quadroRef.current = garantirQuadro(null); quadroVistoRef.current = null; } catch (e) { calou("o quadro da campanha nova", e); } } if (!cap) pessoasRef.current = null; if (!cap) possesRef.current = null; /* BQ2: o livro de factos é da campanha; um capítulo novo guarda-o */
     if (!cap) memoriaRef.current = garantirMemoriaDoSave(null); /* F2d: a memória com rosto é da campanha; um capítulo novo guarda-a, como o registo */
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
     try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração da campanha nova", e); }
@@ -12635,7 +12639,7 @@ export default function Taverna() {
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { factosRef.current = garantirFactos(sv.factos); } catch (e) { calou("o livro de factos do save", e); factosRef.current = garantirFactos(null); } try { pessoasRef.current = garantirPessoas(sv.pessoas); } catch (e) { calou("as pessoas do save", e); pessoasRef.current = null; } try { quadroRef.current = garantirQuadro(sv.quadro); quadroVistoRef.current = null; } catch (e) { calou("o quadro do save", e); quadroRef.current = garantirQuadro(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { factosRef.current = garantirFactos(sv.factos); } catch (e) { calou("o livro de factos do save", e); factosRef.current = garantirFactos(null); } try { pessoasRef.current = garantirPessoas(sv.pessoas); } catch (e) { calou("as pessoas do save", e); pessoasRef.current = null; } try { possesRef.current = garantirPosses(sv.posses); } catch (e) { calou("as posses do save", e); possesRef.current = null; } try { quadroRef.current = garantirQuadro(sv.quadro); quadroVistoRef.current = null; } catch (e) { calou("o quadro do save", e); quadroRef.current = garantirQuadro(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -19243,7 +19247,7 @@ export default function Taverna() {
     const pend = perguntaDoOuvidoRef.current;
     perguntaDoOuvidoRef.current = null;
     let r = null;
-    try { r = aPortaUnica(frase, retratoDoOuvido(), { pendente: pend, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO }); } catch (e) { calou("o ouvido · a porta única", e); r = null; }
+    try { r = aPortaUnica(frase, retratoDoOuvido(), { pendente: pend, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO, aPosse: aPosseAgora(), turno: turnoDeRegistroRef.current + 1 }); } catch (e) { calou("o ouvido · a porta única", e); r = null; }
     portaUnicaRef.current = r ? { entrada: frase, frase: r.frase, r, em: Date.now() } : null;
     return r;
   };
@@ -19272,7 +19276,7 @@ export default function Taverna() {
   const confirmarOCartaoDaPorta = (p) => {
     try {
       let r = null;
-      try { r = aPortaUnica(p.frase, retratoDoOuvido(), { pendente: null, confirmado: p.porta, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO }); } catch (e) { calou("o veredito antes do clique · a releitura", e); r = null; }
+      try { r = aPortaUnica(p.frase, retratoDoOuvido(), { pendente: null, confirmado: p.porta, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO, aPosse: aPosseAgora(), turno: turnoDeRegistroRef.current + 1 }); } catch (e) { calou("o veredito antes do clique · a releitura", e); r = null; }
       if (r && r.caminho === "cartao" && r.cartao) { mostrarOCartaoDaPorta(r); return; }
       portaUnicaRef.current = r ? { entrada: p.frase, frase: r.frase, r, em: Date.now() } : null;
       partirOTurno(p.frase);
@@ -19297,11 +19301,54 @@ export default function Taverna() {
       const r2 = sg.r;
       if (r2.caminho === "cartao" && r2.cartao) { portaUnicaRef.current = null; mostrarOCartaoDaPorta(r2); return; }
       if ((r2.caminho === "aplicado" || r2.caminho === "nao") && r2.veredito) {
-        aplicarOVereditoDaTroca(r2.veredito);
-        darABaixaNaBanca(r2.veredito);
+        if (!(r2.caminho === "aplicado" && aTrocaPorTransacao(r2))) { aplicarOVereditoDaTroca(r2.veredito); darABaixaNaBanca(r2.veredito); }
         executarASeguinte(r2);
       }
     } catch (e) { calou("duas ações · a segunda", e); }
+  };
+  /* ---------------- A TROCA POR TRANSAÇÃO (23/11, identidade e posse · etapa 6) ----------------
+     A porta única devolve o que muda de mão como transações com ids (a-troca-por-transacao.js), já
+     provadas contra a posse. Aqui cada uma passa por aplicarTransacao (quem-tem-o-que.js), uma vez,
+     e é o resultado dela que vai à ficha (mudarFicha, pela porta da troca de hoje), ao registro de
+     posse (possesRef, no save), ao mercado (a baixa no estoque e a gaveta da banca) e ao chão. Se a
+     estrutura recusa agora, o jogador lê o motivo e nada muda; a chave já aplicada não aplica de novo.
+     Devolve true quando tratou a troca (aplicada, recusada ou já feita); false, e o caminho de hoje. */
+  const aPosseAgora = () => {
+    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou("a posse · " + rotulo, e); return seNao; } };
+    const P = vale("a presença", () => presencaAgora(), null);
+    return {
+      posses: possesRef.current, semente: sementeMundo(), dia: diaRef.current,
+      cidade: vale("a cidade", () => (cidadeAtualRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null), null),
+      mercado: mercadoRef.current || null, chao: chaoRef.current,
+      nucleo: vale("o núcleo", () => nucleoAgora(), null),
+      mortos: vale("os mortos", () => ((P && P.mortos) || []).map((m) => m && m.id).filter(Boolean), []),
+      pessoas: vale("quem está", () => Object.fromEntries(((P && P.aqui) || []).filter((p) => p && p.id).map((p) => [p.id, { nome: p.nome, papel: p.papel || "" }])), {}),
+    };
+  };
+  const posAPosse = (res, pos) => {
+    possesRef.current = res.posses;
+    if (res.mercado && res.mercado !== pos.mercado) { mercadoRef.current = res.mercado; setMercado(res.mercado); }
+    if (res.chao && res.chao !== pos.chao) { chaoRef.current = res.chao; setChao(res.chao); }
+  };
+  const aTrocaPorTransacao = (r) => {
+    const ts = r && Array.isArray(r.transacoes) ? r.transacoes : [];
+    if (!ts.length || !r.veredito) return false;
+    let res = null, pos = null;
+    try {
+      pos = aPosseAgora();
+      let bancas = [];
+      try { bancas = bancasDaCena() || []; } catch (e) { calou("a troca por transação · as bancas", e); bancas = []; }
+      res = aplicarAsTransacoes(possesRef.current, fichaViva() || personagem, ts, { ...pos, bancas, aceito: true });
+    } catch (e) { calou("a troca por transação", e); return false; }
+    if (!res) return false;
+    if (!res.ok) {
+      if (res.motivo !== "jaAplicada") aplicarOVereditoDaTroca(oVereditoDaRecusa(res, nomesDasTransacoes(r.veredito, ts, r.leitura), A_CENA_DO_OUVIDO.veto.nada));
+      return true;
+    }
+    try { posAPosse(res, pos); } catch (e) { calou("a troca por transação · o registro", e); }
+    aplicarOVereditoDaTroca({ ...r.veredito, ficha: res.ficha });
+    try { salvar({ posses: possesRef.current, mercado: mercadoRef.current }); } catch (e) { calou("a troca por transação · gravar", e); }
+    return true;
   };
   /* a baixa no estoque da banca, como a compra à banca da frase (a primeira coisa e as outras da mesma compra) */
   const darABaixaNaBanca = (v) => {
@@ -19343,8 +19390,8 @@ export default function Taverna() {
       return { ...ov, fechou: true };
     }
     if ((r.caminho === "nao" || r.caminho === "aplicado" || r.caminho === "desiste") && r.veredito) {
-      aplicarOVereditoDaTroca(r.veredito);
-      darABaixaNaBanca(r.veredito);
+      /* etapa 6: o que muda de mão vai por aplicarTransacao (aTrocaPorTransacao); sem transação (a negativa, a desistência), pela porta da troca de hoje */
+      if (!(r.caminho === "aplicado" && aTrocaPorTransacao(r))) { aplicarOVereditoDaTroca(r.veredito); darABaixaNaBanca(r.veredito); }
       executarASeguinte(r);
       ouvidoDoTurnoRef.current = { ...ov, fechou: true };
       return { ...ov, fechou: true };
@@ -19458,7 +19505,21 @@ export default function Taverna() {
     const alvo = des && des.pessoa && des.pessoa.nome ? des.pessoa : des && des.quem ? { nome: des.quem } : (tr.ctx && tr.ctx.alvo) || null;
     let bancasT = [];
     try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas (dado)", e); bancasT = []; }
-    const v = oVereditoDaTroca(frase, { ficha: pers, intencao: tr.intencao, semente: sementeMundo(), lugar: (tr.ctx && tr.ctx.lugar) || "", dia: diaRef.current, alvo, presentes: (tr.ctx && tr.ctx.presentes) || [], bancas: bancasT, dado: { passou: !!passou }, moeda: moedaDoMundo() });
+    let v = oVereditoDaTroca(frase, { ficha: pers, intencao: tr.intencao, semente: sementeMundo(), lugar: (tr.ctx && tr.ctx.lugar) || "", dia: diaRef.current, alvo, presentes: (tr.ctx && tr.ctx.presentes) || [], bancas: bancasT, dado: { passou: !!passou }, moeda: moedaDoMundo() });
+    /* 23/11 (identidade e posse · etapa 6): o pedido e o tomar que a porta única leu com quem e com a coisa
+       saem da posse de quem os tem, por aplicarTransacao (o dado passado é o consentimento); a pessoa que não
+       tem a coisa não a dá, e nada se inventa. O furto é da etapa 7 (fica como está) */
+    try {
+      const ovD = ouvidoDoTurnoRef.current;
+      const tsD = ovD && String(ovD.frase || "").trim() === String(frase || "").trim() && Array.isArray(ovD.transacoes) ? ovD.transacoes : [];
+      if (passou && tsD.length && (tipo === "deGraca" || tipo === "tomar")) {
+        const pos = aPosseAgora();
+        const resD = aplicarAsTransacoes(possesRef.current, pers, tsD, { ...pos, bancas: bancasT, dado: { passou: true } });
+        const nomesD = nomesDasTransacoes(null, tsD, ovD.leitura);
+        if (resD.ok) { posAPosse(resD, pos); v = oVereditoDoQueVeio(resD, nomesD, A_CENA_DO_OUVIDO.veto.feita, false); }
+        else if (resD.motivo !== "jaAplicada") v = oVereditoDaRecusa(resD, nomesD, A_CENA_DO_OUVIDO.veto.nada);
+      }
+    } catch (e) { calou("o dado da troca · por transação", e); }
     if (!v || (v.estado !== "aplicada" && v.estado !== "negada")) return null;
     if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
     { const fp = oFatoDaTroca(v); if (fp) porNaPautaDoTurno(fp); } /* a nona sessão: o fato é a 1.ª linha da pauta, de ferro, e fecha a porta barata em NÃO PODE */

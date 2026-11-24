@@ -109,6 +109,7 @@ export const CAMPOS = Object.freeze([
   C("quadro", "memoria", "qualquer"),   // QQ · Q3 (14/11): a memória do quadro da quest (quadro-da-quest.js, garantirQuadro); aditivo, save antigo = vazio
   /* depois do `quadro`, e não do `factos`: as suítes do livro e do quadro leem «factos, saber, quadro» à letra no retrato */
   C("pessoas", "memoria", "qualquer"),  // 23/11 (identidade, etapa 1): o que o catálogo de pessoas não deriva — fusões e homônimos (quem-e-quem.js, garantirPessoas); aditivo, save antigo = null (tudo se deriva)
+  C("posses", "memoria", "qualquer"),   // 23/11 (identidade e posse, etapa 6): o registro de posse e de dívida de quem não é o herói (quem-tem-o-que.js, garantirPosses); aditivo, save antigo = null (a posse de todos se deriva)
   C("coracao", "coracao", "qualquer"),
   C("vilaoAgiu", "historia", "numero"),
   C("canone", "memoria", "objeto"),
