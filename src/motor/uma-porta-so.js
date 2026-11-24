@@ -49,7 +49,7 @@
    ============================================================ */
 import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CENA_DO_OUVIDO } from "./a-cena-do-ouvido.js";
 import { ligarACena, asAcoesDaFrase } from "../o-ouvido.js";
-import { asTransacoesDoVeredito, aCobrancaDaLeitura, aTransacaoDoPedido, aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "../a-troca-por-transacao.js";
+import { asDividasDaCena, asTransacoesDoVeredito, aCobrancaDaLeitura, aTransacaoDoPedido, aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "../a-troca-por-transacao.js";
 import { oQualComRotulos, aEscolhaDoQual } from "../quem-esta-aqui.js";
 
 export const UMA_PORTA_SO = Object.freeze({
@@ -347,7 +347,7 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
       const semFoco = aCenaDoOuvido(r0);
       ret = { ...r0, foco: oFocoDaConversa(r0.anteriores, semFoco) };
     }
-    const cena = aCenaDoOuvido(ret);
+    let cena = aCenaDoOuvido(ret);
     const ficha = { ...(obj(r0.ficha) || {}), grupo: arr((obj(r0.ficha) || {}).grupo).length ? r0.ficha.grupo : arr(r0.grupo) };
     /* as bancas para aplicar: as do retrato (com o estoque inteiro e o id) e a casa, como banca de quem a serve */
     /* a bancada da troca (L01): a casa é de TODOS os que servem (a taverneira e a serviçal) — uma banca por quem serve */
@@ -359,6 +359,12 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
     const aPosse = obj(c.aPosse) || {};
     ctxT.posse = { ...aPosse, bancas: ctxT.bancas };
     ctxT.troca = { grupo: ficha.grupo, bancas: ctxT.bancas, pessoas: arr(cena.pessoas), posses: aPosse.posses || null, mercado: aPosse.mercado || null, ficha, posse: ctxT.posse, base: { turno: c.turno, frase: f, profundidade: c.profundidade } };
+    /* etapa 8 (a forma da troca): quem deve a quem vai na cena que o ouvido lê — a dívida é traço da forma */
+    try {
+      const comp = obj(cena.heroi) && cena.heroi.companheiro ? [{ nome: cena.heroi.companheiro }] : [];
+      const dividas = asDividasDaCena([...arr(cena.pessoas), ...comp], ctxT.troca);
+      if (dividas.length) cena = { ...cena, dividas };
+    } catch { /* sem registro, sem dívida na cena */ }
 
     /* 1. A PERGUNTA PENDENTE: a resposta completa a leitura (a estrutura), e não se cola ao texto */
     const pend = obj(c.pendente) && obj(c.pendente.pendente) ? c.pendente.pendente : obj(c.pendente);
