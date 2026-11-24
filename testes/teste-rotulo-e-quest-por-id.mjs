@@ -257,5 +257,17 @@ sec("§9 a fiação: o App leva a chave, e a porta única pergunta e fecha pelo 
   t("o nome que as duas têm não fecha em ninguém", !(r0 && r0.leitura && [J1, J2].includes(r0.leitura.quemId)), J(r0 && { c: r0.caminho, l: r0.leitura && r0.leitura.quemId }));
 }
 
+/* 10. O TEXTO DA PERGUNTA: com o mesmo nome inteiro nos dois, a lista «Tabitha ou Tabitha» não
+   distingue ninguém; a pergunta fica só «Qual Tabitha?», e quem distingue são os rótulos das opções.
+   Com nomes inteiros diferentes, a lista continua a ser a pergunta. */
+{
+  const { aRespostaDoMestre } = await import("../src/a-regra-do-improviso.js");
+  const cenaQ = { pessoas: [], heroi: { moeda: 5, carrega: [] } };
+  const p = (ops) => aRespostaDoMestre({ familia: "trocar", subtipo: "dar", quemEstado: "qual", opcoesDeQuem: ops, coisa: "moeda", coisaTipo: "moeda", quantia: 1 }, cenaQ).pergunta;
+  console.log("\n10. O texto da pergunta");
+  t("dois de mesmo nome inteiro: a pergunta não repete o nome", p(["Tabitha", "Tabitha"]).texto === "Qual Tabitha?", p(["Tabitha", "Tabitha"]).texto);
+  t("PAR: nomes inteiros diferentes continuam na pergunta", /Mercy Quintus ou Mercy Ottoline/.test(p(["Mercy Quintus", "Mercy Ottoline"]).texto));
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 if (maus) process.exit(1);

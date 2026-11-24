@@ -58,6 +58,9 @@ export const A_REGRA_DO_IMPROVISO = Object.freeze({
     faltaOQueA: "O que você {verbo} a {Nome}?",
     faltaOQueDe: "O que você {verbo} de {Nome}?",
     dois: "Qual {primeiro}: {lista}?",
+    /* os dois têm o mesmo nome inteiro: a lista não distingue ninguém, e quem distingue são os
+       rótulos das opções (quem-esta-aqui.js, oQualComRotulos) */
+    doisIguais: "Qual {primeiro}?",
     usarOQue: "O que você usa?",
     oQueFaz: "O que você faz com {coisa}?",
   }),
@@ -127,7 +130,8 @@ export function aRespostaDoMestre(leitura, cena) {
     if (l.quemEstado === "qual") {
       const ops = arr(l.opcoesDeQuem);
       const primeiro = str(ops[0]).split(" ")[0];
-      return sai("pergunta", "dois_com_o_nome", { texto: tpl(R.textos.dois, { primeiro, lista: ou(ops) }), opcoes: ops });
+      const iguais = new Set(ops.map((o) => str(o).trim().toLowerCase())).size <= 1;
+      return sai("pergunta", "dois_com_o_nome", { texto: tpl(iguais ? R.textos.doisIguais : R.textos.dois, { primeiro, lista: ou(ops) }), opcoes: ops });
     }
     if (l.quemEstado === "morto") {
       if (R.tiraDeAlguem.includes(s)) return sai("sim");
