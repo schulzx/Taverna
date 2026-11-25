@@ -167,9 +167,9 @@ function FichaDoItem({ escolha, personagem, aoEquipar, aoDesequipar, telefone, t
    qtd, nota, descricao, item?, peca?, acoes, dar }) · aoEquipar(item, slot) ·
    aoDesequipar(slot) · aoSubirAtributo(id) · mantimentos (o objeto da
    carta: racoes, agua, tochas, bocas, dias, exaustao, aoForragear, bloqueado)
-   · moedas · pessoas/quem/aoTrocarQuem (de quem é a bolsa) · oficina (a
+   · moedas · dividas ([{ texto, vencida }], dividas-na-mesa.js) · pessoas/quem/aoTrocarQuem (de quem é a bolsa) · oficina (a
    bancada e a forja, um elemento) · lex · aoPousar. */
-export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDesequipar = null, aoSubirAtributo = null, mantimentos = null, moedas = 0,
+export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDesequipar = null, aoSubirAtributo = null, mantimentos = null, moedas = 0, dividas = null,
   pessoas = null, quem = "eu", aoTrocarQuem = null, oficina = null, lex = null, aoPousar = null }) {
   const p = personagem || {};
   const j = useJanela();
@@ -321,6 +321,8 @@ export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDeseq
             <PecaDeRecurso tipo="moedas" quantidade={moedas || 0} />
           </div>
           {m.exaustao && m.exaustao.nivel > 0 ? <p style={{ margin: "6px 0 0", color: T.danger, ...letraDaMesa("notaDoMestre") }}>Exaustão {m.exaustao.nivel}: {m.exaustao.efeito}</p> : null}
+          {/* 25/11 (etapa 9, dívidas na mesa): o que você deve e o que lhe devem, em texto simples, na forma da linha de cima */}
+          {arr(dividas).map((d, i) => d && d.texto ? <p key={"divida" + i} style={{ margin: "6px 0 0", color: d.vencida ? T.danger : T.inkMeio, ...letraDaMesa("notaDoMestre") }}>{d.texto}</p> : null)}
           {m.aoForragear ? (
             <button type="button" onClick={m.bloqueado ? undefined : () => { try { m.aoForragear(); } catch (e) { /* segue */ } }} aria-disabled={m.bloqueado ? "true" : "false"}
               className="tv-anel-foco" style={{ marginTop: 8, minHeight: 44, padding: "0 14px", borderRadius: 4, background: "transparent", border: `1px solid ${alfa(T.latao, 0.8)}`, color: m.bloqueado ? T.inkDim : T.ink, cursor: m.bloqueado ? "default" : "pointer", ...letraDaMesa("servico") }}>

@@ -82,13 +82,20 @@ export const A_TROCA_POR_TRANSACAO = Object.freeze({
     passou: "🤲 {De} lhe passa {Coisa}.{Divida}",
     pagou: " A dívida está paga.",
     resta: " Ainda falta {Resto}.",
+    /* etapa 9: a entrega devida que não aconteceu (quem deve não tem) — a dívida continua */
+    continuaDele: " {De} ainda lhe deve {Resto}.",
+    continuaSua: " Você ainda deve {Resto} a {Para}.",
   }),
   fato: Object.freeze({
     recusa: "{Linha} Nada mudou de mão.",
     passou: "{De} me passou {Coisa}.{Divida}",
     pagou: " A dívida está paga.",
     resta: " Ainda falta {Resto}.",
+    continuaDele: " {De} ainda me deve {Resto}.",
+    continuaSua: " Ainda devo {Resto} a {Para}.",
   }),
+  /* o que quem deve não ter faz da entrega devida: recusa, e a dívida fica */
+  semFundos: Object.freeze(["naoTem", "emUso"]),
 });
 
 const A = A_TROCA_POR_TRANSACAO;
@@ -275,7 +282,8 @@ export function asTransacoesDoVeredito(v, ctx) {
         for (const p of vai) transacoes.push({ de: "heroi", para: outro, oQue: p.oQue, contra: null, consentimento: cons0 === "pedido" || cons0 === "tomado" ? "dado" : cons0, ...(comPrazo ? { prazo: A.prazoDoEmprestimo } : {}) });
       } else if (vem.length && !vai.length) {
         /* pedir ao companheiro, receber: só vem */
-        for (const p of vem) transacoes.push({ de: outro, para: "heroi", oQue: p.oQue, contra: null, consentimento: cons0 === "dado" ? "pedido" : cons0 });
+        /* etapa 9: o que vem com prazo (pedir emprestado) abre a dívida do herói pela mesma tabela */
+        for (const p of vem) transacoes.push({ de: outro, para: "heroi", oQue: p.oQue, contra: null, consentimento: cons0 === "dado" ? "pedido" : cons0, ...(comPrazo ? { prazo: A.prazoDoEmprestimo } : {}) });
       } else if (!vem.length && vai.length) {
         for (const p of vai) transacoes.push({ de: "heroi", para: outro, oQue: p.oQue, contra: null, consentimento: "dado" });
       } else return [];
@@ -337,7 +345,14 @@ export function aCobrancaDaLeitura(l0, ctx) {
     const devido = abertas.reduce((n, d) => n + d.quanto, 0);
     if (!devido && str(l.subtipo) !== "cobrar") return null;
     if (!moeda && !str(l.coisa) && !devido) return { transacoes: [], devido: 0, semCoisa: true };
-    const quantos = moeda ? (Number(l.quantia) > 0 && l.quantiaDe !== "coisa" ? inteiro(l.quantia) : devido || 1) : Math.max(1, l.quantiaDe === "coisa" ? inteiro(l.quantia) || 1 : devido || 1);
+    const pedido = moeda ? (Number(l.quantia) > 0 && l.quantiaDe !== "coisa" ? inteiro(l.quantia) : devido || 1) : Math.max(1, l.quantiaDe === "coisa" ? inteiro(l.quantia) || 1 : devido || 1);
+    /* etapa 9: quem deve moeda e tem menos do que a cobrança paga o que tem (dentro do devido), e o resto
+       continua devido; sem moeda nenhuma, nada muda e o veredito diz que a dívida continua */
+    let quantos = pedido;
+    if (moeda && devido > 0 && pedido <= devido && obj(c.posse)) {
+      const tem = inteiro(posseDe(de, c.posses, c.ficha, c.posse).moedas);
+      if (tem > 0 && tem < pedido) quantos = tem;
+    }
     const nome = moeda ? "moedas" : (abertas[0] ? abertas[0].oQue.nome : maiuscula(str(l.coisa)));
     const oQue = moeda ? { tipo: "moedas", nome, quantos } : { tipo: abertas[0] ? abertas[0].oQue.tipo : "item", nome, quantos };
     const base = obj(c.base) || {};
@@ -435,7 +450,21 @@ export function oVereditoDaRecusa(res, nomes, veto) {
   const tela = A.tela[r.motivo] || A.tela.outro;
   const linha = maiuscula(tpl(tela, { De: maiuscula(de), Para: t.para === "heroi" ? A.voce.objeto : para, Coisa, texto: str(r.texto) || Q.motivos.invalida }));
   const semEmoji = linha.replace(/^\S+\s+/, "");
-  return Object.freeze({ tipo: "transacao", estado: "negada", ficha: null, mudou: Object.freeze([]), motivo: str(r.motivo), linha, fato: tpl(A.fato.recusa, { Linha: semEmoji.replace(/: nada muda de mão\.$/, ".") }), veto: Object.freeze(veto ? [veto] : []) });
+  const fato = tpl(A.fato.recusa, { Linha: semEmoji.replace(/: nada muda de mão\.$/, ".") });
+  const cont = aDividaQueContinua(r, t, nomes);
+  return Object.freeze({ tipo: "transacao", estado: "negada", ficha: null, mudou: Object.freeze([]), motivo: str(r.motivo), linha: linha + cont.linha, fato: fato + cont.fato, veto: Object.freeze(veto ? [veto] : []) });
+}
+/* etapa 9: a entrega devida que quem deve não tem com que fazer — o registro não mudou, e o que ainda
+   se deve (da mesma coisa, na mesma direção) vai dito na tela e no fato */
+function aDividaQueContinua(r, t, nomes) {
+  const nada = { linha: "", fato: "" };
+  if (t.consentimento !== "devido" || !A.semFundos.includes(str(r.motivo)) || !obj(t.oQue)) return nada;
+  const resto = dividasDe(r.posses, t.de).deve.filter((d) => d.para === t.para && d.oQue.tipo === t.oQue.tipo && (t.oQue.tipo === "moedas" || mesmaCoisa(d.oQue.nome, t.oQue.nome))).reduce((n, d) => n + d.quanto, 0);
+  if (!resto) return nada;
+  const Resto = aCoisa({ ...t.oQue, quantos: resto });
+  const m = { De: maiuscula(oNome(t.de, nomes, "sujeito")), Para: oNome(t.para, nomes, "objeto"), Resto };
+  const k = t.de === "heroi" ? "continuaSua" : "continuaDele";
+  return { linha: tpl(A.tela[k], m), fato: tpl(A.fato[k], m) };
 }
 
 /* oVereditoDoQueVeio(res, t, nomes, veto, posses) → o veredito de quem passou a coisa ao herói
@@ -446,12 +475,16 @@ export function oVereditoDoQueVeio(res, nomes, veto, devida) {
   const linhas = arr(r.mudou).filter((m) => m.para === "heroi");
   const quem = linhas[0] ? linhas[0].de : "";
   const Coisa = linhas.map((m) => (m.coisa === "moedas" ? tpl(A.moeda, { N: m.quantos }) : m.coisa)).join(" e ");
-  const restoDe = (P) => dividasDe(P, "heroi").aReceber.filter((d) => d.de === quem).reduce((n, d) => n + d.quanto, 0);
+  /* etapa 9: o resto é da MESMA coisa que veio (a moeda que falta, ou o lampião que falta), e não a soma de tudo */
+  const daCoisa = (d) => linhas.some((m) => (m.coisa === "moedas" ? d.oQue.tipo === "moedas" : d.oQue.tipo !== "moedas" && mesmaCoisa(d.oQue.nome, m.coisa)));
+  const abertasDe = (P) => dividasDe(P, "heroi").aReceber.filter((d) => d.de === quem && daCoisa(d));
   const deviaAntes = devida === true;
-  const resto = restoDe(r.posses);
-  const Divida = !deviaAntes ? "" : resto ? tpl(A.tela.resta, { Resto: tpl(A.moeda, { N: resto }) }) : A.tela.pagou;
+  const abertas = abertasDe(r.posses);
+  const resto = abertas.reduce((n, d) => n + d.quanto, 0);
+  const oResto = abertas[0] ? aCoisa({ ...abertas[0].oQue, quantos: resto }) : "";
+  const Divida = !deviaAntes ? "" : resto ? tpl(A.tela.resta, { Resto: oResto }) : A.tela.pagou;
   const De = maiuscula(oNome(quem, nomes, "sujeito"));
-  return Object.freeze({ tipo: "transacao", estado: "aplicada", ficha: r.ficha, mudou: Object.freeze(linhas), linha: tpl(A.tela.passou, { De, Coisa, Divida }), fato: tpl(A.fato.passou, { De, Coisa, Divida: !deviaAntes ? "" : resto ? tpl(A.fato.resta, { Resto: tpl(A.moeda, { N: resto }) }) : A.fato.pagou }), veto: Object.freeze(veto ? [veto] : []) });
+  return Object.freeze({ tipo: "transacao", estado: "aplicada", ficha: r.ficha, mudou: Object.freeze(linhas), linha: tpl(A.tela.passou, { De, Coisa, Divida }), fato: tpl(A.fato.passou, { De, Coisa, Divida: !deviaAntes ? "" : resto ? tpl(A.fato.resta, { Resto: oResto }) : A.fato.pagou }), veto: Object.freeze(veto ? [veto] : []) });
 }
 
 /* ============================================================

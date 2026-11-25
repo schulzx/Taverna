@@ -35,8 +35,11 @@
    ---------------- O REGISTRO (o campo `posses` do save, etapa 6) --------
      { v, delta: { id: { moedas, entrou: [item], saiu: [nome], usos } },
        dividas: [{ id, de, para, oQue, quanto, dia, prazo, estado, origem }],
-       aplicadas: [chave] }
-   Na dívida, `de` é quem tem de entregar e `para` quem recebe — a MESMA
+       aplicadas: [chave],
+       tomadas: [{ id, de, por, oQue, dia, onde, viu, origem }] }   (25/11, etapa 9:
+       campo novo, aditivo; a versão antiga o ignora)
+   Na dívida, `prazo` é o DIA em que vence (0: sem prazo); vencida é a que
+   passou dele (aDividaVenceu). Na dívida, `de` é quem tem de entregar e `para` quem recebe — a MESMA
    direção da transação que a paga.
 
    ---------------- A TRANSAÇÃO ----------------
@@ -80,7 +83,13 @@ import { hashSemente } from "./semente.js";
    `motivos`: a razão de cada recusa, dita para quem lê o log ou o fato. */
 export const QUEM_TEM_O_QUE = Object.freeze({
   v: 1,
-  teto: Object.freeze({ pessoas: 150, itens: 40, dividas: 60, aplicadas: 300, quantos: 100000, chave: 160, nome: 80, prazo: Object.freeze({ min: 1, max: 3650 }) }),
+  teto: Object.freeze({ pessoas: 150, itens: 40, dividas: 60, aplicadas: 300, quantos: 100000, chave: 160, nome: 80, prazo: Object.freeze({ min: 1, max: 3650 }), tomadas: 40 }),
+  /* 25/11 (etapa 9, dívidas na mesa): O QUE SE TOMA DEIXA RASTRO. A coisa que sai de uma pessoa viva
+     sem o consentimento dela (`tomado`) deixa um fato no registro — quem perdeu, quem tomou, o quê, o
+     dia, o lugar e se a vítima viu — e a restituição devida: quem tomou deve a coisa a quem a perdeu,
+     e devolvê-la fecha a dívida pela mesma porta de sempre. `viu` sai do dado (ctx.dado.escondido: a
+     mão que passou sem ser vista); sem a marca, quem perde vê. Nenhuma consequência além do fato. */
+  tomada: Object.freeze({ prefixo: "tom|", divida: "div|tom|", origem: "o que se tomou" }),
   tipos: Object.freeze(["moedas", "item", "uso"]),
   consentimentos: Object.freeze(["pedido", "dado", "tomado", "devido"]),
   consentimentoPadrao: "dado",
@@ -144,6 +153,8 @@ export const QUEM_TEM_O_QUE = Object.freeze({
     abriu: " {Devedor} fica devendo {Coisa} a {Credor} até o dia {Prazo}.",
     fechou: " A dívida de {Devedor} com {Credor} ficou paga.",
     abateu: " {Devedor} ainda deve {Resto} a {Credor}.",
+    viu: " {Vitima} viu.",
+    naoViu: " {Vitima} não viu.",
   }),
 });
 
@@ -321,8 +332,43 @@ export function garantirPosses(x) {
   }
   const dividas = cortarDividas(arr(o.dividas).map(dividaLimpa).filter(Boolean));
   const aplicadas = arr(o.aplicadas).map(str).filter((k) => k && k.length <= Q.teto.chave).slice(-Q.teto.aplicadas);
-  if (!Object.keys(delta).length && !dividas.length && !aplicadas.length) return null;
-  return { v: Q.v, delta, dividas, aplicadas };
+  const tomadas = arr(o.tomadas).map(tomadaLimpa).filter(Boolean).slice(-Q.teto.tomadas);
+  if (!Object.keys(delta).length && !dividas.length && !aplicadas.length && !tomadas.length) return null;
+  return { v: Q.v, delta, dividas, aplicadas, ...(tomadas.length ? { tomadas } : {}) };
+}
+/* o fato do que se tomou (etapa 9): só com quem perdeu, quem tomou e a coisa */
+function tomadaLimpa(x) {
+  const o = obj(x);
+  if (!o) return null;
+  const oQue = oQueLimpo(o.oQue);
+  const id = str(o.id).trim(), de = str(o.de).trim(), por = str(o.por).trim();
+  if (!oQue || !id || !de || !por) return null;
+  return { id, de, por, oQue: { tipo: oQue.tipo, nome: oQue.nome, quantos: oQue.quantos }, dia: inteiro(o.dia), onde: str(o.onde).slice(0, Q.teto.nome), viu: o.viu === true, origem: str(o.origem).slice(0, Q.teto.nome) };
+}
+
+/* aDividaVenceu(d, dia) → a dívida aberta com prazo, e o dia de hoje já passou dele */
+export function aDividaVenceu(d, dia) {
+  const o = obj(d);
+  return !!o && o.estado !== Q.estados.fechada && inteiro(o.prazo) > 0 && inteiro(dia) > inteiro(o.prazo);
+}
+
+/* tomadasDe(posses, id) → { perdeu: [tomada], tomou: [tomada] } — os fatos do que se tomou, com a
+   dívida de restituição ainda aberta (`aberta`) ou já fechada pela devolução */
+export function tomadasDe(posses, id) {
+  const P = garantirPosses(posses);
+  const lista = P && P.tomadas ? P.tomadas : [];
+  const comEstado = (t) => { const d = P.dividas.find((x) => x.id === Q.tomada.divida + t.id.slice(Q.tomada.prefixo.length)); return { ...t, aberta: !!d && d.estado === Q.estados.aberta, resta: d ? d.quanto : 0 }; };
+  return { perdeu: lista.filter((t) => t.de === id).map(comEstado), tomou: lista.filter((t) => t.por === id).map(comEstado) };
+}
+
+/* o rastro do que se tomou: o fato e a restituição (antes de aplicarTransacao: a porta não conhece o gesto) */
+function oRastroDoTomado(de, para, oQue, chave, dia, c, origem) {
+  const base = chave || impressao([de.id, para.id, oQue, dia]);
+  const viu = !(obj(c.dado) && c.dado.escondido === true);
+  const coisa = { tipo: oQue.tipo, nome: oQue.nome, quantos: oQue.quantos };
+  const tomada = { id: Q.tomada.prefixo + base, de: de.id, por: para.id, oQue: coisa, dia, onde: str(c.onde).slice(0, Q.teto.nome), viu, origem: str(origem).slice(0, Q.teto.nome) };
+  const divida = { id: Q.tomada.divida + base, de: para.id, para: de.id, oQue: coisa, quanto: coisa.quantos, dia, prazo: 0, estado: Q.estados.aberta, origem: Q.tomada.origem };
+  return { tomada, divida };
 }
 
 /* ---------------- A POSSE DE AGORA ----------------
@@ -674,11 +720,16 @@ export function aplicarTransacao(posses, ficha, t, ctx) {
     aberta = { id: `div|${chave || impressao([de.id, para.id, oQueDevido, dia])}`, de: para.id, para: de.id, oQue: { tipo: oQueDevido.tipo, nome: oQueDevido.nome, quantos: oQueDevido.quantos }, quanto: oQueDevido.quantos, dia, prazo: dia + prazoDias, estado: Q.estados.aberta, origem: str(T.origem).slice(0, Q.teto.nome) };
     dividas = [...dividas, aberta];
   }
+  /* etapa 9: sem consentimento, de quem vive — o fato e a restituição */
+  const rastro = consentimento === "tomado" && dePessoa ? oRastroDoTomado(de, para, oQue, chave, dia, c, T.origem) : null;
+  if (rastro) dividas = [...dividas, rastro.divida];
   dividas = cortarDividas(dividas);
   if (aberta && !dividas.some((d) => d.id === aberta.id)) return recusa("teto");
+  if (rastro && !dividas.some((d) => d.id === rastro.divida.id)) return recusa("teto");
   if (Object.keys(S.delta).length > Q.teto.pessoas || Object.values(S.delta).some((d) => d.entrou.length > Q.teto.itens || d.saiu.length > Q.teto.itens)) return recusa("teto");
   const aplicadas = chave ? [...P0.aplicadas, chave].slice(-Q.teto.aplicadas) : P0.aplicadas;
-  const novas = garantirPosses({ v: Q.v, delta: S.delta, dividas, aplicadas });
+  const tomadas = [...(P0.tomadas || []), ...(rastro ? [rastro.tomada] : [])].slice(-Q.teto.tomadas);
+  const novas = garantirPosses({ v: Q.v, delta: S.delta, dividas, aplicadas, tomadas });
 
   const nomeDoItem = (x) => nomeDe(obj(x) && temChave(x, "coisa") && temChave(x, "destino") ? x.coisa : x);
   const linhas = (o, coisas, a, b) => (o.tipo === "item" ? coisas.map((x) => ({ coisa: nomeDoItem(x) || o.nome, quantos: 1, de: a, para: b })) : [{ coisa: o.nome, quantos: o.quantos, de: a, para: b }]);
@@ -690,6 +741,7 @@ export function aplicarTransacao(posses, ficha, t, ctx) {
     const m = { Devedor: oNomeDoLado(d.de, c), Credor: oNomeDoLado(d.para, c), Resto: aCoisa({ ...d.oQue, quantos: d.quanto }) };
     fato += tpl(d.estado === Q.estados.fechada ? Q.fato.fechou : Q.fato.abateu, m);
   }
+  if (rastro) fato += tpl(rastro.tomada.viu ? Q.fato.viu : Q.fato.naoViu, { Vitima: oNomeDoLado(de.id, c) });
   fato = maiuscula(fato);
   return {
     ok: true, motivo: "", texto: "",
@@ -697,6 +749,6 @@ export function aplicarTransacao(posses, ficha, t, ctx) {
     posses: novas,
     chao: S.tocouChao ? S.chao : chao0,
     mercado: S.tocouMercado ? S.mercado : mercado0,
-    mudou, fato,
+    mudou, fato, tomada: rastro ? rastro.tomada : null,
   };
 }
