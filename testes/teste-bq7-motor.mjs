@@ -417,7 +417,7 @@ sec("§10 os pedidos do desenho (formas.md «## BQ · as quests na tela», §BQ 
   const vv = vereditoDaEscolha("o_salvo_conduto", comVerdade, "verdade", { estado: E0 });
   const ent = vv && vv.opcoes.find((o) => o.id === "entregar"), lev = vv && vv.opcoes.find((o) => o.id === "levar");
   t("1 · entregar quem se protege FECHA a quest (falhada): gravidade «fecha»; levar é «leve»", ent && ent.gravidade === "fecha" && ent.fecha === "falhada" && lev.gravidade === "leve" && lev.fecha === null, J(vv && vv.opcoes.map((o) => [o.id, o.gravidade, o.fecha])));
-  t("1 · e o contexto é a primeira frase da reviravolta que abriu a escolha", vv && /^Na terceira noite, Lia fala a dormir/.test(vv.contexto) && vv.contexto.length <= GRAVIDADE_DA_ESCOLHA.contexto + 1, vv && vv.contexto);
+  t("1 · e o contexto é a primeira frase da reviravolta que abriu a escolha", vv && /^Na terceira noite, Lia fala dormindo/.test(vv.contexto) /* 24/11/2026: o texto passou a PT-BR («a dormir» virou «dormindo»); a intenção, a de que o contexto é a primeira frase da reviravolta, é a mesma */ && vv.contexto.length <= GRAVIDADE_DA_ESCOLHA.contexto + 1, vv && vv.contexto);
   const PCA = { quem: { nome: "Brash" }, ferido: { nome: "Delfina" }, carta: { nome: "a carta lacrada" } };
   const comBrash = (genero) => base({ personagem: { nome: "Vera", grupo: [{ nome: "Brash", vinculo: 40, ...(genero ? { genero_pessoa: genero } : {}) }], inventario: [], moedas: 100 }, npcs: { ...base().npcs, Brash: NP("Brash", genero) } });
   const Ec = comBrash("homem");
@@ -436,7 +436,7 @@ sec("§10 os pedidos do desenho (formas.md «## BQ · as quests na tela», §BQ 
   const Ef = { ...E0, lugar: { nome: "Trilho do Vau", cidade: CID }, personagem: { ...E0.personagem, grupo: [{ nome: "Lia" }] }, jornada: null };
   const pelo = estadoDaQuest("o_salvo_conduto", noPasso, { estado: { ...Ef, factos: anotarOLivro(Ef, { lugar: Ef.lugar, dia: 1, turno: 900 }).factos } });
   const fp = pelo.feitas.find((f) => f.id === "passo");
-  t("2 · a etapa fechada por um ramo diz como foi, na primeira frase da solução", fp && fp.ramo === "furtiva" && fp.como === "O desvio custou um dia de lama e de silêncio, e Lia não largou o teu braço uma única vez.", fp && fp.como);
+  t("2 · a etapa fechada por um ramo diz como foi, na primeira frase da solução", fp && fp.ramo === "furtiva" && fp.como === "O desvio custou um dia de lama e de silêncio, e Lia não largou o braço de você uma única vez." /* 24/11/2026: PT-BR («o teu braço» virou «o braço de você», para o «seu» não se ler como de Lia); a intenção, a de que o como é a primeira frase da solução, é a mesma */, fp && fp.como);
   t("2 · e a etapa sem ramos não inventa um «como»", pelo.feitas.find((f) => f.id === "aceitar").como === "");
 
   /* 5. a gente desta história */

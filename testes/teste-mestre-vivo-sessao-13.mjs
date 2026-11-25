@@ -250,7 +250,7 @@ sec("2. a carta de decisão: o abatido não fala como vivo, e a carta não engol
   t("depois do «Matar»: nenhum caminho diz que ele «já leu… e sabe o caminho» nem que «continua a bater às portas»",
     morto && !/sabe o caminho para a casa/.test(op(morto, "devolver").custa) && !/continua a bater às portas/.test(op(morto, "trocar").ganha) && /morreu/.test(op(morto, "devolver").custa), J(morto && morto.opcoes.map((o) => [o.id, o.ganha, o.custa])));
   const vivo = jogar("rendido");
-  t("  PAR: poupado, ele segue vivo na carta (os textos de sempre)", vivo && /sabe o caminho para a casa/.test(op(vivo, "devolver").custa) && /continua a bater às portas/.test(op(vivo, "trocar").ganha));
+  t("  PAR: poupado, ele segue vivo na carta (os textos de sempre)", vivo && /sabe o caminho para a casa/.test(op(vivo, "devolver").custa) && /continua batendo às portas/.test(op(vivo, "trocar").ganha) /* 24/11/2026: o texto passou a PT-BR («continua a bater» virou «continua batendo»); a intenção, a de que poupado ele segue vivo na carta, é a mesma */);
   /* a catraca do acervo: os lados de opção que nomeiam um papel que a luta pode abater e
      não dizem o texto de quando ele morre — o número de hoje, para não crescer */
   let semTexto = 0;
