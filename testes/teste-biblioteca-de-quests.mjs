@@ -2138,7 +2138,7 @@ t("o Recado: ir contra todos para o outro sítio mostra a cara de quem manda o r
 const r63 = g6(REC6, "dividir · lâmina matando", [ouvirAnibal, (e) => falar(consulta(e, "Aníbal"), "Filomena"), ["escolher", "noite", "dividir"], (e) => lutar(e, { nome: "Saturnino" })]);
 t("o Recado: dividir a gente avisa quem o mandou", r63.R.feitas.noite.ramo === "dividir" && r63.R.consequencias.some((c) => c.de === "escolha:noite:dividir" && c.efeitos.some((x) => x.tipo === "avisa_vilao")) && r63.R.estado === "concluida");
 const r64 = g6(REC6, "a falha", [ouvirAnibal, (e) => morre(e, "Filomena")], { falha: 0 });
-t("o Recado: quem guardava o outro sítio morta antes da noite — falhada", r64.R.motivo === "falha" && /enganou no sítio/.test(r64.R.fecho.texto));
+t("o Recado: quem guardava o outro sítio morta antes da noite — falhada", r64.R.motivo === "falha" && /enganou no lugar/.test(r64.R.fecho.texto)); /* 24/11/2026: o texto passou a PT-BR («sítio» virou «lugar»; o acervo de quests deixou o PT-PT); a intenção, a de que o desfecho fala de ter errado o lugar, é a mesma */
 const r65 = g6(REC6, "o abandono", [(e) => dias(e, 3)]);
 t("o Recado: três noites — guardou-se a porta errada", r65.R.motivo === "abandono");
 
@@ -2155,7 +2155,7 @@ const m63 = g6(AMA6, "lâmina matando · perguntar · a palavra", [ouvirHerminia
 t("a Ama: perguntar-lhe no meio do sono custa a neta; sem coisa nem sítio, fecha pela palavra dela",
   m63.R.feitas.memoria.ramo === "perguntar" && m63.R.feitas.achar.ramo === "palavra" && m63.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "afeicao" && x.papel === "neta" && x.n === -2)) && m63.R.estado === "concluida", J(m63.R));
 const m64 = g6(AMA6, "a falha", [ouvirHerminia, (e) => morre(e, "Genoveva")], { falha: 0 });
-t("a Ama: não acordou — falhada", m64.R.motivo === "falha" && /chávena/.test(m64.R.fecho.texto));
+t("a Ama: não acordou — falhada", m64.R.motivo === "falha" && /xícara/.test(m64.R.fecho.texto)); /* 24/11/2026: PT-BR («chávena» virou «xícara»); a asserção continua a provar que o desfecho fala da última xícara vazia */
 const m65 = g6(AMA6, "o abandono", [(e) => dias(e, 4)]);
 t("a Ama: quatro dias — o chá continua a chegar", m65.R.motivo === "abandono");
 
@@ -2478,7 +2478,7 @@ sec("§14 a temperatura, os pressupostos e as premissas (Fase TE · TE1–TE3)")
   t("TE3 · jogado: quem o herói conhece de antes da campanha conta-o no dia 1", vale(comIago(1, { tipo: "amizade", forca: 3, desde: -400 })));
   /* o grupo D: certas, e declaradas, para a catraca as guardar */
   const peg = questPorId("as_pegadas_no_barro");
-  t("TE3 · As Pegadas no Barro: «ainda não lhe viste a cara» — declara que vem antes do rosto", igual(peg.pressupoe, [["nenhum", ["camada", "rosto"]]]) && /Ainda não lhe viste a cara/.test(peg.fecho.texto));
+  t("TE3 · As Pegadas no Barro: «ainda não lhe viste a cara» — declara que vem antes do rosto", igual(peg.pressupoe, [["nenhum", ["camada", "rosto"]]]) && /Ainda não lhe viu a cara/.test(peg.fecho.texto)); /* 24/11/2026: o texto passou a PT-BR («viste» virou «viu»); a intenção, a de que o desfecho declara que a cara ainda não foi vista, é a mesma */
   const confrontos = CAT.filter((q) => q.mao && q.mao.tipo === "confronto");
   t("TE3 · os cinco confrontos pressupõem o rosto visto", confrontos.length === 5 && confrontos.every((q) => igual(q.pressupoe, [["camada", "rosto"]])));
   t("TE3 · as catorze da auditoria e as seis declaradas passam todas no validador", [dados, ama, nome, lam, sangue, pedreira, chaves, ...Object.keys(B).map(questPorId), peg, ...confrontos].every((q) => validarQuest(q).ok));

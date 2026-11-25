@@ -112,16 +112,18 @@ const TETO = {
   "src/classes.js": 4,
   "src/habilidades.js": 2,
   "src/regras.js": 1,
-  "src/biblioteca-de-quests.js": 299,  /* 22/11 (a décima sessão do Mestre vivo): os ganchos com «tu» e a quest O Que Desce ao Anoitecer em PT-BR; (a décima primeira): as cartas e os passos de todas as quests em «você» */
-  "src/acervo/quests-lote-6.js": 320,  /* 22/11 (a décima primeira sessão): as cartas e os passos em «você» */
-  "src/acervo/quests-lote-4.js": 187,  /* idem */
-  "src/acervo/quests-lote-5.js": 180,  /* idem */
-  "src/acervo/artefactos-lote-1.js": 79,
+  "src/biblioteca-de-quests.js": 6,  /* 24/11/2026: a prosa das quests toda em PT-BR (você, sem ênclise, gerúndio brasileiro, tela/lugar/fato). Sobram 6 marcas, e todas são texto de quem programa, não do jogador: as mensagens do validador (repetem-se ×3, alcança-se/facto, o género de «…»), que não vão à tela */
+  /* abaixo, o motivo do teto anterior: */  /* 22/11 (a décima sessão do Mestre vivo): os ganchos com «tu» e a quest O Que Desce ao Anoitecer em PT-BR; (a décima primeira): as cartas e os passos de todas as quests em «você» */
+  "src/acervo/quests-lote-6.js": 0,  /* 24/11/2026: PT-BR (idem) */
+  /* abaixo, o teto anterior: */  /* 22/11 (a décima primeira sessão): as cartas e os passos em «você» */
+  "src/acervo/quests-lote-4.js": 0,  /* idem */
+  "src/acervo/quests-lote-5.js": 1,  /* 24/11/2026: a marca que sobra é o nome do marcador {registo}, que é a chave de um papel e não se renomeia */  /* idem */
+  "src/acervo/artefactos-lote-1.js": 0,  /* 24/11/2026: PT-BR (as dádivas e os gestos dos artefatos) */
   "src/plano-do-vilao.js": 60,
   "src/subtramas.js": 35,
   "src/lexico-do-mundo.js": 34,
-  "src/acervo/planos-lote-5.js": 28,
-  "src/acervo/planos-lote-4.js": 24,
+  "src/acervo/planos-lote-5.js": 0,  /* 24/11/2026: PT-BR */
+  "src/acervo/planos-lote-4.js": 0,
   "src/nucleo.js": 23,
   "src/saida-da-luta.js": 0,  /* F4d (20/11): a ênclise europeia das falas do vencedor saiu toda */
   "src/condicoes-da-quest.js": 17,
