@@ -281,7 +281,10 @@ sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
      uma guarda nova (ouvirAFrase no turno, antes da bolsa da frase). A intenção fica: guarda contável, em try e calou. */
   /* MOVIDA em 23/11 (a décima sexta sessão, «uma porta só»), e o motivo: a porta única lê a frase na
      proposta da frase, antes da mão da frase e do cartão — uma guarda nova. A intenção fica: guarda contável, em try e calou. */
-  t("há as nove guardas (o momento do turno, o destino e a resposta, a adjudicação, o espontâneo que pousa, a chegada calada, o mundo fechado, o elenco fechado, o ouvido, a porta única)", guardas.length === 9, String(guardas.length));
+  /* MOVIDA em 24/11 (identidade e posse · etapa 7), e o motivo: os caminhos da posse que passam pela porta única com
+     o Mestre vivo são sete guardas novas (o que o sistema dá, o balcão por botão, a venda do uso, a venda da bolsa, a
+     compra da frase no balcão e na banca, a compra na banca por botão). A intenção fica: guarda contável, em try e calou. */
+  t("há as dezesseis guardas (o momento do turno, o destino e a resposta, a adjudicação, o espontâneo que pousa, a chegada calada, o mundo fechado, o elenco fechado, o ouvido, a porta única, e as sete dos caminhos da posse)", guardas.length === 16, String(guardas.length));
   t("toda guarda abre em try e cala em calou", guardas.every((g) => /^if \(mestreVivoLigado\(\)\) \{\s*try \{/.test(g) && /catch \(e\) \{ calou\("Mestre vivo · /.test(g)));
   t("o efeito do espontâneo também", /if \(carregando \|\| !mestreVivoLigado\(\)\) return;\n    try \{[\s\S]*?catch \(e\) \{ calou\("Mestre vivo · o espontâneo", e\); \}/.test(APP));
   t("o retrato cala o que estoura e devolve null", /catch \(e\) \{ calou\("Mestre vivo · o retrato", e\); return null; \}/.test(corpo("retratoAgora")));

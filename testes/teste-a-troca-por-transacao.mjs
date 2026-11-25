@@ -188,10 +188,11 @@ sec("§5 a fiação");
 {
   const APP = ler("../src/App.jsx");
   const corpo = (nome) => { const i = APP.indexOf(`const ${nome} = (`); return i < 0 ? "" : APP.slice(i, APP.indexOf("\n  };\n", i) + 5); };
-  t("o App importa a ponte e o registro", /import \{ garantirPosses \} from "\.\/quem-tem-o-que\.js";/.test(APP) && /from "\.\/a-troca-por-transacao\.js";/.test(APP));
+  /* 24/11 (etapa 7): o import ganhou posseDe (o furto lê a posse da vítima); a régua aceita outros nomes depois de garantirPosses */
+  t("o App importa a ponte e o registro", /import \{ garantirPosses(?:, [^}]*)? \} from "\.\/quem-tem-o-que\.js";/.test(APP) && /from "\.\/a-troca-por-transacao\.js";/.test(APP));
   t("o campo posses: ref, save, reset da campanha e load em try/calou", /const possesRef = useRef\(null\);/.test(APP) && /pessoas: pessoasRef\.current, posses: possesRef\.current,/.test(APP) && /if \(!cap\) possesRef\.current = null;/.test(APP) && /try \{ possesRef\.current = garantirPosses\(sv\.posses\); \} catch \(e\) \{ calou\("as posses do save", e\);/.test(APP));
   const at = corpo("aTrocaPorTransacao");
-  t("o executor aplica por aplicarAsTransacoes (aplicarTransacao, uma vez), e a ficha vai pela porta de hoje", /aplicarAsTransacoes\(possesRef\.current, fichaViva\(\) \|\| personagem, ts,/.test(at) && /aplicarOVereditoDaTroca\(\{ \.\.\.r\.veredito, ficha: res\.ficha \}\)/.test(at) && /calou\("a troca por transação"/.test(at));
+  t("o executor aplica por aplicarAsTransacoes (aplicarTransacao, uma vez), e a ficha vai pela porta de hoje", /aplicarAsTransacoes\(pos\.posses, fichaViva\(\) \|\| personagem, ts,/.test(at) /* 24/11 (etapa 7): o registro vem de aPosseAgora (pos.posses), que traz a dívida derivada da coisa da quest; sem o Mestre vivo é o mesmo possesRef.current */ && /aplicarOVereditoDaTroca\(\{ \.\.\.r\.veredito, ficha: res\.ficha \}\)/.test(at) && /calou\("a troca por transação"/.test(at));
   t("…a recusa mostra o motivo e não escreve; a chave já aplicada não repete", /res\.motivo !== "jaAplicada"/.test(at) && /oVereditoDaRecusa\(res,/.test(at));
   t("o turno e a segunda ação passam pelo executor (e os caminhos de escrita antigos só sem transação)", /if \(!\(r\.caminho === "aplicado" && aTrocaPorTransacao\(r\)\)\) \{ aplicarOVereditoDaTroca\(r\.veredito\); darABaixaNaBanca\(r\.veredito\); \}/.test(corpo("ouvirAFrase")) && /aTrocaPorTransacao\(r2\)/.test(corpo("executarASeguinte")));
   t("a porta lê a posse e o turno nos dois lugares em que é chamada", (APP.match(/aPosse: aPosseAgora\(\), turno: turnoDeRegistroRef\.current \+ 1/g) || []).length === 2);

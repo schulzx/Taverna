@@ -479,7 +479,7 @@ export function aplicar(estado, resposta, ctx = {}) {
     /* NE7 (13/11): a porta fechada tira a prosa e o declarado, não a frase do
        jogador — ela continua a pagar (cobranca.js, `soOPedido`) */
     try {
-      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "", pedido: typeof op.pedido === "string" ? op.pedido : "", moeda: typeof op.moeda === "string" ? op.moeda : "", soOPedido: !portaAberta("oQueFaltaDebitar", modoDoNarrador) });
+      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "", pedido: typeof op.pedido === "string" ? op.pedido : "", moeda: typeof op.moeda === "string" ? op.moeda : "", soOPedido: !portaAberta("oQueFaltaDebitar", modoDoNarrador), ...(op.porChave === true ? { porChave: true, jaAplicadas: Array.isArray(op.jaAplicadas) ? op.jaAplicadas : [] } : {}) });
       if (deb.temAlgo && !deb.semFundos) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - deb.moedas) }; msgs.push(falaDoDebito(deb)); }
       if (deb.temAlgo) notas.push(envelopeDoDebito(deb));
     } catch (e) { calou("oQueFaltaDebitar", e); }

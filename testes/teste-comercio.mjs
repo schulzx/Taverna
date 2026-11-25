@@ -221,7 +221,9 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
      ataduras e pago") é o MESMO gesto do botão de comprar, e aperta a praça
      como ele — terceiro ponto, contado aqui para que um quarto continue a
      acender esta asserção. Comprar (botão e frase) e vender; nenhum a mais. */
-  t("vender também", (APP.match(/pressoes: apertarProcura\(/g) || []).length === 3);
+  /* 24/11 (identidade e posse · etapa 7): a compra pela porta única (botão e frase, com o Mestre vivo) aperta a
+     procura no seu próprio ramo — eram 3 lugares, são 5. A intenção fica: a venda aperta, do lado dela («venda») */
+  t("vender também", (APP.match(/pressoes: apertarProcura\(/g) || []).length === 5 && /pressoes: apertarProcura\([^\n]*"venda"\)/.test(APP));
   /* a etiqueta e o cofre saem da MESMA função — o que o texto promete, a
      bolsa entrega */
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o botão de vender lê a oferta" provava `const of = ofertaPor ? ofertaPor(v.it) :` — a mesma linha que teste-mercado.mjs exige ("o valor continua vindo de ofertaPor"). A intenção — a etiqueta e o cofre saem da MESMA função — fica pela metade do cofre aqui, abaixo, e pela do botão lá. */

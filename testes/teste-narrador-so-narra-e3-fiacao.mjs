@@ -133,8 +133,12 @@ sec("3. o achado da estrada: entra na bolsa no rolar, e não paga duas vezes");
   const narr = "Debaixo de uma pedra solta você encontra 12 moedas embrulhadas num pano velho.";
   t("(a prova só vale se a cobrança lê este achado — ela lê 12)", oQueFaltaCreditar(narr, null).moedas === 12);
   t("com a marca contada como declarada, a cobrança não paga o achado de novo", !oQueFaltaCreditar(narr, { moedas: 12 }).temAlgo);
-  t("o App credita o achado no rolar, em viajar()", /enc && enc\.tipo === "achado" \? Math\.max\(0, Math\.floor\(Number\(enc\.moedas\) \|\| 0\)\) : 0/.test(app) && /persV = \{ \.\.\.persV, moedas: \(persV\.moedas \|\| 0\) \+ nAchado \}/.test(app));
-  t("e o crédito vai antes do envio (o Narrador recebe a ficha com o dinheiro)", app.indexOf("persV = { ...persV, moedas: (persV.moedas || 0) + nAchado }") > 0 && app.indexOf("persV = { ...persV, moedas: (persV.moedas || 0) + nAchado }") < app.indexOf("if (qr.chamadas) enviar(textoDaViagem, persV)"));
+  t("o App credita o achado no rolar, em viajar()", /enc && enc\.tipo === "achado" \? Math\.max\(0, Math\.floor\(Number\(enc\.moedas\) \|\| 0\)\) : 0/.test(app) && /persV = fichaPelaPorta\("o achado da estrada", oQueOMundoDa\(\{ caminho: "achado", moedas: nAchado,/.test(app));
+  /* 24/11 (identidade e posse · etapa 7): as duas asserções acima e abaixo liam a escrita direta da moeda; a moeda do
+     achado passou a sair do mundo pela porta única (os-caminhos-da-posse.js — sem o Mestre vivo, a mesma transação só
+     na ficha, a mesma conta de antes). A intenção fica: o crédito existe, e vai antes do envio. */
+  const credito = 'persV = fichaPelaPorta("o achado da estrada"';
+  t("e o crédito vai antes do envio (o Narrador recebe a ficha com o dinheiro)", app.indexOf(credito) > 0 && app.indexOf(credito) < app.indexOf("if (qr.chamadas) enviar(textoDaViagem, persV)"));
   /* asserção movida em v9.429 (8.ª sessão): desde a v9.428 quem lê a marca
      é o próprio `oQueFaltaCreditar`, pelos `envelopes` (cobranca.js). O App
      que somava a marca ao declarado E passava os envelopes descontaria o

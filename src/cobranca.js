@@ -605,11 +605,16 @@ function gastoDoPedido(envelopes, narrativa, pedido, moeda) {
    débito também é mexer no estado, e a régua da Fase NE é que a prosa não
    mexe em nada (teste-nada-entra-pelo-ator: a resposta cheia de tentações
    acaba igual à vazia). O Narrador sabe do débito pela nota, e narra-o. */
+/* `porChave` (24/11, etapa 7 da identidade e posse): com a chave do Mestre vivo, o que o sistema
+   já pagou neste turno passou pela porta única (aplicarTransacao) e tem CHAVE — quem chama passa as
+   chaves das transações em que a moeda do herói mudou (`jaAplicadas`), e é isso que se consulta, em
+   vez da lista de frases dos envelopes (JA_PAGO_PELO_SISTEMA). Sem a chave, a lista, como sempre. */
 export function oQueFaltaDebitar(narrativa, mudancas, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const vazio = { moedas: 0, frases: [], temAlgo: false, semFundos: false, narrado: 0 };
   const envelopes = String(o.envelopes || "");
-  if (JA_PAGO_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
+  if (o.porChave === true) { if ((Array.isArray(o.jaAplicadas) ? o.jaAplicadas : []).some((k) => typeof k === "string" && k)) return vazio; }
+  else if (JA_PAGO_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
   if (COMPRA_RECUSADA_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
   const moeda = typeof o.moeda === "string" ? o.moeda : "";
   const soOPedido = o.soOPedido === true;
