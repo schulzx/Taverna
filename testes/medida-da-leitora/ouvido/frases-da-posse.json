@@ -1,0 +1,1274 @@
+[
+ {
+  "id": "P01",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Prudence, me devolve cinco dessas moedas",
+   "familia": "trocar",
+   "subtipo": "pedir",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 5,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "dado",
+   "intencao": "deGraca"
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 48,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🎁 Prudence não tem moeda para dar."
+  ],
+  "fichaMeio": {
+   "moedas": 48,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🎁 Prudence não tem moeda para dar."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 48,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3718,
+  "msRestaurar": 27436,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P02",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Prudence, me devolve as cinco moedas que te emprestei",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 5,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 58,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🤲 Prudence lhe passa ◉ 5. A dívida está paga."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤲 Prudence lhe passa ◉ 5. A dívida está paga."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3283,
+  "msRestaurar": 2469,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "◉ +5",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P03",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "cobro da Prudence as cinco moedas que emprestei",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 5,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 58,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🤲 Prudence lhe passa ◉ 5. A dívida está paga."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤲 Prudence lhe passa ◉ 5. A dívida está paga."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3278,
+  "msRestaurar": 1857,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "◉ +5",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P04",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "cobro da Prudence oito moedas",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 8,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 58,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🤝 Prudence deve a você menos do que ◉ 8: nada muda de mão."
+  ],
+  "fichaMeio": {
+   "moedas": 58,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Prudence deve a você menos do que ◉ 8: nada muda de mão."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 58,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3239,
+  "msRestaurar": 2195,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P05",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "devolvo o símbolo sagrado riscado à Prudence",
+   "familia": "trocar",
+   "subtipo": "devolver",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "Símbolo sagrado riscado",
+   "coisaTipo": "minha",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "sim",
+   "motivo": null,
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Você não deve Símbolo sagrado riscado a Prudence: nada muda de mão."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Você não deve Símbolo sagrado riscado a Prudence: nada muda de mão."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3454,
+  "msRestaurar": 2318,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P06",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Prudence, você me deve cinco moedas, paga logo",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": null,
+   "coisaTipo": null,
+   "quantia": 5,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Prudence não deve ◉ 5 a você: nada muda de mão."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Prudence não deve ◉ 5 a você: nada muda de mão."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3603,
+  "msRestaurar": 2157,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P07",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "cobro da Prudence as quinze moedas",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 15,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 48,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🤝 Prudence não deve ◉ 15 a você: nada muda de mão."
+  ],
+  "fichaMeio": {
+   "moedas": 48,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Prudence não deve ◉ 15 a você: nada muda de mão."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 48,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3169,
+  "msRestaurar": 1759,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P08",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Prudence, me devolve o símbolo que te emprestei",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Prudence",
+   "quemEstado": "aqui",
+   "coisa": "símbolo",
+   "coisaTipo": "livre",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🤲 Prudence lhe passa Símbolo sagrado riscado. A dívida está paga."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤲 Prudence lhe passa Símbolo sagrado riscado. A dívida está paga."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3307,
+  "msRestaurar": 2217,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "bolsa +Símbolo sagrado riscado",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P09",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Lavinia, me devolve o símbolo",
+   "familia": "trocar",
+   "subtipo": "pedir",
+   "quem": "Lavinia Sallow",
+   "quemEstado": "aqui",
+   "coisa": "símbolo",
+   "coisaTipo": "livre",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "sim",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": [
+      "Símbolo sagrado riscado"
+     ]
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "🤝 Lavinia lhe passa Símbolo sagrado riscado."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤝 Lavinia lhe passa Símbolo sagrado riscado."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3341,
+  "msRestaurar": 2379,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "bolsa +Símbolo sagrado riscado; Lavinia: −Símbolo sagrado riscado",
+   "motivos": []
+  }
+ },
+ {
+  "id": "P10",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "devolvo a corda ao Cornelius",
+   "familia": "trocar",
+   "subtipo": "devolver",
+   "quem": "Cornelius",
+   "quemEstado": "aqui",
+   "coisa": "Corda que sempre volta enrolada",
+   "coisaTipo": "minha",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "sim",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 13,
+   "inv": [
+    "Corda que sempre volta enrolada",
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Você devolve Corda que sempre volta enrolada a Cornelius."
+  ],
+  "fichaMeio": {
+   "moedas": 13,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤝 Você devolve Corda que sempre volta enrolada a Cornelius."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 13,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Balança dos Que Voltaram",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3724,
+  "msRestaurar": 2148,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "bolsa −Corda que sempre volta enrolada",
+   "motivos": []
+  }
+ }
+]

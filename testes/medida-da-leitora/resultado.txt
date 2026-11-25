@@ -1,0 +1,79 @@
+=== «pede troca?» (n sem os ambíguos) — acerto · precisão · revocação ===
+conjunto        n   | ouvido               | IA sozinha           | composto
+ineditas-60     59  |  47  88%  84%        |  57  98%  98%        |  57  98%  98%       
+  (IA rica)     59  |                      |  57  98%  98%        |
+bancada-98      94  |  94 100% 100%        |  91  96% 100%        |  91  96% 100%       
+novas-50        48  |  46 100%  94%        |  47 100%  97%        |  47 100%  97%       
+posse-10        10  |  10 100% 100%        |  10 100% 100%        |  10 100% 100%       
+treino-150     150  | 150 100% 100%        | 140  92%  95%        | 140  92%  95%       
+
+=== família no treino (150) ===
+fina (10 famílias):  ouvido 150 · composto 140 · IA (lista mínima não dá família fina) —
+grossa (troca/fala/outra): ouvido 150 · IA 138 · composto 140
+
+=== projeção na nota da bancada ===
+ineditas-60: hoje 39/60 → certa 44 (conserta 5 [T23 T27 T49 T51 T52], quebra 0 []) · possível: +6 [T02 T05 T08 T16 T29 T30] / −1 [T50] → faixa 43–50 · reprovadas que não dependem da IA: 10
+bancada-98: hoje 98/98 → certa 98 (conserta 0 [], quebra 0 []) · possível: +0 [] / −3 [B127 L07 L14] → faixa 95–98 · reprovadas que não dependem da IA: 0
+novas-50: hoje 50/50 → certa 49 (conserta 0 [], quebra 1 [N32]) · possível: +0 [] / −0 [] → faixa 49–49 · reprovadas que não dependem da IA: 0
+posse-10: hoje 10/10 → certa 10 (conserta 0 [], quebra 0 []) · possível: +0 [] / −0 [] → faixa 10–10 · reprovadas que não dependem da IA: 0
+
+=== a IA errou «pede troca?» e o ouvido acertou ===
+bancada-98 B127 gabarito=não IA="pede_troca" «Lavinia, você pagaria a conta?»
+bancada-98 L07 gabarito=não IA="pede_troca" «peço à Tabitha o nome do homem de manto cinza»
+bancada-98 L14 gabarito=não IA="pede_troca" «se eu pagar uma rodada, você me conta o que sabe, Tabitha?»
+novas-50 N32 gabarito=troca IA="outra_acao" «pego o caneco de estanho do balcão e guardo na manga»
+ineditas-60 T41 gabarito=troca IA="outra_acao" «enfio o prato de cobre na mochila e vou saindo»
+ineditas-60 T50 gabarito=não IA="pede_troca" «se eu pagasse uma rodada pra todo mundo, Charity, vc cantava?»
+treino-150 T-015 gabarito=troca IA="outra_acao" «pego o que ele deixou»
+treino-150 T-034 gabarito=troca IA="outra_acao" «pego o livro grande»
+treino-150 T-035 gabarito=não IA="pede_troca" «se eu pagar o quarto adiantado, a Marta faz um preço?»
+treino-150 T-037 gabarito=não IA="pede_troca" «Ferran, se eu pagar, você me anuncia ao barão?»
+treino-150 T-085 gabarito=troca IA="outra_acao" «pego o livro da estante»
+treino-150 T-109 gabarito=troca IA="outra_acao" «recolho os ossos»
+treino-150 T-111 gabarito=não IA="pede_troca" «adulo o Osk pra ele me levar de graça»
+treino-150 T-113 gabarito=não IA="pede_troca" «Dorva, se eu der uma moeda, você me conta o que viu?»
+treino-150 T-132 gabarito=não IA="pede_troca" «Bóris, se eu pagar mais, faz pra amanhã?»
+treino-150 T-150 gabarito=não IA="pede_troca" «capitão, se eu pagar, o senhor leva a gente?»
+
+=== a IA acertou e o ouvido errou ===
+novas-50 N11 gabarito=troca «Prudence, vê se me paga as oito moedas que me deve»
+novas-50 N41 gabarito=troca «Lavinia, vende uma ração pra mim?»
+ineditas-60 T02 gabarito=troca «fecha comigo três tochas, td bem?»
+ineditas-60 T05 gabarito=troca «— Prudence, empurro esse símbolo riscado pra vc. Aceita? — digo, estendendo a mão»
+ineditas-60 T08 gabarito=troca «— Lavinia, leva o símbolo contigo, vai que precisa»
+ineditas-60 T16 gabarito=troca «Cornelius, topa trocar meu símbolo por duas tochas?»
+ineditas-60 T23 gabarito=não «ontem eu paguei caro por uma corda dessas»
+ineditas-60 T27 gabarito=não «Prudence, um dia eu ainda roubo esta banca inteira, brincadeira ein»
+ineditas-60 T29 gabarito=troca «Prudence, empurro essa corda pra você, quanto dá?»
+ineditas-60 T30 gabarito=troca «acerto trinta moedas com a Prudence»
+ineditas-60 T44 gabarito=troca «Tabitha, vim devolver o seu lenço»
+ineditas-60 T49 gabarito=não «Mercy, que voz linda, vale cada moeda do mundo»
+ineditas-60 T51 gabarito=não «lembro de quando paguei três moedas por um pão duro naquela estrada»
+ineditas-60 T52 gabarito=não «Tabitha, vou te cobrar caro se mentir pra mim, hein»
+
+=== os dois erraram ===
+
+=== custo e latência ===
+{
+ "chamadas": 428,
+ "boas": 428,
+ "foraDaLista": 0,
+ "erros": 0,
+ "modelos": {
+  "deepseek-flash": 428
+ },
+ "entradaMedia": 415,
+ "cacheMedio": 198,
+ "saidaMedia": 4,
+ "latencia": {
+  "media": 1366,
+  "mediana": 1284,
+  "p95": 2151,
+  "pior": 3913
+ },
+ "porChamada": {
+  "deepseek-v4-flash": 0.00001381723831775701,
+  "gemini-3.5-flash-lite": 0.00008121785046728971
+ }
+}
+por 1.000 turnos: deepseek-v4-flash US$ 0.0138 · gemini-3.5-flash-lite US$ 0.0812

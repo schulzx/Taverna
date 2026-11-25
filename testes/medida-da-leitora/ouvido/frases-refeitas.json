@@ -1,0 +1,2314 @@
+[
+ {
+  "id": "L08",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "cobro da Tabitha as moedas que emprestei",
+   "familia": "trocar",
+   "subtipo": "cobrar",
+   "quem": "Tabitha",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Tabitha não deve ◉ 1 a você: nada muda de mão."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Tabitha não deve ◉ 1 a você: nada muda de mão."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4014,
+  "msRestaurar": 30479,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L10",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "suborno a Charity com vinte moedas pra ela me contar quem esteve aqui",
+   "familia": "trocar",
+   "subtipo": "subornar",
+   "quem": "Charity Mordaunt",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 20,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "dado",
+   "intencao": "suborno"
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [
+   {
+    "momento": "chamado",
+    "verbo": "",
+    "cede": "",
+    "preco": "",
+    "texto": "Rolar d20 + 1 Persuasão precisa de 8 Mudar de ideia",
+    "botoes": [
+     "Rolar d20 + 1 Persuasão precisa de 8",
+     "Mudar de ideia"
+    ]
+   }
+  ],
+  "pergunta": null,
+  "linhas1": [],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "dado",
+   "respostas": [
+    {
+     "k": "dado",
+     "texto": "Rolar d20 + 1 Persuasão precisa de 8 Mudar de ideia"
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "dado",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3770,
+  "msRestaurar": 2639,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L11",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "dou o símbolo sagrado riscado à Tabitha",
+   "familia": "trocar",
+   "subtipo": "dar",
+   "quem": "Tabitha",
+   "quemEstado": "aqui",
+   "coisa": "Símbolo sagrado riscado",
+   "coisaTipo": "minha",
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": "sim_com_preco",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Símbolo sagrado riscado agora é de Tabitha."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤝 Símbolo sagrado riscado agora é de Tabitha."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4043,
+  "msRestaurar": 3474,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "bolsa −Símbolo sagrado riscado",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L12",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "dou três moedas a ele",
+   "familia": "trocar",
+   "subtipo": "dar",
+   "quem": null,
+   "quemEstado": null,
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 3,
+   "confianca": 0.85,
+   "veredito": "pergunta",
+   "motivo": "falta_quem",
+   "caminho": "pergunta",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": "A quem você entrega as moedas? 1. Mercy Quintus · 2. Tabitha · 3. Charity Mordaunt",
+  "linhas1": [],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "pergunta",
+   "respostas": [
+    {
+     "k": "pergunta",
+     "texto": "A quem você entrega as moedas? 1. Mercy Quintus · 2. Tabitha · 3. Charity Mordaunt"
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "pergunta",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3124,
+  "msRestaurar": 2477,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L13",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "vendo o símbolo sagrado riscado à Charity",
+   "familia": "trocar",
+   "subtipo": "vender",
+   "quem": "Charity Mordaunt",
+   "quemEstado": "aqui",
+   "coisa": "Símbolo sagrado riscado",
+   "coisaTipo": "minha",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "sim_com_preco",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 0,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [
+   {
+    "momento": "proposta",
+    "verbo": "Vender Símbolo sagrado riscado",
+    "cede": "«vendo o símbolo sagrado riscado à Charity»",
+    "preco": "◉ +7",
+    "texto": "Vender Símbolo sagrado riscado «vendo o símbolo sagrado riscado à Charity» ◉ +7 Reescrever",
+    "botoes": [
+     "Vender Símbolo sagrado riscado «vendo o símbolo sagrado riscado à Charity» ◉ +7",
+     "Reescrever"
+    ]
+   }
+  ],
+  "pergunta": null,
+  "linhas1": [],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "cartao",
+   "respostas": [
+    {
+     "k": "cartao",
+     "texto": "Vender Símbolo sagrado riscado"
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "cartao",
+  "cartaoAberto": {
+   "texto": "Vender Símbolo sagrado riscado «vendo o símbolo sagrado riscado à Charity» ◉ +7 · ao Sino Rachado: a bolsa fica com ◉ 70 Reescrever Vender · ◉ +7",
+   "botoes": [
+    "Vender Símbolo sagrado riscado «vendo o símbolo sagrado riscado à Charity» ◉ +7",
+    "Reescrever",
+    "Vender · ◉ +7"
+   ]
+  },
+  "confirmou": "clicou Vender · ◉ +7",
+  "linhas2": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "◉ +7: O Sino Rachado fica com Símbolo sagrado riscado (bolsa: ◉ 70)."
+  ],
+  "ouvidoDepoisDoCartao": true,
+  "fichaDepois": {
+   "moedas": 70,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 6754,
+  "msRestaurar": 2062,
+  "fase2": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "◉ +7: O Sino Rachado fica com Símbolo sagrado riscado (bolsa: ◉ 70)."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "◉ +7; bolsa −Símbolo sagrado riscado",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L14",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "se eu pagar uma rodada, você me conta o que sabe, Tabitha?",
+   "familia": "convencer",
+   "subtipo": null,
+   "quem": "Tabitha",
+   "quemEstado": "aqui",
+   "coisa": "rodada",
+   "coisaTipo": "livre",
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": null,
+   "motivo": null,
+   "caminho": null,
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🔮 \"se eu pagar uma rodada, você me conta o que sabe, Tabitha?\" — Sim, e ainda mais…"
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "tipo": "nada",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4430,
+  "msRestaurar": 2258,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L15",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "compro a corda do Cornelius",
+   "familia": "trocar",
+   "subtipo": "comprar",
+   "quem": "Cornelius",
+   "quemEstado": "longe",
+   "coisa": "Corda que sempre volta enrolada",
+   "coisaTipo": "dele",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "nao",
+   "motivo": "ausente",
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Cornelius não está aqui."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Cornelius não está aqui."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3754,
+  "msRestaurar": 2507,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L16",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Peço desculpas à Charity, a sopa estava ótima",
+   "familia": "falar",
+   "subtipo": null,
+   "quem": "Charity Mordaunt",
+   "quemEstado": "aqui",
+   "coisa": "sopa",
+   "coisaTipo": "dele",
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": null,
+   "motivo": null,
+   "caminho": "falar",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…"
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "tipo": "nada",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4718,
+  "msRestaurar": 2840,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L17",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Mercy, você é uma velha trambiqueira",
+   "familia": "falar",
+   "subtipo": null,
+   "quem": "Mercy Quintus",
+   "quemEstado": "aqui",
+   "coisa": null,
+   "coisaTipo": null,
+   "quantia": null,
+   "confianca": 0.35,
+   "veredito": null,
+   "motivo": null,
+   "caminho": null,
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…"
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "tipo": "nada",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4452,
+  "msRestaurar": 2179,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L18",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "furto a bolsa da Charity enquanto ela serve a mesa",
+   "familia": "trocar",
+   "subtipo": "furtar",
+   "quem": "Charity Mordaunt",
+   "quemEstado": "aqui",
+   "coisa": "bolsa",
+   "coisaTipo": "livre",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "dado",
+   "intencao": "furto"
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [
+   {
+    "momento": "chamado",
+    "verbo": "",
+    "cede": "",
+    "preco": "",
+    "texto": "Rolar d20 + 6 Prestidigitação precisa de 15 Mudar de ideia",
+    "botoes": [
+     "Rolar d20 + 6 Prestidigitação precisa de 15",
+     "Mudar de ideia"
+    ]
+   }
+  ],
+  "pergunta": null,
+  "linhas1": [],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "dado",
+   "respostas": [
+    {
+     "k": "dado",
+     "texto": "Rolar d20 + 6 Prestidigitação precisa de 15 Mudar de ideia"
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "dado",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3632,
+  "msRestaurar": 2287,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "L19",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "Charity, me dá um pedaço desse pão",
+   "familia": "trocar",
+   "subtipo": "pedir",
+   "quem": "Charity Mordaunt",
+   "quemEstado": "aqui",
+   "coisa": "paes",
+   "coisaTipo": "dele",
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": "dado",
+   "motivo": null,
+   "caminho": "dado",
+   "intencao": "deGraca"
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🎁 Charity Mordaunt não tem paes para dar."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🎁 Charity Mordaunt não tem paes para dar."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "A Lâmpada dos Sonhos",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4393,
+  "msRestaurar": 2160,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "X01",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "compro uma tocha",
+   "familia": "trocar",
+   "subtipo": "comprar",
+   "quem": null,
+   "quemEstado": null,
+   "coisa": "tocha",
+   "coisaTipo": "minha",
+   "quantia": null,
+   "confianca": 0.9,
+   "veredito": "nao",
+   "motivo": "ninguem_aqui",
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Não há ninguém aqui para isso."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Não há ninguém aqui para isso."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3977,
+  "msRestaurar": 2445,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": true,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": [
+    "motivo: esperava dizer [\"vende\"]"
+   ]
+  }
+ },
+ {
+  "id": "X02",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "dou cinco moedas a Lavinia",
+   "familia": "trocar",
+   "subtipo": "dar",
+   "quem": "Lavinia Sallow",
+   "quemEstado": "aqui",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 5,
+   "confianca": 0.85,
+   "veredito": "sim_com_preco",
+   "motivo": null,
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Lavinia devolve: o dinheiro do grupo fica na sua bolsa."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Lavinia devolve: o dinheiro do grupo fica na sua bolsa."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 3816,
+  "msRestaurar": 2469,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "X03",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "dou o símbolo sagrado riscado a Lavinia",
+   "familia": "trocar",
+   "subtipo": "dar",
+   "quem": "Lavinia Sallow",
+   "quemEstado": "aqui",
+   "coisa": "Símbolo sagrado riscado",
+   "coisaTipo": "minha",
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": "sim_com_preco",
+   "motivo": null,
+   "caminho": "aplicado",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Símbolo sagrado riscado agora é de Lavinia Sallow."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": [
+      "Símbolo sagrado riscado"
+     ]
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "aplica",
+   "respostas": [
+    {
+     "k": "aplica",
+     "texto": "🤝 Símbolo sagrado riscado agora é de Lavinia Sallow."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 1
+  },
+  "tipo": "aplica",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": [
+      "Símbolo sagrado riscado"
+     ]
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4373,
+  "msRestaurar": 2094,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "bolsa −Símbolo sagrado riscado; Lavinia: +Símbolo sagrado riscado",
+   "motivos": []
+  }
+ },
+ {
+  "id": "X04",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "dou cinco moedas ao mendigo",
+   "familia": "trocar",
+   "subtipo": "dar",
+   "quem": null,
+   "quemEstado": null,
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 5,
+   "confianca": 0.85,
+   "veredito": "nao",
+   "motivo": "ninguem_aqui",
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Não há ninguém aqui para isso."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Não há ninguém aqui para isso."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4415,
+  "msRestaurar": 2060,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "X05",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "dou duas moedas à Mercy Quintus",
+   "familia": "trocar",
+   "subtipo": "dar",
+   "quem": "Mercy Quintus",
+   "quemEstado": "longe",
+   "coisa": "moeda",
+   "coisaTipo": "moeda",
+   "quantia": 2,
+   "confianca": 0.85,
+   "veredito": "nao",
+   "motivo": "ausente",
+   "caminho": "nao",
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "🤝 Mercy Quintus não está aqui."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nega",
+   "respostas": [
+    {
+     "k": "nega",
+     "texto": "🤝 Mercy Quintus não está aqui."
+    }
+   ],
+   "nResp": 1,
+   "nAplica": 0
+  },
+  "tipo": "nega",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4021,
+  "msRestaurar": 2772,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "X06",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "peço desculpas a Lavinia",
+   "familia": "falar",
+   "subtipo": null,
+   "quem": "Lavinia Sallow",
+   "quemEstado": "aqui",
+   "coisa": null,
+   "coisaTipo": null,
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": null,
+   "motivo": null,
+   "caminho": null,
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…",
+   "✧ +17 XP — um risco enfrentado, e vencido."
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "tipo": "nada",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 5212,
+  "msRestaurar": 2982,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ },
+ {
+  "id": "X09",
+  "saida": "quieto",
+  "ouvido": {
+   "frase": "deixa pra lá, Lavinia",
+   "familia": "falar",
+   "subtipo": null,
+   "quem": "Lavinia Sallow",
+   "quemEstado": "aqui",
+   "coisa": null,
+   "coisaTipo": null,
+   "quantia": null,
+   "confianca": 0.85,
+   "veredito": null,
+   "motivo": null,
+   "caminho": null,
+   "intencao": null
+  },
+  "ouvidosN": 1,
+  "fichaAntes": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "cartoes": [],
+  "pergunta": null,
+  "linhas1": [
+   "📖 Anteriormente, em A lenda de Barnabas — você parou há 2 dias\n   Estava em Rio do Martelo, no dia 1, com Lavinia Sallow.\n   Dia 1 — o beco atrás das bancas (Lavinia Sallow, Mercy Quintus, Cornelius): digo que procuro a pessoa: a filha de Mercy Quintus, e pergunto o nome dela\n   Dia 1 — A Lâmpada dos Sonhos (Lavinia Sallow, Mercy Quintus, Cornelius): olho Charity Mordaunt e digo em voz alta que a sopa daqui é água suja queimada e que ela…"
+  ],
+  "fichaMeio": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "fase1": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "tipo": "nada",
+  "cartaoAberto": null,
+  "confirmou": null,
+  "linhas2": [],
+  "fichaDepois": {
+   "moedas": 63,
+   "inv": [
+    "Símbolo sagrado riscado"
+   ],
+   "eq": [
+    "arma=Espada Curta"
+   ],
+   "rac": 10,
+   "agua": 10,
+   "toc": 5,
+   "grupo": [
+    {
+     "nome": "Lavinia Sallow",
+     "inv": []
+    }
+   ],
+   "lugar": "Fenda de Névoa",
+   "cidade": "Rio do Martelo",
+   "pv": 17,
+   "dia": 1
+  },
+  "ms": 4242,
+  "msRestaurar": 2218,
+  "fase2": {
+   "tipo": "nada",
+   "respostas": [],
+   "nResp": 0,
+   "nAplica": 0
+  },
+  "julgamento": {
+   "ok": true,
+   "tipoOk": true,
+   "fichaOk": true,
+   "multiplas": false,
+   "linhaVsFicha": false,
+   "semResposta": false,
+   "ouvido": [],
+   "motivoErrado": false,
+   "duploDebito": false,
+   "deltaTexto": "igual",
+   "motivos": []
+  }
+ }
+]

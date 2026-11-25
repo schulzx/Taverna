@@ -1,0 +1,30 @@
+[infra] vite no ar (pid 19460, porta 5391, TAVERNA_API=http://127.0.0.1:5392)
+[infra] edge no ar (pid 19012, cdp 9391)
+
+==================== A BANCADA DA TROCA ====================
+NOTA: 50 de 50 frases com o tipo da resposta E a ficha batendo com o esperado (100%).
+  só o tipo: 50 de 50  ·  só a ficha: 50 de 50
+Contadas à parte (uma frase pode estar em várias):
+  mais de uma resposta do sistema ....... 0  
+  a linha diz uma coisa e a ficha outra .. 0  
+  sem resposta nenhuma onde se esperava .. 0  
+  leitura errada do ouvido ............... 3  [N11 N28 N41]
+  motivo diferente do esperado (não derruba a nota) 2  [N06 N44]
+Por estado de partida: balanca 17/17 · balanca-pobre 9/9 · lampada 12/12 · fenda 12/12
+Por tipo de troca: comprar 11/11 · (sem troca) 19/19 · vender 2/2 · escambo 1/1 · pagar 1/1 · pedir 1/1 · furtar 2/2 · cobrar 2/2 · subornar 2/2 · emprestar 3/3 · dar 4/4 · devolver 2/2
+
+DEFEITOS CONHECIDOS (sessões 16 e 17), reproduzidos na versão de hoje?
+  não reproduziu  pagamento com quantia dita debita o dobro e mostra duas linhas: 0 de 0 frases marcadas  
+  não reproduziu  ofensa, desculpa e «deixa pra lá» lidos como troca: 0 de 0 frases marcadas  
+  não reproduziu  «dessa»/«desse»/«pedaço» tomados por coisa: 0 de 0 frases marcadas  
+  não reproduziu  suborno com quantia sem resposta nenhuma: 0 de 0 frases marcadas  
+
+AS 0 FRASES QUE FALHARAM (esperado → veio):
+
+--- PROVA DE QUE NENHUMA CHAMADA DE IA SAIU ---
+  destino do /api no Vite (TAVERNA_API): http://127.0.0.1:5392  (Narrador de mentira, local)
+  sonda no /api do dev-server caiu no Narrador de mentira: sim
+  /api pedidas pela página: 49  ·  recebidas pelo Narrador de mentira: 49  ·  /api para fora de localhost: 0
+  o log do Vite cita vercel.app: não  ·  outros hosts que a página contatou (só ativos estáticos): fonts.googleapis.com ×50, fonts.gstatic.com ×451
+
+Tempo: 349 s para 50 frases (7.0 s por frase).

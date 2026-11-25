@@ -1,0 +1,210 @@
+[infra] vite no ar (pid 7640, porta 5391, TAVERNA_API=http://127.0.0.1:5392)
+[infra] edge no ar (pid 15020, cdp 9391)
+
+==================== A BANCADA DA TROCA ====================
+NOTA: 39 de 60 frases com o tipo da resposta E a ficha batendo com o esperado (65%).
+  só o tipo: 41 de 60  ·  só a ficha: 50 de 60
+Contadas à parte (uma frase pode estar em várias):
+  mais de uma resposta do sistema ....... 0  
+  a linha diz uma coisa e a ficha outra .. 0  
+  sem resposta nenhuma onde se esperava .. 6  [T02 T05 T08 T16 T29 T30]
+  leitura errada do ouvido ............... 20  [T01 T02 T03 T05 T06 T08 T15 T16 T17 T20 T23 T27 T29 T30 T31 T44 T45 T49 T51 T52]  (+ 1 sem linha do ouvido: [T20])
+  motivo diferente do esperado (não derruba a nota) 0  
+Por estado de partida: balanca 17/28 · balanca-pobre 5/8 · lampada 10/16 · fenda 7/8
+Por tipo de troca: comprar 3/8 · vender 2/4 · pagar 2/3 · dar 5/8 · pedir 3/3 · (sem troca) 13/21 · furtar 2/2 · emprestar 2/2 · devolver 3/3 · subornar 1/2 · escambo 1/2 · cobrar 2/2
+
+DEFEITOS CONHECIDOS (sessões 16 e 17), reproduzidos na versão de hoje?
+  não reproduziu  pagamento com quantia dita debita o dobro e mostra duas linhas: 0 de 0 frases marcadas  
+  não reproduziu  ofensa, desculpa e «deixa pra lá» lidos como troca: 0 de 0 frases marcadas  
+  não reproduziu  «dessa»/«desse»/«pedaço» tomados por coisa: 0 de 0 frases marcadas  
+  não reproduziu  suborno com quantia sem resposta nenhuma: 0 de 0 frases marcadas  
+
+AS 21 FRASES QUE FALHARAM (esperado → veio):
+
+[T01] (balanca) «Cornelius, quero levar uma racao pra viagem»
+  esperava: "cartao" · ficha: ◉ -7; suprimentos {"rac":1}
+  veio:     aplica · ficha suprimentos rac-1
+    linha: 🤝 Ração agora é de Cornelius.
+    ouvido: trocar/dar quem=Cornelius coisa=ração quantia=- veredito=sim_com_preco/-
+    ✗ tipo: esperava cartao, o sistema deu aplica
+    ✗ ficha: esperava ◉ -7, veio ◉ 0
+    ✗ ficha: suprimento rac: esperava +1, veio -1
+    ✗ ouvido: subtipo: esperava comprar, leu dar
+
+[T02] (balanca) «fecha comigo três tochas, td bem?»
+  esperava: "cartao" · ficha: ◉ -3; suprimentos {"toc":3}
+  veio:     nada · ficha igual
+    linha: 🔮 "fecha comigo três tochas, td bem?" — Sim, e ainda mais…
+    ouvido: agir/- quem=- coisa=tocha quantia=3 veredito=-/-
+    ✗ tipo: esperava cartao, o sistema deu nada
+    ✗ ficha: esperava ◉ -3, veio ◉ 0
+    ✗ ficha: suprimento toc: esperava +3, veio +0
+    ✗ ouvido: família: esperava trocar, leu agir
+    ✗ ouvido: subtipo: esperava comprar, leu nenhum
+
+[T03] (balanca) «bota a corda no meu saco aí que eu levo»
+  esperava: "cartao" · ficha: ◉ -50; bolsa {"+":["Corda que sempre volta enrolada"]}
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com a Corda que sempre volta enrolada? 1. Comprar · 2. Pedir · 3. Furtar
+    ouvido: trocar/- quem=- coisa=Corda que sempre volta enrolada quantia=- veredito=pergunta/falta_o_que
+    ✗ tipo: esperava cartao, o sistema deu pergunta
+    ✗ ficha: esperava ◉ -50, veio ◉ 0
+    ✗ ficha: bolsa entra: faltou «Corda que sempre volta enrolada»
+    ✗ ouvido: subtipo: esperava comprar, leu nenhum
+
+[T05] (balanca) «— Prudence, empurro esse símbolo riscado pra vc. Aceita? — digo, estendendo a mão»
+  esperava: ["cartao","nega"] · ficha: ◉ +; bolsa {"-":["Símbolo sagrado riscado"]} (por tipo: {"nega":{}})
+  veio:     nada · ficha igual
+    ouvido: falar/- quem=Prudence coisa=Símbolo sagrado riscado quantia=- veredito=-/-
+    ✗ tipo: esperava cartao ou nega, o sistema deu nada
+    ✗ ficha: esperava ganhar moedas, veio ◉ 0
+    ✗ ficha: bolsa sai: faltou «Símbolo sagrado riscado»
+    ✗ ouvido: família: esperava trocar, leu falar
+    ✗ ouvido: subtipo: esperava vender, leu nenhum
+
+[T08] (balanca) «— Lavinia, leva o símbolo contigo, vai que precisa»
+  esperava: ["aplica","cartao"] · ficha: bolsa {"-":["Símbolo sagrado riscado"]}; companheiro {"Lavinia Sallow":{"+":["Símbolo sagrado riscado"]}}
+  veio:     nada · ficha igual
+    ouvido: falar/- quem=Lavinia Sallow coisa=Símbolo sagrado riscado quantia=- veredito=-/-
+    ✗ tipo: esperava aplica ou cartao, o sistema deu nada
+    ✗ ficha: bolsa sai: faltou «Símbolo sagrado riscado»
+    ✗ ficha: Lavinia recebe: faltou «Símbolo sagrado riscado»
+    ✗ ouvido: família: esperava trocar, leu falar
+    ✗ ouvido: subtipo: esperava dar, leu nenhum
+
+[T15] (balanca) «Prudence, aqui vão dez moedas, finge que não me viu»
+  esperava: ["dado","cartao","aplica"] · ficha: igual (por tipo: {"cartao":{"moedas":-10},"aplica":{"moedas":-10}})
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com as moedas? 1. Dar · 2. Emprestar · 3. Vender
+    ouvido: trocar/- quem=Prudence coisa=moeda quantia=10 veredito=pergunta/falta_o_que
+    ✗ tipo: esperava dado ou cartao ou aplica, o sistema deu pergunta
+    ✗ ouvido: subtipo: esperava subornar, leu nenhum
+
+[T16] (balanca) «Cornelius, topa trocar meu símbolo por duas tochas?»
+  esperava: ["cartao","dado","pergunta"] · ficha: igual (por tipo: {"cartao":{"moedas":"?","inv":{"-":["Símbolo sagrado riscado"]},"sup":{"toc":2}}})
+  veio:     nada · ficha igual
+    linha: 🔮 "Cornelius, topa trocar meu símbolo por duas tochas?" — Sim, e ainda mais…
+    ouvido: falar/- quem=Cornelius coisa=Símbolo sagrado riscado quantia=- veredito=-/-
+    ✗ tipo: esperava cartao ou dado ou pergunta, o sistema deu nada
+    ✗ ouvido: família: esperava trocar, leu falar
+    ✗ ouvido: subtipo: esperava escambo, leu nenhum
+
+[T18] (balanca) «dou duas moedas pra Prudence e outras duas pro Cornelius»
+  esperava: ["cartao","aplica","pergunta"] · ficha: ◉ -4 (por tipo: {"pergunta":{}})
+  veio:     aplica · ficha ◉ -2
+    linha: ◉ −2: Prudence recebe (bolsa: ◉ 61).
+    ouvido: trocar/dar quem=Prudence coisa=moeda quantia=2 veredito=sim_com_preco/-
+    ✗ ficha: esperava ◉ -4, veio ◉ -2
+
+[T20] (balanca) «Tabitha, me vende uma ração»
+  esperava: "nega" · ficha: igual
+  veio:     cartao · ficha igual
+    cartão: [proposta] Comprar Rações de viagem · ◉ 7
+    veredito do cartão: Comprar Rações de viagem «Tabitha, me vende uma ração» ◉ 7 · ◉ 7 · a bolsa fica com ◉ 56 Reescrever Comprar · ◉ 7
+    ouvido: (sem linha)
+    ✗ tipo: esperava nega, o sistema deu cartao
+    ✗ ouvido: sem linha do ouvido (a frase não passou por ele)
+
+[T23] (balanca) «ontem eu paguei caro por uma corda dessas»
+  esperava: "nada" · ficha: igual
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com a Corda que sempre volta enrolada? 1. Comprar · 2. Pedir · 3. Furtar
+    ouvido: trocar/- quem=- coisa=Corda que sempre volta enrolada quantia=- veredito=pergunta/falta_o_que
+    ✗ tipo: esperava nada, o sistema deu pergunta
+    ✗ ouvido: leu como trocar o que não era troca
+
+[T27] (balanca) «Prudence, um dia eu ainda roubo esta banca inteira, brincadeira ein»
+  esperava: "nada" · ficha: igual
+  veio:     nega · ficha igual
+    linha: 🎒 Você não tem banca.
+    ouvido: trocar/dar quem=Prudence coisa=banca quantia=- veredito=nao/nao_tem
+    ✗ tipo: esperava nada, o sistema deu nega
+    ✗ ouvido: leu como trocar o que não era troca
+
+[T29] (balanca-pobre) «Prudence, empurro essa corda pra você, quanto dá?»
+  esperava: ["cartao","nega"] · ficha: ◉ +; bolsa {"-":["Corda que sempre volta enrolada"]} (por tipo: {"nega":{}})
+  veio:     nada · ficha igual
+    ouvido: usar/- quem=Prudence coisa=Corda que sempre volta enrolada quantia=- veredito=sim/-
+    ✗ tipo: esperava cartao ou nega, o sistema deu nada
+    ✗ ficha: esperava ganhar moedas, veio ◉ 0
+    ✗ ficha: bolsa sai: faltou «Corda que sempre volta enrolada»
+    ✗ ouvido: família: esperava trocar, leu usar
+    ✗ ouvido: subtipo: esperava vender, leu nenhum
+
+[T30] (balanca-pobre) «acerto trinta moedas com a Prudence»
+  esperava: "nega" · ficha: igual
+  veio:     nada · ficha igual
+    ouvido: lutar/- quem=Prudence coisa=- quantia=30 veredito=-/-
+    ✗ tipo: esperava nega, o sistema deu nada
+    ✗ ouvido: família: esperava trocar, leu lutar
+    ✗ ouvido: subtipo: esperava pagar, leu nenhum
+
+[T31] (balanca-pobre) «Cornelius, três rações, anota aí»
+  esperava: "nega" · ficha: igual
+  veio:     aplica · ficha suprimentos rac-1
+    linha: 🤝 Ração agora é de Cornelius.
+    ouvido: trocar/dar quem=Cornelius coisa=ração quantia=3 veredito=sim_com_preco/-
+    ✗ tipo: esperava nega, o sistema deu aplica
+    ✗ ficha: suprimento rac: esperava +0, veio -1
+    ✗ ouvido: subtipo: esperava comprar, leu dar
+
+[T38] (lampada) «Tabitha, aqui vão três moedas pelo susto»
+  esperava: ["aplica","cartao"] · ficha: ◉ -3
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com as moedas? 1. Dar · 2. Emprestar · 3. Vender
+    ouvido: trocar/- quem=Tabitha coisa=moeda quantia=3 veredito=pergunta/falta_o_que
+    ✗ tipo: esperava aplica ou cartao, o sistema deu pergunta
+    ✗ ficha: esperava ◉ -3, veio ◉ 0
+
+[T41] (lampada) «enfio o prato de cobre na mochila e vou saindo»
+  esperava: ["dado","nega"] · ficha: igual
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com as moedas? 1. Dar · 2. Emprestar · 3. Vender
+    ouvido: trocar/- quem=- coisa=moeda quantia=- veredito=pergunta/falta_o_que
+    ✗ tipo: esperava dado ou nega, o sistema deu pergunta
+
+[T48] (lampada) «dou uma moeda pra Mercy e outra pra Tabitha»
+  esperava: ["cartao","aplica","pergunta"] · ficha: ◉ -2 (por tipo: {"pergunta":{}})
+  veio:     aplica · ficha ◉ -1
+    linha: ◉ −1: Mercy Quintus recebe (bolsa: ◉ 62).
+    ouvido: trocar/dar quem=Mercy Quintus coisa=moeda quantia=1 veredito=sim_com_preco/-
+    ✗ ficha: esperava ◉ -2, veio ◉ -1
+
+[T49] (lampada) «Mercy, que voz linda, vale cada moeda do mundo»
+  esperava: "nada" · ficha: igual
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com as moedas? 1. Dar · 2. Emprestar · 3. Vender
+    ouvido: trocar/- quem=Mercy Quintus coisa=moeda quantia=- veredito=pergunta/falta_o_que
+    ✗ tipo: esperava nada, o sistema deu pergunta
+    ✗ ouvido: leu como trocar o que não era troca
+
+[T51] (lampada) «lembro de quando paguei três moedas por um pão duro naquela estrada»
+  esperava: "nada" · ficha: igual
+  veio:     pergunta · ficha igual
+    pergunta: O que você faz com o paes? 1. Comprar · 2. Pedir · 3. Furtar
+    ouvido: trocar/- quem=- coisa=paes quantia=3 veredito=pergunta/falta_o_que
+    ✗ tipo: esperava nada, o sistema deu pergunta
+    ✗ ouvido: leu como trocar o que não era troca
+
+[T52] (lampada) «Tabitha, vou te cobrar caro se mentir pra mim, hein»
+  esperava: "nada" · ficha: igual
+  veio:     nega · ficha igual
+    linha: 🤝 Tabitha não cede: nada muda de mão.
+    ouvido: trocar/cobrar quem=Tabitha coisa=- quantia=- veredito=dado/-
+    ✗ tipo: esperava nada, o sistema deu nega
+    ✗ ouvido: leu como trocar o que não era troca
+
+[T59] (fenda) «essa estrada ameaça roubar até a minha sombra»
+  esperava: "nada" · ficha: igual
+  veio:     dado · ficha igual
+    cartão: [chamado] Rolar d20 + 1 Intimidação precisa de 14 Mudar de ideia
+    ouvido: agir/- quem=- coisa=- quantia=- veredito=-/-
+    ✗ tipo: esperava nada, o sistema deu dado
+
+--- PROVA DE QUE NENHUMA CHAMADA DE IA SAIU ---
+  destino do /api no Vite (TAVERNA_API): http://127.0.0.1:5392  (Narrador de mentira, local)
+  sonda no /api do dev-server caiu no Narrador de mentira: sim
+  /api pedidas pela página: 49  ·  recebidas pelo Narrador de mentira: 49  ·  /api para fora de localhost: 0
+  o log do Vite cita vercel.app: não  ·  outros hosts que a página contatou (só ativos estáticos): fonts.googleapis.com ×60, fonts.gstatic.com ×540
+
+Tempo: 387 s para 60 frases (6.5 s por frase).

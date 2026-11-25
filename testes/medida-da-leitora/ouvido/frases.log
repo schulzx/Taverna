@@ -1,0 +1,102 @@
+[infra] vite no ar (pid 18572, porta 5391, TAVERNA_API=http://127.0.0.1:5392)
+[infra] edge no ar (pid 3568, cdp 9391)
+
+==================== A BANCADA DA TROCA ====================
+NOTA: 80 de 98 frases com o tipo da resposta E a ficha batendo com o esperado (82%).
+  só o tipo: 80 de 98  ·  só a ficha: 80 de 98
+Contadas à parte (uma frase pode estar em várias):
+  mais de uma resposta do sistema ....... 0  
+  a linha diz uma coisa e a ficha outra .. 0  
+  sem resposta nenhuma onde se esperava .. 0  
+  leitura errada do ouvido ............... 5  [B46 B52 B73 B80 L06]
+  motivo diferente do esperado (não derruba a nota) 3  [B52 B73 L03]
+Por estado de partida: balanca 60/60 · balanca-pobre 13/13 · lampada 7/18 · fenda 0/7
+Por tipo de troca: comprar 13/15 · (sem troca) 21/27 · vender 6/7 · pagar 6/6 · dar 11/17 · pedir 3/3 · furtar 3/4 · emprestar 6/6 · devolver 3/3 · subornar 4/5 · escambo 3/3 · cobrar 1/2
+
+DEFEITOS CONHECIDOS (sessões 16 e 17), reproduzidos na versão de hoje?
+  não reproduziu  pagamento com quantia dita debita o dobro e mostra duas linhas: 0 de 10 frases marcadas  
+  não reproduziu  ofensa, desculpa e «deixa pra lá» lidos como troca: 0 de 3 frases marcadas  
+  não reproduziu  «dessa»/«desse»/«pedaço» tomados por coisa: 0 de 2 frases marcadas  
+  não reproduziu  suborno com quantia sem resposta nenhuma: 0 de 2 frases marcadas  
+
+AS 18 FRASES QUE FALHARAM (esperado → veio):
+
+[L08] (lampada) «cobro da Tabitha as moedas que emprestei»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L10] (lampada) «suborno a Charity com vinte moedas pra ela me contar quem esteve aqui»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L11] (lampada) «dou o símbolo sagrado riscado à Tabitha»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L12] (lampada) «dou três moedas a ele»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L13] (lampada) «vendo o símbolo sagrado riscado à Charity»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L14] (lampada) «se eu pagar uma rodada, você me conta o que sabe, Tabitha?»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L15] (lampada) «compro a corda do Cornelius»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L16] (lampada) «Peço desculpas à Charity, a sopa estava ótima»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L17] (lampada) «Mercy, você é uma velha trambiqueira»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L18] (lampada) «furto a bolsa da Charity enquanto ela serve a mesa»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[L19] (lampada) «Charity, me dá um pedaço desse pão»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:265563
+
+[X01] (fenda) «compro uma tocha»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+[X02] (fenda) «dou cinco moedas a Lavinia»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+[X03] (fenda) «dou o símbolo sagrado riscado a Lavinia»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+[X04] (fenda) «dou cinco moedas ao mendigo»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+[X05] (fenda) «dou duas moedas à Mercy Quintus»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+[X06] (fenda) «peço desculpas a Lavinia»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+[X09] (fenda) «deixa pra lá, Lavinia»
+  ERRO da bancada: JS: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
+    at <anonymous>:1:152691
+
+--- PROVA DE QUE NENHUMA CHAMADA DE IA SAIU ---
+  destino do /api no Vite (TAVERNA_API): http://127.0.0.1:5392  (Narrador de mentira, local)
+  sonda no /api do dev-server caiu no Narrador de mentira: sim
+  /api pedidas pela página: 71  ·  recebidas pelo Narrador de mentira: 71  ·  /api para fora de localhost: 0
+  o log do Vite cita vercel.app: não  ·  outros hosts que a página contatou (só ativos estáticos): fonts.googleapis.com ×80, fonts.gstatic.com ×721
+
+Tempo: 637 s para 98 frases (6.5 s por frase).
