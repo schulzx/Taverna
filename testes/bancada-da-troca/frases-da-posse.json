@@ -10,6 +10,8 @@
   { "id": "P07", "estado": "balanca", "antes": ["dou quinze moedas à Prudence"], "frase": "cobro da Prudence as quinze moedas", "tipo": ["nega", "dado"], "ficha": {}, "ouvido": { "familia": "trocar", "subtipo": "cobrar", "quem": "Prudence" } },
   { "id": "P08", "estado": "balanca", "antes": ["empresto o símbolo sagrado riscado à Prudence"], "frase": "Prudence, me devolve o símbolo que te emprestei", "tipo": "aplica", "ficha": { "inv": { "+": ["Símbolo sagrado riscado"] } }, "ouvido": { "familia": "trocar", "quem": "Prudence" } },
   { "id": "P09", "estado": "balanca", "antes": ["empresto o símbolo sagrado riscado à Lavinia"], "frase": "Lavinia, me devolve o símbolo", "tipo": "aplica", "ficha": { "inv": { "+": ["Símbolo sagrado riscado"] }, "grupo": { "Lavinia Sallow": { "-": ["Símbolo sagrado riscado"] } } }, "ouvido": { "familia": "trocar", "quem": "Lavinia" } },
-  { "id": "P10", "estado": "balanca-pobre", "frase": "devolvo a corda ao Cornelius", "tipo": ["aplica", "cartao"], "ficha": { "moedas": "?", "inv": { "-": ["Corda que sempre volta enrolada"] } }, "ouvido": { "familia": "trocar", "subtipo": "devolver", "quem": "Cornelius" } }
+  { "id": "P10", "estado": "balanca-pobre", "frase": "devolvo a corda ao Cornelius", "tipo": ["aplica", "cartao"], "ficha": { "moedas": "?", "inv": { "-": ["Corda que sempre volta enrolada"] } }, "ouvido": { "familia": "trocar", "subtipo": "devolver", "quem": "Cornelius" } },
+  { "id": "P11", "estado": "balanca", "antes": ["furto a balança do Cornelius", "[rolar]"], "frase": "Cornelius, me dá a balança de bolso", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "quem": "Cornelius" } },
+  { "id": "P12", "estado": "balanca", "antes": ["furto a bolsa da Prudence", "[rolar]"], "frase": "Prudence, me dá uma moeda", "tipo": "nega", "ficha": {}, "ouvido": { "familia": "trocar", "quem": "Prudence" } }
  ]
 }

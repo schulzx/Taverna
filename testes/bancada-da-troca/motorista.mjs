@@ -58,3 +58,6 @@ export async function digitar(pag, frase) {
 export const abrirProposta = async (pag) => JSON.parse(await pag.avaliar(ABRIR_PROPOSTA));
 export const confirmarProposta = (pag) => pag.avaliar(CLICAR_CONFIRMAR);
 export const clicarBotao = (pag, texto) => pag.avaliar(CLICAR_BOTAO(texto));
+/* 24/11 (etapa 7 da identidade e posse): o dado que o Mestre pede, rolado como o jogador rola — o botão «Rolar» do
+   cartão do chamado. Serve ao «antes» que prepara um furto (o d20 da bancada tem semente: o mesmo em toda rodada) */
+export const rolar = (pag) => pag.avaliar(CLICAR_BOTAO("Rolar"));

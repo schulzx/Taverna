@@ -92,7 +92,8 @@ async function medir(pag, infra, f) {
   const tR = Date.now();
   await M.restaurar(pag, infra.portaVite, estadoDe(f.estado));
   const msRestaurar = Date.now() - tR;
-  for (const a of f.antes || []) { await M.digitar(pag, a); await M.esperarFim(pag); }
+  /* «[rolar]» no antes rola o dado que o cartão pede (24/11: o furto que prepara a medida) */
+  for (const a of f.antes || []) { if (a === "[rolar]") { await M.rolar(pag); await M.esperarFim(pag); continue; } await M.digitar(pag, a); await M.esperarFim(pag); }
   const cartoesAntes = (await M.cartao(pag)) || [];
   const fichaAntes = await M.ficha(pag);
   const n0 = (await M.mensagens(pag)).length;
