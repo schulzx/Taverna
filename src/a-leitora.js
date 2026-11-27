@@ -34,6 +34,8 @@ import { O_OUVIDO, VERBOS_DO_OUVIDO } from "./o-ouvido.js";
 import { aCenaDoOuvido } from "./motor/a-cena-do-ouvido.js";
 
 export const A_LEITORA = Object.freeze({
+  /* a releitura que só tira do herói, numa pergunta, não se aplica direto (aRelidaSoPerde) */
+  relida: Object.freeze({ caminhoDireto: "aplicado", heroi: "heroi" }),
   /* quanto o turno espera pela resposta (ms): acima disto vale o ouvido sozinho.
      Medido: média 1366, p95 2151, pior 3913 (428 chamadas) */
   tetoMs: 2500,
@@ -245,4 +247,25 @@ export function oDesempate(leitura, resposta) {
   } catch {
     return sai("ouvido", false, null, "semResposta");
   }
+}
+
+/* ============================================================
+   A RELEITURA NÃO ENTREGA SOZINHA (26/11)
+   A leitora diz «é troca» e o ouvido relê; mas a frase que PERGUNTA O PREÇO
+   (a tabela do ouvido, O_OUVIDO.precoPergunta) espera algo de volta. Se o resultado da porta fosse aplicar direto (sem cartão,
+   sem dado, sem pergunta ao jogador) transações em que o herói só perde — tudo
+   sai dele e nada chega a ele —, a releitura não vale: fica a leitura do ouvido
+   sozinho. Ganhar, abrir cartão, rolar dado ou perguntar continuam valendo.
+   leitura = a relida; saida = o que a porta ia devolver; frase = a do turno → boolean
+   ============================================================ */
+export function aRelidaSoPerde(leitura, saida, frase) {
+  const l = leitura && typeof leitura === "object" ? leitura : null;
+  const x = saida && typeof saida === "object" ? saida : null;
+  if (!l || !x || !l.pergunta || x.caminho !== A_LEITORA.relida.caminhoDireto) return false;
+  const txt = String(frase == null ? "" : frase).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!O_OUVIDO.precoPergunta.some((w) => new RegExp("\\b" + w + "\\b").test(txt))) return false;
+  const ts = Array.isArray(x.transacoes) ? x.transacoes.filter((t) => t && typeof t === "object") : [];
+  if (!ts.length) return false;
+  const h = A_LEITORA.relida.heroi;
+  return ts.every((t) => t.de === h && !t.contra) && !ts.some((t) => t.para === h);
 }

@@ -146,6 +146,19 @@ sec("§7 a porta única com a resposta dela");
   t("a fala entre travessões: sem a resposta, o ouvido lê conversa", s2.troca === false, J([s2.troca, s2.leitura && s2.leitura.familia]));
   const re = porta(fNao, "pede_troca");
   t("ouvido não × leitora troca → o ouvido relê como troca e extrai quem e o quê (entregar o símbolo à Prudence)", re.troca === true && re.pelaLeitora === "troca" && re.leitura.subtipo === "dar" && re.leitura.quem === "Prudence" && /símbolo/i.test(re.leitura.coisa || ""), J(re.leitura && [re.leitura.subtipo, re.leitura.quem, re.leitura.coisa]));
+  /* 26/11: a releitura não entrega sozinha — quem pergunta o preço espera algo de volta */
+  {
+    const { aRelidaSoPerde } = await import("../src/a-leitora.js");
+    const so = [{ de: "heroi", para: "npc|x", oQue: { coisa: "corda" }, contra: null }];
+    const P = { pergunta: true }, fp = "empurro isto pra você, quanto dá?";
+    t("pergunta de preço + aplicar direto + o herói só perde → a releitura não vale", aRelidaSoPerde(P, { caminho: "aplicado", transacoes: so }, fp) === true);
+    t("PAR: a mesma entrega com cartão, dado ou pergunta ao jogador continua valendo", ["cartao", "dado", "pergunta"].every((c) => aRelidaSoPerde(P, { caminho: c, transacoes: so }, fp) === false));
+    t("PAR: se algo volta para o herói (contrapartida ou transação de volta), vale", aRelidaSoPerde(P, { caminho: "aplicado", transacoes: [{ ...so[0], contra: { moedas: 3 } }] }, fp) === false && aRelidaSoPerde(P, { caminho: "aplicado", transacoes: [...so, { de: "npc|x", para: "heroi", oQue: { moedas: 3 } }] }, fp) === false);
+    t("PAR: a oferta que não pergunta preço («Aceita?») continua sendo entrega", aRelidaSoPerde(P, { caminho: "aplicado", transacoes: so }, "empurro isto pra você. Aceita?") === false);
+    t("PAR: sem pergunta, ou com null, nada muda", aRelidaSoPerde({ pergunta: false }, { caminho: "aplicado", transacoes: so }, fp) === false && aRelidaSoPerde(null, null, null) === false);
+    const naPorta = porta("Prudence, empurro esse símbolo riscado pra você, quanto dá?", "pede_troca");
+    t("na porta: a pergunta de preço relida não aplica uma entrega de graça", naPorta.caminho !== "aplicado", J([naPorta.troca, naPorta.caminho, naPorta.pelaLeitora]));
+  }
   const re2 = porta("Prudence, vê se me paga as oito moedas que me deve", "pede_troca");
   t("a cobrança dita ao outro («vê se me paga») relida: cobrar, de Prudence, moeda", re2.troca === true && re2.leitura.subtipo === "cobrar" && re2.leitura.quem === "Prudence" && re2.leitura.coisaTipo === "moeda", J(re2.leitura && [re2.leitura.subtipo, re2.leitura.quem, re2.leitura.coisaTipo]));
   t("ouvido não × leitora não → a porta de sempre", porta(fNao, "fala").troca === false && porta(fNao, "fala").pelaLeitora === null);

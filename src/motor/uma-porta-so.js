@@ -51,7 +51,7 @@ import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CEN
 import { ligarACena, asAcoesDaFrase } from "../o-ouvido.js";
 import { asDividasDaCena, asTransacoesDoVeredito, aCobrancaDaLeitura, aTransacaoDoPedido, aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "../a-troca-por-transacao.js";
 import { oQualComRotulos, aEscolhaDoQual } from "../quem-esta-aqui.js";
-import { aLeitoraDecide, oDesempate } from "../a-leitora.js";
+import { aLeitoraDecide, oDesempate, aRelidaSoPerde } from "../a-leitora.js";
 
 export const UMA_PORTA_SO = Object.freeze({
   /* o resultado lido na proposta da frase vale para o turno da mesma frase por este tempo (ms) */
@@ -400,6 +400,7 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
        mudar algo aqui (o App só a chama quando sim). */
     const leitoraDecide = !pend && !!(o && o.lido && aLeitoraDecide(o.leitura));
     let naoPelaLeitora = null, pelaLeitora = null;
+    const oDoOuvido = o;
     /* o cartão que nasceu da resposta dela a leva consigo: o clique relê a frase com a mesma resposta */
     const daLeitora = c.leitora != null ? c.leitora : obj(c.confirmado) && c.confirmado.leitora != null ? c.confirmado.leitora : null;
     if (leitoraDecide && daLeitora != null) {
@@ -413,7 +414,16 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
     if (!o || !o.lido) return vazio;
     const l = o.leitura;
     const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null, leitoraDecide, pelaLeitora };
-    const sai = (x) => Object.freeze({ ...base, ...x, ...(pelaLeitora && obj(x.cartao) ? { cartao: Object.freeze({ ...x.cartao, leitora: daLeitora }) } : {}) });
+    /* 26/11: a troca que só existe pela releitura dela, numa frase que pergunta o preço, e que aplicaria direto uma
+       perda sem volta para o herói (nada vem em troca, nenhum cartão, nenhum dado) não se aplica: quem pergunta
+       o preço espera algo de volta. Vale a leitura do ouvido sozinho, como antes dela (a regra está em a-leitora.js). */
+    const sai = (x) => {
+      if (pelaLeitora === "troca" && aRelidaSoPerde(l, x, f)) {
+        const lo = oDoOuvido.leitura;
+        return Object.freeze({ ...base, troca: false, leitura: lo, resposta: oDoOuvido.resposta, caminho: null, pelaLeitora: null });
+      }
+      return Object.freeze({ ...base, ...x, ...(pelaLeitora && obj(x.cartao) ? { cartao: Object.freeze({ ...x.cartao, leitora: daLeitora }) } : {}) });
+    };
     if (naoPelaLeitora) return sai({ caminho: null, troca: false, leitura: Object.freeze({ ...l, familia: naoPelaLeitora, subtipo: null }) });
 
     /* a bancada da troca (L07): «peço à Tabitha o nome do homem de manto cinza» — o pedido sem coisa nenhuma
