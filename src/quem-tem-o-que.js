@@ -36,8 +36,10 @@
      { v, delta: { id: { moedas, entrou: [item], saiu: [nome], usos } },
        dividas: [{ id, de, para, oQue, quanto, dia, prazo, estado, origem }],
        aplicadas: [chave],
-       tomadas: [{ id, de, por, oQue, dia, onde, viu, origem }] }   (25/11, etapa 9:
+       tomadas: [{ id, de, por, oQue, dia, onde, viu, origem }],   (25/11, etapa 9:
        campo novo, aditivo; a versão antiga o ignora)
+       reacoes: { v, porChave } }   (25/11, a reação da vítima: campo novo, aditivo;
+       a forma é de a-reacao-da-vitima.js — aqui só atravessa)
    Na dívida, `prazo` é o DIA em que vence (0: sem prazo); vencida é a que
    passou dele (aDividaVenceu). Na dívida, `de` é quem tem de entregar e `para` quem recebe — a MESMA
    direção da transação que a paga.
@@ -333,8 +335,10 @@ export function garantirPosses(x) {
   const dividas = cortarDividas(arr(o.dividas).map(dividaLimpa).filter(Boolean));
   const aplicadas = arr(o.aplicadas).map(str).filter((k) => k && k.length <= Q.teto.chave).slice(-Q.teto.aplicadas);
   const tomadas = arr(o.tomadas).map(tomadaLimpa).filter(Boolean).slice(-Q.teto.tomadas);
-  if (!Object.keys(delta).length && !dividas.length && !aplicadas.length && !tomadas.length) return null;
-  return { v: Q.v, delta, dividas, aplicadas, ...(tomadas.length ? { tomadas } : {}) };
+  /* a reação da vítima (25/11): só atravessa, se tem a forma de fora ({ porChave: {…} }) */
+  const reacoes = obj(o.reacoes) && obj(o.reacoes.porChave) && Object.keys(o.reacoes.porChave).length ? o.reacoes : null;
+  if (!Object.keys(delta).length && !dividas.length && !aplicadas.length && !tomadas.length && !reacoes) return null;
+  return { v: Q.v, delta, dividas, aplicadas, ...(tomadas.length ? { tomadas } : {}), ...(reacoes ? { reacoes } : {}) };
 }
 /* o fato do que se tomou (etapa 9): só com quem perdeu, quem tomou e a coisa */
 function tomadaLimpa(x) {
@@ -729,7 +733,7 @@ export function aplicarTransacao(posses, ficha, t, ctx) {
   if (Object.keys(S.delta).length > Q.teto.pessoas || Object.values(S.delta).some((d) => d.entrou.length > Q.teto.itens || d.saiu.length > Q.teto.itens)) return recusa("teto");
   const aplicadas = chave ? [...P0.aplicadas, chave].slice(-Q.teto.aplicadas) : P0.aplicadas;
   const tomadas = [...(P0.tomadas || []), ...(rastro ? [rastro.tomada] : [])].slice(-Q.teto.tomadas);
-  const novas = garantirPosses({ v: Q.v, delta: S.delta, dividas, aplicadas, tomadas });
+  const novas = garantirPosses({ v: Q.v, delta: S.delta, dividas, aplicadas, tomadas, reacoes: P0.reacoes });
 
   const nomeDoItem = (x) => nomeDe(obj(x) && temChave(x, "coisa") && temChave(x, "destino") ? x.coisa : x);
   const linhas = (o, coisas, a, b) => (o.tipo === "item" ? coisas.map((x) => ({ coisa: nomeDoItem(x) || o.nome, quantos: 1, de: a, para: b })) : [{ coisa: o.nome, quantos: o.quantos, de: a, para: b }]);

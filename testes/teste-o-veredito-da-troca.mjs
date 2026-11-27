@@ -272,7 +272,9 @@ sec("12. a fiação: o veredito aplica antes do Narrador, pela porta da ficha vi
   const iDesp = app.indexOf("const cascata = cascataDoTurno(sinais);", iMV);
   t("no turno: com o Mestre vivo, depois da ficha da cena e antes do despachante (logo antes do Narrador)", iMV > 0 && iFC > iMV && iVT > iFC && iDesp > iVT);
   t("protegido por calou (nunca custa o turno)", /try \{ vereditoDaTrocaAntes\(acao, momentoDoTurnoRef\.current, oQueOMomentoFaz\(momentoDoTurnoRef\.current\)\); \} catch \(e\) \{ calou\("Mestre vivo · o veredito da troca", e\);/.test(app));
-  const iDado = app.indexOf("const vT = resolverATrocaDoDado(r.frase || \"\", passou, des, persT);");
+  /* 25/11 (a reação da vítima): a chamada ganhou o 5.º argumento (a mão leve vista, aMaoFoiVista); a âncora
+     passa a ser o começo da chamada — a intenção (o dado decide antes do envio) é a mesma */
+  const iDado = app.indexOf("const vT = resolverATrocaDoDado(r.frase || \"\", passou, des, persT");
   const iEnv = app.indexOf("enviar(preRefazer + env, persT);", iDado);
   t("o dado pousou: o furto e o de graça decidem pelo resultado, ANTES do envio ao Narrador, e a ficha nova vai no envio", iDado > 0 && iEnv > iDado && /persT = vT\.ficha; personagemRef\.current = persT; setPersonagem\(persT\);/.test(app.slice(iDado, iEnv)));
   t("o bilhete da troca nasce limpo a cada frase", /conferenteDoTurnoRef\.current = null;\n    trocaDoTurnoRef\.current = null;/.test(app));

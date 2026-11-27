@@ -271,7 +271,10 @@ sec("10. A FIAÇÃO NO APP");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   t("a linha das dívidas entra na pauta de um turno, atrás da chave do Mestre vivo", /mestreVivoLigado\(\)\) \{ try \{ const posM = aPosseAgora\(\) \|\| \{\}; const dvM = asLinhasDasDividas\(/.test(app) && /if \(dvM\) porNaPautaDoTurno\(dvM\)/.test(app));
   t("quem está à mesa sai da presença por id e do grupo", /quemEstaNaMesa\(/.test(app));
-  t("o furto às escondidas passa a marca ao dado", /dado: \{ passou: true, escondido: true \}/.test(app));
+  /* 25/11 (a reação da vítima): a marca deixou de ser sempre `true` — a mão leve que passou por pouco
+     (o preço do furto: «o tilintar tem ouvidos») é vista; o sucesso limpo continua às escondidas. A
+     intenção da asserção (o furto passa a marca ao dado) fica, agora pela régua aMaoFoiVista. */
+  t("o furto às escondidas passa a marca ao dado", /dado: \{ passou: true, escondido: !aMaoFoiVista\(/.test(app));
   t("a troca da frase diz a quitação", /comAQuitacao\(/.test(app));
   t("a ficha lê as linhas da dívida (atrás da chave)", /asDividasDaFicha\(/.test(app));
 }

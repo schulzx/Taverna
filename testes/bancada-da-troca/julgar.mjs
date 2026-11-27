@@ -202,8 +202,12 @@ export function comparar(f, r) {
   for (const d of linhaVsFicha) motivos.push("linha×ficha: " + d);
   for (const d of ouvido) motivos.push("ouvido: " + d);
   if (motivoErrado) motivos.push(`motivo: esperava dizer ${JSON.stringify(f.diz)}`);
+  /* 25/11 (a reação da vítima): `linhas` — o que tem de aparecer numa linha de sistema do turno medido (a reação
+     não muda a ficha nem tem a forma de troca: sem isto, a bancada não a via). Só o lote que o declara o usa. */
+  const faltamLinhas = (Array.isArray(f.linhas) ? f.linhas : []).filter((s) => !textos.some((x) => norm(x).includes(norm(s))));
+  for (const s of faltamLinhas) motivos.push(`linha: esperava uma linha com «${s}»`);
   return {
-    ok: tipoOk && fichaOk, tipoOk, fichaOk, multiplas, linhaVsFicha: linhaVsFicha.length > 0, semResposta, ouvido, motivoErrado, duploDebito,
+    ok: tipoOk && fichaOk && !faltamLinhas.length, tipoOk, fichaOk, multiplas, linhaVsFicha: linhaVsFicha.length > 0, semResposta, ouvido, motivoErrado, duploDebito,
     deltaTexto: textoDoDelta(obs), motivos,
   };
 }

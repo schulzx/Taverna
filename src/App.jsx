@@ -128,6 +128,7 @@ import { garantirPosses, posseDe } from "./quem-tem-o-que.js";
 import { aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio, oLadoDaTroca } from "./a-troca-por-transacao.js";
 import { asLinhasDasDividas, quemEstaNaMesa, comAQuitacao, asDividasDaFicha } from "./dividas-na-mesa.js";
 import { comAsDividasDaQuest, semAsDividasDerivadas, oFurtoPorTransacao, oVereditoDoFurto, aCompraNaBanca, oPagamentoABanca, aCompraNoBalcao, aVendaNaBanca, oQueOMundoDa, asChavesQuePagaram, aChaveDoCaminho } from "./os-caminhos-da-posse.js";
+import { asReacoesDoTurno, asLinhasDaReacao, asLinhasDoTurno, comAAfeicaoCaida, aMaoFoiVista } from "./a-reacao-da-vitima.js";
 import { A_CENA_DO_OUVIDO } from "./motor/a-cena-do-ouvido.js";
 import { idDoLugar } from "./livro-de-factos.js";
 import { chamadoDoMomento, chamadoQueOMundoProvoca } from "./a-cena-do-jogo.js";
@@ -5975,6 +5976,7 @@ export default function Taverna() {
   const quadroRef = useRef(garantirQuadro(null));
   const pessoasRef = useRef(null);                            // 23/11: o que o catálogo de pessoas não deriva (campo `pessoas` do save; quem-e-quem.js)
   const pagasDoTurnoRef = useRef([]);                         // 24/11 (identidade e posse · etapa 7): as chaves das transações deste turno em que a moeda do herói mudou (a cobrança da prosa as consulta)
+  const leituraDaVitimaRef = useRef(null);                    // 25/11: a leitura do ouvido deste turno (negada? a quem?) — a recusa da cobrança do silêncio
   const possesRef = useRef(null);                             // 23/11 (identidade e posse · etapa 6): o registro de posse e dívida (campo `posses` do save; quem-tem-o-que.js)
   const [quadroAberto, setQuadroAberto] = useState(false);
   const [questDoQuadro, setQuestDoQuadro] = useState(null); /* a quest que o Diário pediu: sobrepõe-se à da vez enquanto a gaveta está aberta */
@@ -15033,6 +15035,8 @@ export default function Taverna() {
       try { vereditoDaTrocaAntes(acao, momentoDoTurnoRef.current, oQueOMomentoFaz(momentoDoTurnoRef.current)); } catch (e) { calou("Mestre vivo · o veredito da troca", e); trocaDoTurnoRef.current = null; }
       /* O OUVIDO (22/11): a troca que ele leu e nenhuma porta aplicou, ele aplica (o fato do turno e a linha) */
       try { oOuvidoFechaATroca(acao, oQueOMomentoFaz(momentoDoTurnoRef.current)); } catch (e) { calou("Mestre vivo · o ouvido fecha a troca", e); }
+      /* 25/11 (a reação da vítima): a vítima em cena reage ao que se tomou dela; a cobrança paga ou recusada segue a tabela */
+      try { aReacaoDaVitima(acao); } catch (e) { calou("a reação da vítima · o turno", e); }
       /* 21/11 (a oitava sessão, T18): a busca que não rola não acha — e a prosa não põe à vista o que se leve */
       try {
         const mB = momentoDoTurnoRef.current;
@@ -18590,7 +18594,7 @@ export default function Taverna() {
         try {
           /* a busca que falhou (ou passou sem nada escondido) não põe à vista o que se leve */
           if (!(passou && (r.achado || facto))) { const bv = aBuscaSemAchado(des, { achou: false }); if (bv) porNaPautaDoTurno(bv); }
-          const vT = resolverATrocaDoDado(r.frase || "", passou, des, persT);
+          const vT = resolverATrocaDoDado(r.frase || "", passou, des, persT, aMaoFoiVista({ porPouco: !!(custo && custo.porPouco), bateu }));
           if (vT && vT.estado === "aplicada" && vT.ficha) {
             persT = vT.ficha; personagemRef.current = persT; setPersonagem(persT);
             try { salvar({ personagem: persT }); } catch (e2) { calou("Mestre vivo · gravar a troca do dado", e2); }
@@ -19399,6 +19403,46 @@ export default function Taverna() {
       return r && r.ok ? r.ficha : ficha;
     } catch (e) { calou("os caminhos da posse · " + rotulo, e); return ficha; }
   };
+  /* ---------------- A REAÇÃO DA VÍTIMA (25/11) ----------------
+     A vítima do que se tomou reage pela ficha (a-reacao-da-vitima.js decide: quando, que linha da tabela,
+     o preço do silêncio). Aqui só se aplica, nos mecanismos que já existem: a denúncia na lei da cidade
+     (registrarCrime, crime.js), a afeição no registro de NPCs, o preço do silêncio no registro de dívida
+     (o estado da reação mora no próprio registro de posse, `posses.reacoes`, aditivo)
+     (pagar é «pago … a Fulana», pela porta única). A linha da tela e o fato da pauta de um turno; o
+     Narrador só narra. Só com o Mestre vivo; sem ele, nada muda. */
+  const aReacaoDaVitima = (acao) => {
+    if (!mestreVivoLigado()) return;
+    try {
+      const pos = aPosseAgora() || {};
+      const fichaDoNpc = (nome) => { const reg = npcsRef.current || {}; const k = Object.keys(reg).find((x) => x.toLowerCase() === String(nome || "").toLowerCase()); return k ? { k, f: reg[k] } : null; };
+      const pessoasR = Object.entries(pos.pessoas || {}).map(([id, p]) => { const n = fichaDoNpc(p && p.nome); const f = (n && n.f) || {}; return { id, nome: (p && p.nome) || "", relacao: f.relacao || "", laco: f.laco || null }; });
+      const lt = leituraDaVitimaRef.current;
+      const recusa = acao && lt && lt.frase === acao ? { negada: lt.negada, quem: lt.quem } : null;
+      const r = asReacoesDoTurno({ posses: possesRef.current, pessoas: pessoasR, semente: sementeMundo(), dia: diaRef.current, turno: turnoDeRegistroRef.current, recusa });
+      if (!r.eventos.length && r.posses === possesRef.current) return;
+      possesRef.current = r.posses;
+      const leis = r.eventos.map((e) => {
+        let lei = null;
+        if (e.crime) {
+          try {
+            const crimeR = { vitima: e.nome, papel: "", gravidade: e.crime, testemunhas: [e.nome], doElenco: false };
+            const cidR = cidadeAtualRef.current && !jornadaRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
+            const consR = cidR ? consequenciaDoCrime(crimeR, { semente: sementeMundo(), mapa: mapaRef.current, cidade: cidR, genero: generoMundo(), lex: (mundoAtual() || {}).lexico, molde: moldeMundo(), noite: ehNoite(minutoRef.current), elencoCtx: contextoDoElenco() }) : null;
+            if (consR && consR.cidade && consR.cidade.nome) { leiRef.current = registrarCrime(leiRef.current, consR, crimeR, diaRef.current); lei = consR.cidade; }
+          } catch (e2) { calou("a reação da vítima · a denúncia", e2); }
+        }
+        if (e.afeicao) {
+          try { const n = fichaDoNpc(e.nome); if (n) { const novo = comAAfeicaoCaida(n.f); if (novo !== n.f) { npcsRef.current = { ...(npcsRef.current || {}), [n.k]: novo }; setNpcs(npcsRef.current); } } } catch (e2) { calou("a reação da vítima · a afeição", e2); }
+        }
+        return lei;
+      });
+      const telas = r.eventos.map((e, i) => asLinhasDaReacao(e, { lei: leis[i] }).tela).filter(Boolean);
+      if (telas.length) pushMsgs(telas.map((texto) => ({ autor: "sistema", texto })));
+      const paR = asLinhasDoTurno(r.eventos, leis);
+      if (paR) porNaPautaDoTurno(paR);
+      try { salvar({ posses: possesRef.current, lei: leiRef.current, npcs: npcsRef.current }); } catch (e) { calou("a reação da vítima · gravar", e); }
+    } catch (e) { calou("a reação da vítima", e); }
+  };
   /* o caminho que ainda paga por fora, com o Mestre vivo, deixa a marca da chave (a cobrança não cobra de novo) */
   const marcarPagoDoTurno = (...partes) => { try { if (mestreVivoLigado()) pagasDoTurnoRef.current = [...(pagasDoTurnoRef.current || []), aChaveDoCaminho("consumo", turnoDeRegistroRef.current, ...partes)].slice(-40); } catch (e) { calou("os caminhos da posse · a marca", e); } };
   const aTrocaPorTransacao = (r) => {
@@ -19443,6 +19487,8 @@ export default function Taverna() {
     ouvidoDoTurnoRef.current = null;
     if (!acao || acao.startsWith("/") || acao.startsWith("[") || combateRef.current) { portaUnicaRef.current = null; return null; }
     const r = aPortaDaFrase(acao);
+    /* 25/11 (a reação da vítima): a frase negada dirigida a quem cobra o silêncio é a recusa */
+    try { leituraDaVitimaRef.current = r && r.leitura ? { frase: acao, negada: !!r.leitura.negada, quem: r.leitura.quem || "" } : null; } catch (e) { calou("a reação da vítima · a leitura", e); leituraDaVitimaRef.current = null; }
     portaUnicaRef.current = null;
     /* só o console: os testadores de sessão jogada leem a leitura e a resposta */
     try { console.info(oRegistroDoOuvido(acao, r ? { leitura: r.leitura, resposta: r.resposta, caminho: r.caminho, intencao: r.intencao } : null)); } catch (e) { calou("o ouvido · o registro", e); }
@@ -19560,7 +19606,7 @@ export default function Taverna() {
   /* o dado pousou: o furto e o de graça deste turno decidem-se pelo resultado.
      Devolve o veredito (a ficha nova vai para quem chamou, que a manda ao
      Narrador), ou null. */
-  const resolverATrocaDoDado = (frase, passou, des, pers) => {
+  const resolverATrocaDoDado = (frase, passou, des, pers, vista) => {
     let tr = trocaDoTurnoRef.current;
     /* 22/11 (a décima terceira sessão, E2; T7 e T49): a mão leve rolou e passou
        sem leitura de troca no turno — nenhuma linha, e a prosa pôs «a bolsa está
@@ -19610,7 +19656,7 @@ export default function Taverna() {
         if (vitima && !["nada", "heroi", "mundo"].includes(vitima)) {
           const coisaF = (tr.intencao && tr.intencao.coisa) || "";
           const fF = oFurtoPorTransacao({ vitima, coisa: coisaF, posse: posseDe(vitima, posF.posses, pers, { ...posF, bancas: bancasT }), turno: turnoDeRegistroRef.current, frase });
-          const resF = fF.transacoes.length ? aplicarNaPosse("o furto", fF.transacoes, pers, { bancas: bancasT, dado: { passou: true, escondido: true }, onde: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "" }) : null;
+          const resF = fF.transacoes.length ? aplicarNaPosse("o furto", fF.transacoes, pers, { bancas: bancasT, dado: { passou: true, escondido: !aMaoFoiVista({ porPouco: !!vista }) }, onde: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "" }) : null;
           const vF = oVereditoDoFurto(resF, { alvo: nomeV, coisa: coisaF, vazia: fF.vazia || !!(fF.transacoes.length && !(resF && resF.ok)), semACoisa: fF.semACoisa });
           if (vF) v = vF;
         }
@@ -19619,6 +19665,8 @@ export default function Taverna() {
     if (!v || (v.estado !== "aplicada" && v.estado !== "negada")) return null;
     if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
     { const fp = oFatoDaTroca(v); if (fp) porNaPautaDoTurno(fp); } /* a nona sessão: o fato é a 1.ª linha da pauta, de ferro, e fecha a porta barata em NÃO PODE */
+    /* 25/11: quem viu o que se tomou reage já, na mesma cena (a-reacao-da-vitima.js) */
+    if (passou && (tipo === "furto" || tipo === "tomar")) { try { aReacaoDaVitima(null); } catch (e) { calou("a reação da vítima · o dado", e); } }
     trocaDoTurnoRef.current = { ...tr, veredito: v };
     return v;
   };

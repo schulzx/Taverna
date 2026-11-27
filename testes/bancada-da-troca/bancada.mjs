@@ -99,7 +99,8 @@ async function medir(pag, infra, f) {
   const n0 = (await M.mensagens(pag)).length;
   pag.consoleLog.length = 0;
   const tIni = Date.now();
-  await M.digitar(pag, f.frase);
+  /* 25/11 (a reação da vítima): «[rolar]» como frase medida mede o que o dado faz (o furto e a reação de quem viu) */
+  if (f.frase === "[rolar]") await M.rolar(pag); else await M.digitar(pag, f.frase);
   const saida = await M.esperarFim(pag);
   const msgs1 = (await M.mensagens(pag)).slice(n0);
   const cartoes = ((await M.cartao(pag)) || []).filter((c) => !cartoesAntes.some((a) => a.texto === c.texto));

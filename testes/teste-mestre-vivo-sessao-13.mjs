@@ -191,7 +191,8 @@ sec("E2 · a porta final: frase de troca sem veredito não existe");
   t("T7: «por um fio» passou — e diz o que veio (ou que a bolsa estava vazia)", v7 && v7.linha && /Gareth/.test(v7.linha), J(v7 && v7.linha));
   const d49 = aIntencaoDoDadoDaTroca("tiro a bolsa de moedas do cinto de Corwin sem ele ver", { id: "bater_carteira" });
   t("o dado de troca sem leitura no turno: a mão leve vira o furto da coisa dita", d49 && d49.tipo === "furto" && d49.coisa === "bolsa" && aIntencaoDoDadoDaTroca("x", { id: "escalar" }) === null);
-  const resolver = corpo("const resolverATrocaDoDado = (frase, passou, des, pers) => {");
+  /* 25/11 (a reação da vítima): o resolver ganhou o 5.º parâmetro (`vista`, a mão leve vista); a âncora segue a assinatura nova */
+  const resolver = corpo("const resolverATrocaDoDado = (frase, passou, des, pers, vista) => {");
   t("  a fiação: o resolver do dado lê a porta final quando o turno não tinha troca (e a mão leve rolou)", /aIntencaoDoDadoDaTroca\(frase, des\)/.test(resolver) && /des\.id === "bater_carteira"/.test(resolver));
 
   const pao = aPortaFinalDaTroca("aceito o pão de Dagon e como devagar", { ficha: ONDINE, presentes: ARCO });

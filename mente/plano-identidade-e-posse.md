@@ -157,6 +157,9 @@ uma lista de frases ou de nomes consertados.** Regra por palavra ou por nome é 
 4. **Caixa do mercador:** lido por adaptador; `mercado.gastos` e `mercado.comprados` não mudam.
 5. **O exame selado:** a etapa 8 é a única que mexe no que ele mede; vai em sombra e por subtipo. O
    gesto fica como pista de consentimento, nunca como tabela de tipo.
+6. **Sem fiado por agora** (a pessoa, 25/11): «não vamos fazer fiado por enquanto». Nada novo de fiado; o que existe fica.
+7. **A vítima reage pela ficha** (a pessoa, 25/11): honesta denuncia, desonesta cobra para guardar segredo, etc. — tabela + índole + semente (`src/a-reacao-da-vitima.js`).
+8. **Sem consequência de prazo vencido** (a pessoa, 25/11): «como não terá fiado, não terá dívidas» vencidas; o prazo não cobra nada.
 
 **O limite de sempre:** campo de save novo e aditivo pode; campo existente não muda nem sai; um save
 antigo tem de abrir e jogar. Tudo o que muda o que o jogador vive fica atrás da chave do Mestre vivo

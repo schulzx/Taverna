@@ -1,0 +1,12 @@
+{
+ "nota": "25/11 (a reação da vítima, src/a-reacao-da-vitima.js): sequências de furto visto → reação → pagar ou recusar. O d20 da bancada tem semente: a mão leve passa POR POUCO (16 contra 15, o sim pago: «o tilintar tem ouvidos»), e por isso a vítima vê. Neste mundo (A lenda de Barnabas), a ficha do Cornelius sorteia «cobrar o silêncio» (◉ 6, metade do valor da Balança de bolso); a frase medida é a que depende do que a reação deixou. O campo «linhas» pede o que tem de aparecer numa linha de sistema do turno medido (a reação não muda a ficha: sem ele a bancada não a via). A Prudence, no mesmo furto, cala (sem linha de tela: o Narrador narra).",
+ "frases": [
+  { "id": "V01", "estado": "balanca", "antes": ["furto a balança do Cornelius"], "frase": "[rolar]", "tipo": "dado", "ficha": { "inv": { "+": ["Balança de bolso"] } }, "linhas": ["Cornelius viu você tomar", "quer ◉ 6 para guardar segredo"] },
+  { "id": "V02", "estado": "balanca", "antes": ["furto a balança do Cornelius", "[rolar]"], "frase": "pago seis moedas ao Cornelius", "tipo": "aplica", "ficha": { "moedas": -6 }, "ouvido": { "familia": "trocar", "subtipo": "pagar", "quem": "Cornelius" }, "linhas": ["A dívida com Cornelius está paga", "Cornelius guarda o segredo"] },
+  { "id": "V03", "estado": "balanca", "antes": ["furto a balança do Cornelius", "[rolar]"], "frase": "não vou pagar nada, Cornelius", "tipo": "nada", "ficha": {}, "linhas": ["Cornelius foi contar", "Você é procurado em"] },
+  { "id": "V04", "estado": "balanca", "antes": ["furto a balança do Cornelius", "[rolar]"], "frase": "não pago", "tipo": "nada", "ficha": {}, "linhas": ["Cornelius foi contar"] },
+  { "id": "V05", "estado": "balanca", "antes": ["furto a balança do Cornelius", "[rolar]"], "frase": "pago dez moedas ao Cornelius", "tipo": "aplica", "ficha": { "moedas": -10 }, "ouvido": { "familia": "trocar", "subtipo": "pagar", "quem": "Cornelius" }, "linhas": ["Cornelius guarda o segredo"] },
+  { "id": "V06", "estado": "balanca", "antes": ["furto a balança do Cornelius", "[rolar]", "não vou pagar nada, Cornelius"], "frase": "pago seis moedas ao Cornelius", "tipo": "aplica", "ficha": { "moedas": -6 }, "ouvido": { "familia": "trocar", "subtipo": "pagar", "quem": "Cornelius" } },
+  { "id": "V07", "estado": "balanca", "antes": ["furto a bolsa da Prudence"], "frase": "[rolar]", "tipo": "dado", "ficha": { "moedas": 3 } }
+ ]
+}
