@@ -133,8 +133,11 @@ t("mandar impede o `Enter` nativo de escrever a linha em branco",
   /gestoDoCampo\(e\) !== "mandar"\) return; e\.preventDefault\(\); lancarODado\(\); \}/.test(APP)
   /* AJUSTADA em 23/11 (a décima sexta sessão, «uma porta só»): antes da encruzilhada, a porta única
      lê a frase de troca (a carta não abre para a troca negada), e o partirOTurno foi além dos 1800
-     caracteres. A régua é a mesma; só a janela cresceu. */
-  && /const lancarODado = \(\) => \{[\s\S]{0,2600}?partirOTurno\(entrada\);/.test(APP));
+     caracteres. A régua é a mesma; só a janela cresceu.
+     AJUSTADA em 26/11 (a IA leitora, a-leitora.js): com a chave do Mestre vivo, o dado pergunta à
+     leitora antes de partir, e esse bloco levou o partirOTurno para lá dos 3800 caracteres. A régua
+     continua a mesma (mandar passa pelo dado, que parte pelo partirOTurno); só a janela cresceu. */
+  && /const lancarODado = \(\) => \{[\s\S]{0,4400}?partirOTurno\(entrada\);/.test(APP));
 t("e quem parte devolve o campo ao repouso ANTES de mandar — e o `agir` fica de fora do try",
   /const partirOTurno = \(texto\) => \{[\s\S]{0,600}?calou\([^)]*\); \}\n    agir\(texto\);/.test(APP)
   || (/const partirOTurno/.test(APP) && /\} catch \(e\) \{ calou\("devolver o campo ao repouso quando o turno parte", e\); \}\s*\n\s*agir\(texto\);/.test(APP)),
