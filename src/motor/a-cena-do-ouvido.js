@@ -389,13 +389,14 @@ function aNegativa(l, r, cena) {
      pergunta  — { texto, linha, opcoes: [{ rotulo, frase }] } (caminho «pergunta»)
    }
    ============================================================ */
-export function oOuvidoNaTroca(frase, cena) {
+/* opcoes.pedeTroca (25/11, a IA leitora): a releitura da frase como troca (o-ouvido.js#oOuvido) */
+export function oOuvidoNaTroca(frase, cena, opcoes) {
   const vazio = Object.freeze({ lido: false, leitura: null, resposta: null, caminho: null, intencao: null, negada: null, pergunta: null });
   try {
     const R = A_CENA_DO_OUVIDO;
     const f = str(frase).trim();
     if (!f) return vazio;
-    const lida = oOuvido(f, cena);
+    const lida = oOuvido(f, cena, opcoes);
     /* o gesto sem verbo conhecido que nomeia uma coisa de alguém, minha ou moeda
        («aceito o pão e a água que ela oferece», sessão 15): a confiança é a mais
        baixa do ouvido, e o Mestre pergunta o que se faz com ela em vez de calar.

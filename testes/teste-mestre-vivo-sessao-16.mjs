@@ -345,7 +345,10 @@ sec("§7 a bancada da troca — o que o jogo jogado mostrou");
   const APP = ler("../src/App.jsx");
   /* B30 B31 B49 L02: a quantia dita saía duas vezes — a porta única aplicava, e a cobrança da frase pagava de novo depois da prosa */
   t("a frase que a porta única leu como troca não paga de novo pela cobrança do pedido",
-    /if \(mestreVivoLigado\(\) && ovC && ovC\.lido && ovC\.troca\) pedidoDaCobranca = "";/.test(APP) && /aplicarResposta\(resp, persAtual, \{ envelopes: [^}]*pedido: pedidoDaCobranca,/.test(APP));
+    /* 25/11 (a IA leitora): a condição ganhou «|| ovC.pelaLeitora === "nao"» — a frase que o ouvido lia como troca
+       e a leitora desfez continua fora da cobrança do pedido, como era antes dela; a intenção (a troca não paga duas
+       vezes) é a mesma, e a asserção aceita a forma nova */
+    /if \(mestreVivoLigado\(\) && ovC && ovC\.lido && \(ovC\.troca \|\| ovC\.pelaLeitora === "nao"\)\) pedidoDaCobranca = "";/.test(APP) && /aplicarResposta\(resp, persAtual, \{ envelopes: [^}]*pedido: pedidoDaCobranca,/.test(APP));
   /* X01: fora dos muros (lugar com distância que não é «dentro») as bancas, o balcão e a casa ficam na cidade */
   const rt = (() => { const i = APP.indexOf("  const retratoDoOuvido = "); return APP.slice(i, APP.indexOf("\n  };\n", i)); })();
   t("fora dos muros, o retrato não traz bancas, balcão nem casa", /foraDosMuros = !jornadaRef\.current && !!\(lgM && lgM\.distancia && lgM\.distancia !== "dentro"\)/.test(rt) && /bancas = foraDosMuros \? \[\] :/.test(rt) && (rt.match(/!foraDosMuros/g) || []).length >= 2);

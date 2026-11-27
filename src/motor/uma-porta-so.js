@@ -51,6 +51,7 @@ import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CEN
 import { ligarACena, asAcoesDaFrase } from "../o-ouvido.js";
 import { asDividasDaCena, asTransacoesDoVeredito, aCobrancaDaLeitura, aTransacaoDoPedido, aplicarAsTransacoes, nomesDasTransacoes, oVereditoDaRecusa, oVereditoDoQueVeio } from "../a-troca-por-transacao.js";
 import { oQualComRotulos, aEscolhaDoQual } from "../quem-esta-aqui.js";
+import { aLeitoraDecide, oDesempate } from "../a-leitora.js";
 
 export const UMA_PORTA_SO = Object.freeze({
   /* o resultado lido na proposta da frase vale para o turno da mesma frase por este tempo (ms) */
@@ -296,14 +297,18 @@ export function aPortaUnica(frase, retrato, ctx) {
   try {
     const c = obj(ctx) || {};
     if (!f || c.confirmado || obj(c.pendente) || (Number(c.profundidade) || 0) >= R.maxAcoes - 1) return inteira;
+    /* a IA leitora julgou a frase inteira: «não é troca» vale para ela toda; os pedaços se leem sem ela */
+    if (inteira.pelaLeitora === "nao") return inteira;
     const partes = asAcoesDaFrase(f);
     if (partes.length < 2) return inteira;
     const primeira = partes[0], resto = partes.slice(1).join(" e ");
+    const { leitora: _leitora, ...semLeitora } = c;
+    ctx = semLeitora;
     const r1 = aPortaDeUmaAcao(primeira, retrato, ctx);
     if (!r1.troca || !r1.caminho) return inteira;
     const r0 = obj(retrato) || {};
     const ret2 = r1.caminho === "aplicado" && r1.veredito && obj(r1.veredito.ficha) ? { ...r0, ficha: r1.veredito.ficha } : r0;
-    const r2 = aPortaUnica(resto, ret2, { ...c, profundidade: (Number(c.profundidade) || 0) + 1 });
+    const r2 = aPortaUnica(resto, ret2, { ...semLeitora, profundidade: (Number(c.profundidade) || 0) + 1 });
     if (!r2.troca || !r2.caminho) return inteira;
     const s1 = r1.leitura && r1.leitura.subtipo, l2 = r2.leitura || {};
     if (R.mesmaAcao.primeira.includes(s1) && l2.subtipo === R.mesmaAcao.segunda && (!l2.coisa || l2.coisaTipo === "moeda")) return inteira;
@@ -387,10 +392,29 @@ function aPortaDeUmaAcao(frase, retrato, ctx) {
       const f2 = aCoisaRetomada(f, cena, r0.anteriores);
       if (f2) { const o2 = oOuvidoNaTroca(f2, cena); if (o2 && o2.lido && o2.leitura.familia === "trocar" && str(o2.leitura.coisa)) o = o2; }
     }
+    /* A IA LEITORA (25/11, a-leitora.js): a resposta dela (ctx.leitora) só desempata «pede troca?» —
+       o ouvido disse troca e ela não → não é troca; o ouvido disse que não e ela sim → o ouvido relê a
+       frase como troca (e o que ele não souber extrair vira a pergunta de sempre). Onde o ouvido manda
+       (a condicional, o tomar, o preço), ou sem resposta dela, vale o ouvido. A resposta à pergunta
+       pendente não se desempata (já é de uma leitura). `leitoraDecide`: se a resposta dela poderia
+       mudar algo aqui (o App só a chama quando sim). */
+    const leitoraDecide = !pend && !!(o && o.lido && aLeitoraDecide(o.leitura));
+    let naoPelaLeitora = null, pelaLeitora = null;
+    /* o cartão que nasceu da resposta dela a leva consigo: o clique relê a frase com a mesma resposta */
+    const daLeitora = c.leitora != null ? c.leitora : obj(c.confirmado) && c.confirmado.leitora != null ? c.confirmado.leitora : null;
+    if (leitoraDecide && daLeitora != null) {
+      const d = oDesempate(o.leitura, daLeitora);
+      if (d.acao === "naoETroca") { naoPelaLeitora = d.familia; pelaLeitora = "nao"; }
+      else if (d.acao === "releComoTroca") {
+        const o2 = oOuvidoNaTroca(f, cena, { pedeTroca: true });
+        if (o2 && o2.lido && o2.leitura && o2.leitura.familia === "trocar") { o = o2; pelaLeitora = "troca"; }
+      }
+    }
     if (!o || !o.lido) return vazio;
     const l = o.leitura;
-    const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null };
-    const sai = (x) => Object.freeze({ ...base, ...x });
+    const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null, cartao: null, leitoraDecide, pelaLeitora };
+    const sai = (x) => Object.freeze({ ...base, ...x, ...(pelaLeitora && obj(x.cartao) ? { cartao: Object.freeze({ ...x.cartao, leitora: daLeitora }) } : {}) });
+    if (naoPelaLeitora) return sai({ caminho: null, troca: false, leitura: Object.freeze({ ...l, familia: naoPelaLeitora, subtipo: null }) });
 
     /* a bancada da troca (L07): «peço à Tabitha o nome do homem de manto cinza» — o pedido sem coisa nenhuma
        que mude de mão (o nome, a ajuda, a informação) é conversa, e nenhuma porta de troca abre (antes, o

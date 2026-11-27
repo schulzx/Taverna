@@ -561,18 +561,23 @@ const VAZIA = Object.freeze({ familia: "agir", subtipo: null, quem: null, coisa:
      quemEstado ("aqui"|"qual"|"longe"|"morto"|null), opcoesDeQuem, quemDito,
      coisaTipo ("minha"|"dele"|"solta"|"moeda"|"livre"|null), dono, preco,
      direcao ("recebe" | null), regateio, fala, pergunta, negada, condicional,
-     propostaDeEmTroca ({ nome, dono, preco } | null) } */
-export function oOuvido(frase, cena) {
+     propostaDeEmTroca ({ nome, dono, preco } | null) }
+   opcoes.pedeTroca (25/11, a IA leitora · a-leitora.js): a frase já foi julgada «pede troca» por quem
+   desempata, e o ouvido a RELÊ como troca pelo caminho que tem — a fala entre aspas e a pergunta não o
+   desviam, o verbo de troca da frase (onde estiver) é a ação, e a forma da troca diz o tipo. Sem tipo
+   que a forma diga, a leitura sai troca sem subtipo, e a regra do improviso pergunta ao jogador. Sem a
+   opção, nada muda (a leitura é a de sempre, byte a byte). */
+export function oOuvido(frase, cena, opcoes) {
   try {
     if (!str(frase).trim()) return VAZIA;
     const L = ligarACena(frase, cena);
-    return ler(L, str(frase));
+    return ler(L, str(frase), !!(opcoes && typeof opcoes === "object" && opcoes.pedeTroca));
   } catch {
     return VAZIA;
   }
 }
 
-function ler(L, frase) {
+function ler(L, frase, pedeTroca) {
   const { toks, marcas, cena: cn } = L;
   const C = O_OUVIDO.confianca;
   const marcaEm = (k) => marcas.find((m) => m.i <= k && k < m.j) || null;
@@ -728,8 +733,8 @@ function ler(L, frase) {
     const ks = toks.map((_, k) => k);
     return sai({ familia: "perguntar_ao_mestre", quem: null, quemEstado: null, opcoesDeQuem: [], quemDito: false, coisa: coisaMarcada(ks, null), quantia: null, confianca: C.falaOuPergunta });
   }
-  /* a fala entre aspas ou travessão: falar, com quem o vocativo diz */
-  if (fala) {
+  /* a fala entre aspas ou travessão: falar, com quem o vocativo diz (relida como troca, segue adiante) */
+  if (fala && !pedeTroca) {
     const ks = toks.map((_, k) => k);
     const m = vocativo || primeiraPessoa(ks);
     return sai({ familia: "falar", ...quemDe(m), coisa: coisaMarcada(ks, null), quantia: quantiaDe(ks), confianca: C.falaOuPergunta });
@@ -766,6 +771,9 @@ function ler(L, frase) {
     const prox = i0 >= 0 ? cand[i0 + 1] : null;
     if (prox && prox.some((k) => { const x = marcaEm(k); return x && x.i === k && ["COISA", "MOEDA", "N"].includes(x.tipo); })) principal = prox;
   }
+  /* relida como troca: a oração que traz o verbo de troca é a ação («Cornelius, topa trocar…», «vê se me paga…») */
+  const temVerboDeTroca = (o) => arr(o).some((k) => { const vv = verboDe(toks[k].s); return !!(vv && vv.fam === "trocar" && !marcaEm(k)); });
+  if (pedeTroca && !negada && !condicional && !temVerboDeTroca(principal)) { const outra = cand.find(temVerboDeTroca); if (outra) principal = outra; }
   if (!principal || !principal.length) principal = toks.map((_, k) => k);
   const todos = toks.map((_, k) => k);
   const ks = principal;
@@ -818,7 +826,7 @@ function ler(L, frase) {
   }
   /* a pergunta: de preço (falar), a alguém (falar), ao mundo (Mestre) */
   const principalAcao = !ks.some((k) => toks[k].s === "?") && (() => { const k1 = ks[comeca(ks)]; const vv = k1 != null ? verboDe(toks[k1].s) : null; return !!(vv && !marcaEm(k1)); })();
-  if (pergunta && !principalAcao) {
+  if (pergunta && !principalAcao && !pedeTroca) {
     const ehPreco = O_OUVIDO.precoPergunta.some((w) => new RegExp("\\b" + w + "\\b").test(txtTudo)) && !/\bquanto (falta|tempo|demora|dura|anda)\b/.test(txtTudo) && !(!vocativo && /\b(eu tenho|tenho|me resta|resta|sobrou|sobra|tenho de|de vida)\b/.test(txtTudo));
     const pedido = /\b(me (vende|empresta|da|de|passa|arruma|ve)|pode me|poderia me|vende pra mim)\b/.test(txtTudo);
     const m = vocativo || primeiraPessoa(todos);
@@ -856,6 +864,16 @@ function ler(L, frase) {
   /* sem verbo no começo: procura o primeiro verbo da oração (a frase começa por um nome, «Rhogar, …») */
   if (!v && i < ks.length && marcaEm(ks[i]) && marcaEm(ks[i]).tipo === "PESSOA") {
     for (let j = i; j < ks.length; j++) { const vv = verboDe(toks[ks[j]].s); if (vv && !marcaEm(ks[j])) { vk = ks[j]; v = vv; i = j; break; } }
+  }
+  /* relida como troca: o verbo de troca da oração é a ação, ainda que outro venha antes («topa trocar») */
+  if (pedeTroca && !(v && v.fam === "trocar")) {
+    for (let j = 0; j < ks.length; j++) {
+      const vv = verboDe(toks[ks[j]].s);
+      if (!vv || vv.fam !== "trocar" || marcaEm(ks[j])) continue;
+      if (j > 0 && O_OUVIDO.clitico.includes(toks[ks[j - 1]].s)) clitico = toks[ks[j - 1]].s;
+      vk = ks[j]; v = vv; i = j; modal = null;
+      break;
+    }
   }
   const depois = vk == null ? ks : ks.filter((k) => k > vk);
   const dps = depois.map((k) => toks[k].s);
@@ -1323,6 +1341,8 @@ function ler(L, frase) {
       if (O_OUVIDO.aFormaManda.includes(fv.subtipo)) { familia = "trocar"; subtipo = fv.subtipo; confianca = C.estrutura; }
     }
   }
+  /* relida como troca: a família é troca; o tipo é o do verbo, ou o que a forma disser logo abaixo, ou nenhum (a pergunta) */
+  if (pedeTroca && familia !== "trocar") { familia = "trocar"; subtipo = v && v.fam === "trocar" ? v.sub : null; confianca = C.estrutura; }
   if (familia === "trocar") {
     try { forma = osTracosDaForma(); } catch { forma = null; }
     if (forma && forma.subtipo && O_OUVIDO.aFormaManda.includes(forma.subtipo)) {

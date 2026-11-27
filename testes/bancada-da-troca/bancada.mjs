@@ -12,6 +12,9 @@
      node testes/bancada-da-troca/bancada.mjs --lista           só lista as frases
      node testes/bancada-da-troca/bancada.mjs --frases arquivo.json  outro arquivo de frases (mesmo formato)
      opções: --json arquivo (grava o resultado frase a frase) · --quieto (sem a linha de progresso)
+             --porta-base N (outras portas: Vite N, Narrador de mentira N+1, CDP N+4000)
+             --leitora (a IA leitora responde com as respostas reais gravadas pela medida, sem custo;
+                        sem a opção, todo pedido dela cai no recuo e a bancada mede como antes)
 
    É MEDIDA, não portão: sai sempre com código 0. */
 import fs from "node:fs";
@@ -37,7 +40,9 @@ if (tem("--lista")) { for (const f of escolhidas) console.log(f.id.padEnd(5), f.
 if (!escolhidas.length) { console.log("nenhuma frase escolhida"); process.exit(0); }
 
 const t0 = Date.now();
-const infra = await subir({ log: (m) => console.error("[infra] " + m) });
+/* --porta-base N: o Vite em N, o Narrador de mentira em N+1, o CDP em N+4000 (duas bancadas ao mesmo tempo, em árvores diferentes) */
+const portaBase = Number(opcao("--porta-base")) || 0;
+const infra = await subir({ ...(portaBase ? { portaVite: portaBase, portaNarrador: portaBase + 1, portaCdp: portaBase + 4000 } : {}), leitora: tem("--leitora"), log: (m) => console.error("[infra] " + m) });
 const resultados = [];
 let provaDaIA = null;
 try {
@@ -73,6 +78,7 @@ try {
     apiParaForaDeLocalhost: apiDaPagina.filter((x) => { try { return !/^(127\.0\.0\.1|localhost)(:|$)/.test(new URL(x.url).host); } catch { return true; } }).length,
     hostsContatadosPelaPagina: externos.map((h) => h + " ×" + hosts[h]),
     viteCitouVercel: /vercel\.app/i.test(logVite),
+    leitora: { ligada: tem("--leitora"), ...infra.narrador.daLeitora },
   };
   pag.fechar();
 } finally { await infra.parar(); }
@@ -195,6 +201,7 @@ function relatorio(rs, prova, ms) {
     console.log(`  destino do /api no Vite (TAVERNA_API): ${prova.destinoDoProxy}  (Narrador de mentira, local)`);
     console.log(`  sonda no /api do dev-server caiu no Narrador de mentira: ${prova.sondaNoMock ? "sim" : "NÃO"}`);
     console.log(`  /api pedidas pela página: ${prova.apiPedidasPelaPagina}  ·  recebidas pelo Narrador de mentira: ${prova.recebidasPeloMock}  ·  /api para fora de localhost: ${prova.apiParaForaDeLocalhost}`);
+    console.log(`  a IA leitora: ${prova.leitora.ligada ? "as respostas gravadas pela medida" : "desligada (todo pedido cai no recuo)"} · pedidos dela ${prova.leitora.pedidos} · com gravação ${prova.leitora.gravadas}`);
     console.log(`  o log do Vite cita vercel.app: ${prova.viteCitouVercel ? "SIM" : "não"}  ·  outros hosts que a página contatou (só ativos estáticos): ${prova.hostsContatadosPelaPagina.join(", ") || "nenhum"}`);
   }
   console.log(`\nTempo: ${(ms / 1000).toFixed(0)} s para ${n} frases (${(ms / 1000 / n).toFixed(1)} s por frase).`);

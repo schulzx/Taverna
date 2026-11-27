@@ -296,6 +296,7 @@ import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao
 import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-proposta-da-frase.js";
 import { aTrocaDoOuvido, oRegistroDoOuvido, osPratosDaCasa } from "./motor/a-cena-do-ouvido.js";
 import { aPortaUnica, UMA_PORTA_SO } from "./motor/uma-porta-so.js";
+import { oPedidoDaLeitora, perguntarALeitora } from "./a-leitora.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui, aPresencaUnica, comRotuloDoHomonimo } from "./quem-esta-aqui.js";
 import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ausente.js";
@@ -5995,6 +5996,7 @@ export default function Taverna() {
   const pautaDeUmTurnoRef = useRef(null);
   /* O OUVIDO (22/11): a leitura da frase deste turno, e a pergunta da troca à espera da resposta */
   const ouvidoDoTurnoRef = useRef(null);
+  const leitoraRef = useRef(null);              // A IA LEITORA (25/11): { frase, emVoo, resposta } da última frase julgada
   const perguntaDoOuvidoRef = useRef(null);
   const portaUnicaRef = useRef(null);           // UMA PORTA SÓ (23/11): o resultado da frase, lido na proposta e executado no turno     // o canal de um turno (ACABOU DE e NÃO PODE): o encontro da estrada, e quem mais o pedir
   const crimeConfirmadoRef = useRef(false);
@@ -11723,7 +11725,7 @@ export default function Taverna() {
          (cobranca.js#oQueFaltaDebitar, o «pedido») pagava outra vez (◉ −2 moedas). Com a frase lida como
          troca pela porta única, ela é a única porta: a cobrança não lê o pedido deste turno. */
       let pedidoDaCobranca = pedidoDaBolsa;
-      try { const ovC = ouvidoDoTurnoRef.current; if (mestreVivoLigado() && ovC && ovC.lido && ovC.troca) pedidoDaCobranca = ""; } catch (e) { calou("a porta única · a cobrança da frase", e); }
+      try { const ovC = ouvidoDoTurnoRef.current; if (mestreVivoLigado() && ovC && ovC.lido && (ovC.troca || ovC.pelaLeitora === "nao")) pedidoDaCobranca = ""; } catch (e) { calou("a porta única · a cobrança da frase", e); }
       /* 24/11 (identidade e posse · etapa 7): com o Mestre vivo, o que a porta única já pagou neste turno tem
          chave (pagasDoTurnoRef), e a cobrança da prosa consulta as chaves, e não a lista de frases dos envelopes */
       let porChaveC = false;
@@ -19272,7 +19274,7 @@ export default function Taverna() {
     const pend = perguntaDoOuvidoRef.current;
     perguntaDoOuvidoRef.current = null;
     let r = null;
-    try { r = aPortaUnica(frase, retratoDoOuvido(), { pendente: pend, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO, aPosse: aPosseAgora(), turno: turnoDeRegistroRef.current + 1 }); } catch (e) { calou("o ouvido · a porta única", e); r = null; }
+    try { r = aPortaUnica(frase, retratoDoOuvido(), { pendente: pend, ofertaDe: (item) => ofertaPor(item), ofertaDoUso: ofertaDoUsoAqui, vaiAoCorpo: VAI_AO_CORPO, aPosse: aPosseAgora(), turno: turnoDeRegistroRef.current + 1, leitora: (() => { try { const lr = leitoraRef.current; return lr && lr.frase === frase && !lr.emVoo ? lr.resposta : null; } catch (e) { calou("a IA leitora · a resposta na porta", e); return null; } })() }); } catch (e) { calou("o ouvido · a porta única", e); r = null; }
     portaUnicaRef.current = r ? { entrada: frase, frase: r.frase, r, em: Date.now() } : null;
     return r;
   };
@@ -28710,6 +28712,35 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       setLancado(true);
       setTimeout(() => { try { setLancado(false); } catch (e) { calou("o dado assenta", e); } }, DADO.lancado);
     } catch (e) { calou("o quarto de volta do dado", e); }
+    /* A IA LEITORA (25/11, a-leitora.js): com o Mestre vivo, a frase que a porta única diz que a
+       IA pode desempatar («pede troca?») vai a ela, à parte, uma vez; o envio espera a resposta (ou o
+       teto da tabela) e parte de novo, e a porta lê a frase com ela. Erro, recusa, atraso ou resposta
+       fora da lista: vale o ouvido sozinho, calado. Sem a chave, nada é chamado. */
+    try {
+      const e0 = String(entrada || "").trim();
+      if (mestreVivoLigado() && e0 && !e0.startsWith("/") && !e0.startsWith("[") && !perguntaDoOuvidoRef.current && !salaRef.current && !combateRef.current && !carregando && !rolagem) {
+        const lr = leitoraRef.current;
+        if (lr && lr.frase === e0 && lr.emVoo) return;
+        if (!(lr && lr.frase === e0)) {
+          const r0 = aPortaDaFrase(e0);
+          const pedido = r0 && r0.leitoraDecide ? oPedidoDaLeitora(e0, retratoDoOuvido()) : null;
+          if (!pedido) leitoraRef.current = { frase: e0, emVoo: false, resposta: null };
+          else {
+            leitoraRef.current = { frase: e0, emVoo: true, resposta: null };
+            perguntarALeitora((p) => chamarModelo(p.system, p.messages, p.maxTokens, p.formato, p.tarefa), pedido).then((resposta) => {
+              try {
+                const agora = leitoraRef.current;
+                if (!(agora && agora.frase === e0 && agora.emVoo)) return;
+                leitoraRef.current = { frase: e0, emVoo: false, resposta: resposta || null };
+                if (resposta) portaUnicaRef.current = null;
+                if (lancarODadoRef.current) lancarODadoRef.current();
+              } catch (e) { calou("a IA leitora · a volta", e); }
+            });
+            return;
+          }
+        }
+      }
+    } catch (e) { calou("a IA leitora · o envio", e); }
     /* a frase que ia agir vira proposta, e o turno espera o toque */
     /* BQ7: a frase que é uma das cartas abertas abre a encruzilhada com essa
        carta escolhida e a frase entre aspas — o botão continua a confirmar.

@@ -12,17 +12,39 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { A_LEITORA } from "../../src/a-leitora.js";
 
 export const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const EDGE = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe"].find((p) => fs.existsSync(p));
 
 export const NARRACAO_FIXA = "O Mestre escuta em silêncio, e a cena segue.";
 
+/* A IA LEITORA DE MENTIRA (25/11): o pedido da leitora (o `system` de A_LEITORA) é respondido
+   REPRODUZINDO as respostas reais já gravadas pela medida (testes/medida-da-leitora/respostas-minima.jsonl,
+   a frase sai de itens.json): a frase → o texto cru que o modelo devolveu. Frase sem gravação = sem
+   resposta (texto vazio, e o jogo cai no recuo). Sem `leitora`, todo pedido dela recebe a narração fixa —
+   fora da lista, o mesmo recuo: a bancada mede como antes. Nenhuma chamada paga. */
+export function asGravacoesDaLeitora() {
+  const D = path.join(RAIZ, "testes", "medida-da-leitora");
+  const itens = JSON.parse(fs.readFileSync(path.join(D, "itens.json"), "utf8"));
+  const fraseDe = new Map(itens.map((i) => [i.conjunto + "|" + i.id, i.frase]));
+  const porFrase = new Map();
+  for (const l of fs.readFileSync(path.join(D, "respostas-minima.jsonl"), "utf8").split("\n").filter(Boolean)) {
+    let r; try { r = JSON.parse(l); } catch { continue; }
+    const f = fraseDe.get(r.conjunto + "|" + r.id);
+    if (f && r.status === 200 && typeof r.bruto === "string" && !porFrase.has(f)) porFrase.set(f, r.bruto);
+  }
+  return porFrase;
+}
+const fraseDoPedido = (j) => { const m = String((((j.messages || [])[0]) || {}).content || "").match(/Frase do jogador: «([\s\S]*)»\nResposta:$/); return m ? m[1] : null; };
+
 /* O Narrador de mentira. Responde no formato do /api/narrador:
    { texto, provedor, uso }. `formato: "json"` pede o molde do Narrador
    ({ narrativa, ... }); a tarefa «leve» (Juiz, cronista…) recebe um objeto vazio. */
-export function subirNarradorDeMentira(porta) {
+export function subirNarradorDeMentira(porta, { leitora = false } = {}) {
   const chamadas = [];
+  const gravacoes = leitora ? asGravacoesDaLeitora() : null;
+  const daLeitora = { pedidos: 0, gravadas: 0 };
   const servidor = http.createServer((req, res) => {
     let corpo = "";
     req.on("data", (d) => (corpo += d));
@@ -33,14 +55,21 @@ export function subirNarradorDeMentira(porta) {
       res.setHeader("content-type", "application/json");
       if (!/^\/api\/narrador/.test(req.url || "")) { res.statusCode = 404; res.end(JSON.stringify({ erro: "rota sem Narrador de mentira" })); return; }
       let texto;
-      if (j.formato === "json") texto = j.tarefa && j.tarefa !== "narrador" ? "{}" : JSON.stringify({ narrativa: NARRACAO_FIXA, mudancas: {} });
+      if (j.system === A_LEITORA.pedido.system) {
+        daLeitora.pedidos++;
+        const f = fraseDoPedido(j);
+        const g = gravacoes && f != null ? gravacoes.get(f) : undefined;
+        if (g !== undefined) daLeitora.gravadas++;
+        texto = !gravacoes ? NARRACAO_FIXA : g !== undefined ? g : "";
+        chamadas[chamadas.length - 1].leitora = { frase: f, resposta: texto };
+      } else if (j.formato === "json") texto = j.tarefa && j.tarefa !== "narrador" ? "{}" : JSON.stringify({ narrativa: NARRACAO_FIXA, mudancas: {} });
       else texto = NARRACAO_FIXA;
       res.end(JSON.stringify({ texto, provedor: "bancada", uso: { entrada: 0, saida: 0, cache: 0 } }));
     });
   });
   return new Promise((ok, falha) => {
     servidor.once("error", falha);
-    servidor.listen(porta, "127.0.0.1", () => ok({ chamadas, parar: () => new Promise((r) => servidor.close(r)) }));
+    servidor.listen(porta, "127.0.0.1", () => ok({ chamadas, daLeitora, parar: () => new Promise((r) => servidor.close(r)) }));
   });
 }
 
@@ -51,10 +80,10 @@ async function esperarUrl(url, ms = 60000) {
   throw new Error("não subiu a tempo: " + url);
 }
 
-export async function subir({ portaVite = 5391, portaCdp = 9391, portaNarrador = 5392, log = () => {} } = {}) {
+export async function subir({ portaVite = 5391, portaCdp = 9391, portaNarrador = 5392, leitora = false, log = () => {} } = {}) {
   if (!EDGE) throw new Error("Edge não encontrado");
   const pids = [];
-  const narrador = await subirNarradorDeMentira(portaNarrador);
+  const narrador = await subirNarradorDeMentira(portaNarrador, { leitora });
   const alvoApi = "http://127.0.0.1:" + portaNarrador;
   /* o Vite, direto pelo node (sem shell), com a API de mentira */
   const vite = spawn(process.execPath, [path.join(RAIZ, "node_modules", "vite", "bin", "vite.js"), "--port", String(portaVite), "--strictPort", "--host", "127.0.0.1"], {
